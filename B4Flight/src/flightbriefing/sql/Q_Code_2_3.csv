@@ -1,0 +1,180 @@
+Code,Description,Abbreviation
+AA,Minimum altitude (specify en-route/crossing/safe),mnm alt
+AC,Control zone,ctr
+AD,Air defence identification zone,adiz
+AE,Control area,cta
+AF,Flight information region,fir
+AH,Upper control area,uta
+AL,Minimum usable flight level,mnm usable fl
+AN,Area navigation route,rnav rte
+AO,Oceanic control area,oca
+AP,Reporting point (specify name or coded designator),rep
+AR,ATS route (specify),ats rte
+AT,Terminal control area,tma
+AU,Upper flight information region,uir
+AV,Upper advisory area,uda
+AX,Significant point,sig
+AZ,Aerodrome traffic zone,atz
+CA,Air/ground facility (specify service and frequency),a/g fac
+CB,Automatic dependent surveillance — broadcast (details),ads-b
+CC,Automatic dependent surveillance — contract (details),ads-c
+CD,Controller-pilot data link communications (details),cpdlc
+CE,En-route surveillance radar,rsr
+CG,Ground controlled approach system,gca
+CL,Selective calling system,selcal
+CM,Surface movement radar,smr
+CP,Precision approach radar (specify runway),par
+CR,Surveillance radar element of precision approach radar system (specify wavelength),sre
+CS,Secondary surveillance radar,ssr
+CT,Terminal area surveillance radar,tar
+FA,Aerodrome,ad
+FB,Friction measuring device (specify type),friction measuring device
+FC,Ceiling measurement equipment,ceiling measurement eqpt
+FD,"Docking system (specify AGNIS, BOLDS, etc.)",dckg system
+FE,Oxygen (specify type),oxygen
+FF,Firefighting and rescue,fire and rescue
+FG,Ground movement control,gnd mov ctl
+FH,Helicopter alighting area/platform,hel alighting area
+FI,Aircraft de-icing (specify),acft de-ice
+FJ,Oils (specify type),oil
+FL,Landing direction indicator,ldi
+FM,Meteorological service (specify type),met
+FO,Fog dispersal system,fg dispersal
+FP,Heliport,heliport
+FS,Snow removal equipment,sn removal eqpt
+FT,"Transmissometer (specify runway and, where applicable, designator(s) of transmissometer(s))",transmissometer
+FU,Fuel availability,fuel avbl
+FW,Wind direction indicator,wdi
+FZ,Customs/immigration,cust/immigration
+GA,GNSS airfield-specific operations (specify operation),gnss airfield
+GW,GNSS area-wide operations (specify operation),gnss area
+IC,Instrument landing system (specify runway),ils
+ID,DME associated with ILS,ils dme
+IG,Glide path (ILS) (specify runway),ils gp
+II,Inner marker (ILS) (specify runway),ils im
+IL,Localizer (ILS) (specify runway),ils llz
+IM,Middle marker (ILS) (specify runway),ils mm
+IN,Localizer (not associated with ILS),llz
+IO,Outer marker (ILS) (specify runway),ils om
+IS,ILS Category I (specify runway),ils cat I
+IT,ILS Category II (specify runway),ils cat II
+IU,ILS Category III (specify runway),ils cat III
+IW,Microwave landing system (specify runway),mls
+IX,"Locator, outer (ILS) (specify runway)",ils lo
+IY,"Locator, middle (ILS) (specify runway)",ils lm
+LA,Approach lighting system (specify runway and type),als
+LB,Aerodrome beacon,abn
+LC,Runway centre line lights (specify runway),rcll
+LD,Landing direction indicator lights,ldi lgt
+LE,Runway edge lights (specify runway),redl
+LF,Sequenced flashing lights (specify runway) sequenced,flg lgt
+LG,Pilot-controlled lighting,pcl
+LH,High intensity runway lights (specify runway),high intst rwy lgt
+LI,Runway end identifier lights (specify runway),rwy end id lgt
+LJ,Runway alignment indicator lights (specify runway),rai lgt
+LK,Category II components of approach lighting system (specify runway),cat II components als
+LL,Low intensity runway lights (specify runway),low intst rwy lgt
+LM,Medium intensity runway lights (specify runway),medium intst rwy lgt
+LP,Precision approach path indicator (specify runway),papi
+LR,All landing area lighting facilities,ldg area lgt fac
+LS,Stopway lights (specify runway),stwl
+LT,Threshold lights (specify runway),thr lgt
+LU,Helicopter approach path indicator,hapi
+LV,Visual approach slope indicator system (specify type and runway),vasis
+LW,Heliport lighting,heliport lgt
+LX,Taxiway centre line lights (specify taxiway),twy cl lgt
+LY,Taxiway edge lights (specify taxiway),twy edge lgt
+LZ,Runway touchdown zone lights (specify runway),rtzl
+MA,Movement area,mov area
+MB,Bearing strength (specify part of landing area or movement area),bearing strength
+MC,Clearway (specify runway),cwy
+MD,Declared distances (specify runway),declared dist
+MG,Taxiing guidance system,tgs
+MH,Runway arresting gear (specify runway),rag
+MK,Parking area,prkg area
+MM,"Daylight markings (specify threshold, centre line, etc.)",day markings
+MN,Apron,apron
+MO,Stopbar (specify taxiway),stopbar
+MP,Aircraft stands (specify),acft stand
+MR,Runway (specify runway),rwy
+MS,Stopway (specify runway),swy
+MT,Threshold (specify runway),thr
+MU,Runway turning bay (specify runway),rwy turning bay
+MW,Strip/shoulder (specify runway),strip/shoulder
+MX,Taxiway(s) (specify),twy
+MY,Rapid exit taxiway (specify),rapid exit twy
+NA,All radio navigation facilities (except . . .),all rdo nav fac
+NB,Non-directional radio beacon,ndb
+NC,DECCA,decca
+ND,Distance measuring equipment,dme
+NF,Fan marker,fan mkr
+NL,Locator (specify identification),1
+NM,VOR/DME,vor/dme
+NN,TACAN,tacan
+NO,OMEGA,omega
+NT,VORTAC,vortac
+NV,VOR,vor
+NX,Direction-finding station (specify type and frequency),df
+OA,Aeronautical information service,ais
+OB,Obstacle (specify details),obst
+OE,Aircraft entry requirements,acft entry rqmnts
+OL,Obstacle lights on . . . (specify),obst lgt
+OR,Rescue coordination centre,rcc
+PA,Standard instrument arrival (specify route designator),star
+PB,Standard VFR arrival,std vfr arr
+PC,Contingency procedures,contingency proc
+PD,Standard instrument departure (specify route designator),sid
+PE,Standard VFR departure,std vfr dep
+PF,Flow control procedure,flow ctl proc
+PH,Holding procedure,hldg proc
+PI,Instrument approach procedure (specify type and runway),instr apch proc
+PK,VFR approach procedure,vfr apch proc
+PL,"Flight plan processing, filing and related contingency",fpl
+PM,Aerodrome operating minima (specify procedure and amended minimum),opr minima
+PN,Noise operating restrictions,noise opr restrictions
+PO,Obstacle clearance altitude and height (specify procedure),oca och
+PR,Radio failure procedure,rdo failure proc
+PT,Transition altitude or transition level (specify),ta/trl
+PU,Missed approach procedure (specify runway),missed apch proc
+PX,Minimum holding altitude (specify fix),mnm hldg alt
+PZ,ADIZ procedure,adiz proc
+RA,Airspace reservation (specify),airspace reservation
+RD,Danger area (specify). .,d . .
+RM,Military operating area,moa
+RO,Overflying of . . . (specify),overflying
+RP,Prohibited area (specify ). .,p . .
+RR,Restricted area . .,r . .
+RT,Temporary restricted area (specify area),tempo restricted area
+SA,Automatic terminal information,serviceatis
+SB,ATS reporting,officearo
+SC,Area control,centreacc
+SE,Flight information,servicefis
+SF,Aerodrome flight information,serviceafis
+SL,Flow control centreflow,ctl centre
+SO,Oceanic area control,centreoac
+SP,Approach control,serviceapp
+SS,Flight service,stationfss
+ST,Aerodrome control,towertwr
+SU,Upper area control,centreuac
+SV,VOLMET broadcast,volmet
+SY,Upper advisory service (specify),upper advisory ser
+WA,Air display,air display
+WB,Aerobatics,aerobatics
+WC,Captive balloon or kite,captive balloon/kite
+WD,Demolition of explosives,demolition of explosives
+WE,Exercises (specify),exer
+WF,Air refuelling,air refuelling
+WG,Glider flying,gld fly
+WH,Blasting,blasting
+WJ,Banner/target towing,banner/target towing
+WL,Ascent of free balloon,ascent of free balloon
+WM,"Missile, gun or rocket firing",missile/gun/rocket/frng
+WP,"Parachute jumping exercise, paragliding or hang gliding",pje/paragliding/hang gliding
+WR,Radioactive materials or toxic chemicals (specify),radioactive materials/toxic chemicals
+WS,Burning or blowing gas,burning/blowing gas
+WT,Mass movement of aircraft,mass mov of acft
+WU,Unmanned aircraft,ua
+WV,Formation flight,formation flt
+WW,Significant volcanic activity,significant volcanic act
+WY,Aerial survey,aerial survey
+WZ,Model flying,model fly
