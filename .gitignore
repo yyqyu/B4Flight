@@ -4,6 +4,8 @@ venv/
 __pycache__/
 
 instance/
+working_files/
+notam_archives/
 
 .pytest_cache/
 .coverage

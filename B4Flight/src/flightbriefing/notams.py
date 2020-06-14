@@ -13,11 +13,11 @@ from sqlalchemy.orm import sessionmaker, relationship
 import re
 import sys
 from datetime import datetime
+import os
 
 
 #SQLAlchemny - A declarative base class  
 Base = declarative_base() 
-eng = ''
 
 
 class QCode_2_3_Lookup(Base):
@@ -104,12 +104,11 @@ class Notam(Base):
     QCode_4_5_Lookup = relationship("QCode_4_5_Lookup")
     
 
-def init_db(sql_eng):
+def init_db(sqa_engine):
     #The declarative Base is bound to the database engine.
-    eng = sql_eng
-    Base.metadata.bind = eng
+    Base.metadata.bind = sqa_engine
 
-def create_new_db():
+def create_new_db(sql_script_folder):
     import csv
 
     #Create defined tables
@@ -118,17 +117,17 @@ def create_new_db():
     print('----------Initialising Database for Initial Use----------')
     print('Created Data Tables')
     
-    Session = sessionmaker(bind=eng)
+    Session = sessionmaker(bind=Base.metadata.bind)
     ses = Session()
     
-    with open('sql/Q_Code_2_3.csv') as imp_file:
+    with open(os.path.join(sql_script_folder, 'Q_Code_2_3.csv')) as imp_file:
         csv_reader = csv.DictReader(imp_file)
         for row in csv_reader:
             ref = QCode_2_3_Lookup(Code = row['Code'], Description = row['Description'], Abbreviation = row['Abbreviation'])
             ses.add(ref)
     print('Imported QCode Lookups: QCode_2_3_Lookup')
 
-    with open('sql/Q_Code_4_5.csv') as imp_file:
+    with open(os.path.join(sql_script_folder, 'Q_Code_4_5.csv')) as imp_file:
         csv_reader = csv.DictReader(imp_file)
         for row in csv_reader:
             ref = QCode_4_5_Lookup(Code = row['Code'], Description = row['Description'], Abbreviation = row['Abbreviation'])
@@ -164,7 +163,7 @@ def tidy_notam(notam):
     
     #----Try to extract bounded co-ordinates if they exist, but not for Obstacles
     sCoords = ''
-#    sSortedCoods = ''
+
     if notam.Q_Code_2_3 != 'OB':  #Obstacles are identified by first 2 letters in QCode = "OB"
         #First are there any single co-ord pairs?  If so, remove them from the text 
         tempText = notam.Notam_Text
@@ -189,17 +188,9 @@ def tidy_notam(notam):
                 reBoundedCoords.append(reBoundedCoords[0])
             
             sCoords = sCoords.strip() #removing trailing space
-#            reBoundedCoords = sortPolygonPoints(reBoundedCoords)
-#            for x in reBoundedCoords:
-#                sSortedCoods  = sSortedCoods  + f"{x[0]},{x[1]} " #add the next set of coords on
-#            sSortedCoods = sSortedCoods.strip()
-        
             
     notam.Bounded_Area = sCoords
     
-##    if 'Duration' not in notamDict:
-##        notamDict['Duration'] = ''
-
     #Determine the final Lower Level - use the "F" field if exists, otherwise the lower level from Q field
     if notam.Level_Lower is not None:
         if notam.Level_Lower.find('GND')>=0 or notam.Level_Lower.find('000')>=0:
@@ -248,7 +239,7 @@ def tidy_notam(notam):
 
 
 '''---------------------------------------
- parseNotamTextFile(filename)
+ parse_notam_text_file(filename)
 
  PURPOSE: Opens and parses a text file containing NOTAMs, placing details into XML format
           Text file is a text version of the CAA Notam Summary:
@@ -259,7 +250,7 @@ def tidy_notam(notam):
  RETURNS: Briefing Object, list of Notam Objects
 ---------------------------------------'''
     
-def parseNotamTextFile(filename, country_code):
+def parse_notam_text_file(filename, country_code):
     
     briefing_date_format = {'ZA':'%d%b%y'}
     briefing_time_format = {'ZA':'%H%M'}
@@ -268,22 +259,15 @@ def parseNotamTextFile(filename, country_code):
     processing_notam = False  #Are we processing a NOTAM currently?
     processing_D_line = False  #Are we processing a "D" line in a NOTAM currently - these can be multi-line?
     processing_E_line = False  #Are we processing an "E" line in a NOTAM currently - these can be multi-line?
-##    notam_text = ''  #Text for the current NOTAM
     raw_notam = '' #Raw text of NOTAM
     
     notam_ref = ''  #NOTAM Reference Number
     
-##    dictNotam = {}  #Dictionary of details for current NOTAM being processed
-##    dictHeader = {}  #Dictionary of header details: Date & Time, Briefing ID
-
-##    decode_notam_scope={'A':'Aerodrome','E':'En-Route','W':'Nav Warning','K':'Checklist'}
     
     #Create the empty list for notam objects
     notams = []
     this_briefing = Briefing()
     this_notam = Notam()
-    
-##    xmlNotam = ET.Element('NOTAM_BRIEFING')
     
     #-------Regular Expressions to extract details from NOTAMs
     
@@ -304,25 +288,22 @@ def parseNotamTextFile(filename, country_code):
 
         for in_line in notam_file:
             in_line = in_line.replace(chr(12),"")  #PDF File may have form feed/new page character - ASCII code 12
+            in_line = in_line.lstrip()
+            while in_line.find("  ") > 0:
+                in_line = in_line.replace("  ", " ")  #PDF File may have double-spacing, and remove leading & trailing spaces
             
             #Extract the Date and Time of the NOTAM Briefing
             if in_line[0:9] == 'Date/Time':
-##                dictHeader['Date'] = in_line[10:17]
-##                dictHeader['Time'] = in_line[18:22]
                 this_briefing.Briefing_Country = country_code
                 this_briefing.Briefing_Date = datetime.strptime(in_line[10:17],briefing_date_format[country_code]).date()
                 this_briefing.Briefing_Time = datetime.strptime(in_line[18:22],briefing_time_format[country_code]).time()
                 this_briefing.Import_DateTime = datetime.now()
                 
                 footer_date_time = in_line[10:22]
-##                xmlNotam.set('Date', dictHeader['Date'])
-##                xmlNotam.set('Time', dictHeader['Time'])
             
             #Extract the NOTAM Briefing ID
             if in_line[0:11] == 'Briefing Id':
-##                dictHeader['Briefing_Id'] = in_line[12:-1]
-##                xmlNotam.set('Briefing_ID',dictHeader['Briefing_Id'])
-                this_briefing.Briefing_Ref = in_line[12:-1]
+                this_briefing.Briefing_Ref = in_line[12:].strip()
 
 
             #if this is the first line of a NOTAM - i.e. matches the format similar to C4544/19 NOTAMN
@@ -333,34 +314,26 @@ def parseNotamTextFile(filename, country_code):
                 if processing_notam == True:
                     
                     #Extract more accurate co-ordinates from the "E" line
-##                    reACoord = regACoord.search(dictNotam['Text'])
                     reACoord = regACoord.search(this_notam.Notam_Text)
                     if reACoord is not None:
-##                        dictNotam['AccurateCoord_Lat'] = reACoord['coord_lat']
-##                        dictNotam['AccurateCoord_Lon'] = reACoord['coord_lon']
                         this_notam.E_Coord_Lat = reACoord['coord_lat']
                         this_notam.E_Coord_Lon = reACoord['coord_lon']
                     
                     this_notam.Raw_Text = raw_notam
                     this_notam.Briefing = this_briefing
                     tidy_notam(this_notam)
-##                    createNotamXML(xmlNotam, dictNotam) #Add Notam to XML structure
                     notams.append(this_notam)
                     #reset all flags and variables
                     processing_D_line = False
                     processing_E_line = False
                     processing_notam = False
                     raw_notam = ''
-##                    dictNotam = {}
-##                    notam_text = ''
                     #Create new NOTAM object
                     this_notam = Notam()
 
                 #if this is not the end of document, then start a new NOTAM
                 if in_line.upper().find('END OF DOCUMENT') < 0:
                     notam_ref = in_line[0:in_line.find("NOTAM")-1]  #Extract NOTAM ref number
-##                    dictNotam['Notam_Series'] = notam_ref[0:1]
-##                    dictNotam['Notam_Number'] = notam_ref
                     this_notam.Notam_Series = notam_ref[0:1]
                     this_notam.Notam_Number = notam_ref
                     raw_notam += in_line
@@ -369,7 +342,6 @@ def parseNotamTextFile(filename, country_code):
             #If this is not the first line of the NOTAM, and we are currently processing one
             elif processing_notam == True:
 
-##                notam_text += in_line #Text verison of NOTAM - to be used as comparison to check the NOTAM was decoded correctly
                 raw_notam += in_line #Text verison of NOTAM - to be used as comparison to check the NOTAM was decoded correctly
 
                 if in_line[0:3] == 'Q) ':   #If this is a "Q" line
@@ -386,26 +358,11 @@ def parseNotamTextFile(filename, country_code):
                         this_notam.Flightrule_Code = reResult['FlightRule']  #IV
                         this_notam.Purpose_Code = reResult['Purpose']  #M
 
-##                        dictNotam['FIR'] = reResult['FIR']  #FAJA
-##                        dictNotam['QCode'] = reResult['QCode']  #WCLW
-##                        dictNotam['FlightRule'] = reResult['FlightRule']  #IV
-##                        dictNotam['Purpose'] = reResult['Purpose']  #M
-                        
-##                        dictNotam['ADrome_ERoute']=""
-##                        for x in reResult['AD_ER']:
-##                            if len(dictNotam['ADrome_ERoute'])>0: dictNotam['ADrome_ERoute'] += ' / '
-##                            dictNotam['ADrome_ERoute'] += decode_notam_scope[x]   #W
                         this_notam.Scope_Code = reResult['AD_ER']
                         this_notam.Scope_Aerodrome = 'A' in this_notam.Scope_Code
                         this_notam.Scope_EnRoute = 'E' in this_notam.Scope_Code
                         this_notam.Scope_Nav_Warning = 'W' in this_notam.Scope_Code
                         this_notam.Scope_Checklist = 'K' in this_notam.Scope_Code
-
-##                        dictNotam['LevelLower'] = reResult['LevelLower']  #000
-##                        dictNotam['LevelUpper'] = reResult['LevelUpper']  #002
-##                        dictNotam['Coord_Lat'] = reResult['Coords'][0:5]  #2949S03100E
-##                        dictNotam['Coord_Lon'] = reResult['Coords'][5:]  #2949S03100E
-##                        dictNotam['Radius'] = reResult['Radius']  #001
 
                         this_notam.Q_Level_Lower = reResult['LevelLower']  #000
                         this_notam.Q_Level_Upper = reResult['LevelUpper']  #002
@@ -425,9 +382,6 @@ def parseNotamTextFile(filename, country_code):
                     #Extract the elements of the A,B,C line that were matched.  This is inside a "try" to pickup any format anomalies
                     try:
                         #A) FAJA B) 2001010700 C) 2003301600 EST   is broken down as follows:
-##                        dictNotam['A_Location'] = reResult['A_Location']  #FAJA
-##                        dictNotam['FromDate'] = reResult['FromDate']  #2001010700
-##                        dictNotam['ToDate'] = reResult['ToDate']  #2003301600 EST
 
                         this_notam.A_Location = reResult['A_Location']  #FAJA
                         this_notam.From_Date = datetime.strptime(reResult['FromDate'],'%y%m%d%H%M')  #2001010700
@@ -451,24 +405,20 @@ def parseNotamTextFile(filename, country_code):
 
                 if in_line[0:3] == 'D) ':  #If this is a "D" Line
                     processing_D_line = True  #Flag to allow for multi-line processing
-##                    dictNotam['Duration'] = in_line[3:-1]  #Extract text excluding the "D) " at start of line
                     this_notam.Duration = in_line[3:-1]  #Extract text excluding the "D) " at start of line
 
                 elif processing_D_line == True and not in_line[0:3] == 'E) ':  #If we are processing "D" Line, and not yet on an "E" Line
-##                    dictNotam['Duration'] += ' ' + in_line[:-1]  #Append the line to the current "D" Line (adding space, removing NEWLINE)
                     this_notam.Duration += ' ' + in_line[:-1]  #Append the line to the current "D" Line (adding space, removing NEWLINE)
 
                 elif in_line[0:3] == 'E) ':  #If this is an "E" line
                     #Need to prevent the footer appearing in the Text
                     if footer_date_time not in in_line:
-##                        dictNotam['Text'] = in_line[3:-1]  #Extract text excluding the "E) " at start of line
                         this_notam.Notam_Text = in_line[3:-1]  #Extract text excluding the "E) " at start of line
                         processing_D_line = False  #We are no longer processing "D" (incase we were)
                         processing_E_line = True  #We are now processing E line - very likely multi-line
 
                 elif processing_E_line == True and not in_line[0:3] == 'F) ':  #If we are processing "E" Line, and not yet on an "F" Line
                     if footer_date_time not in in_line:
-##                        dictNotam['Text'] += ' ' + in_line[:-1]  #Append the line to the current "E" Line (adding space, removing NEWLINE)
                         this_notam.Notam_Text += ' ' + in_line[:-1]  #Append the line to the current "E" Line (adding space, removing NEWLINE)
 
                 
@@ -480,8 +430,6 @@ def parseNotamTextFile(filename, country_code):
                     #Extract the elements of the F,G line that were matched.  This is inside a "try" to pickup any format anomalies
                     try:
                         #F) GND G) 181FT AMSL   is broken down as follows:
-##                        dictNotam['F_FL_Lower'] = reResult['F_FL_Lower']  #GND
-##                        dictNotam['G_FL_Upper'] = reResult['G_FL_Upper']  #181FT AMSL
                         this_notam.Level_Lower = reResult['F_FL_Lower']  #GND
                         this_notam.Level_Upper = reResult['G_FL_Upper']  #181FT AMSL
                     except:
@@ -491,12 +439,10 @@ def parseNotamTextFile(filename, country_code):
 
     #We have finished processing the file, so check if we need to write the final NOTAM in the file
     if processing_notam == True:
-##        tidy_notam(dictNotam)
         this_notam.Raw_Text = raw_notam
         this_notam.Briefing = this_briefing
         tidy_notam(this_notam)
-##                    createNotamXML(xmlNotam, dictNotam) #Add Notam to XML structure
         notams.append(this_notam)
     
-    return this_briefing, notams #return the full XML Tree Structure
+    return this_briefing #return the Briefing Object (which contains all the notams)
 
