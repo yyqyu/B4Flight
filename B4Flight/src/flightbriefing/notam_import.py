@@ -35,6 +35,7 @@ def read_settings_ZA():
     settings['upload_url'] = cfg.get('notam_import_ZA', 'convert_upload_url')
     settings['status_url'] = cfg.get('notam_import_ZA', 'convert_status_url')
     settings['download_url'] = cfg.get('notam_import_ZA', 'convert_download_url')
+    settings['sql_script_folder'] = cfg.get('database', 'sql_script_folder')
     
     return settings
 
@@ -136,12 +137,19 @@ def download_conv_file(api_key, download_url, local_filename, file_id):
 
 
 
-def create_notam_db(sqa_engine, sql_script_folder):
+def create_notam_db():
+
+    settings = read_settings_ZA()
+
+    #Get database connection string
+    db_connect = helpers.read_db_connect()
+    #create SQLAlchemy engine
+    sqa_engine = create_engine(db_connect)
 
     #initialise notams module with the engine
     notams.init_db(sqa_engine)
     #create the database structure
-    notams.create_new_db(sql_script_folder)
+    notams.create_new_db(settings['sql_script_folder'])
 
 
 
@@ -264,4 +272,6 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
     os.remove(txt_file_name)
 
 
-import_notam_ZA(overwrite_existing=True)
+if __name__ == "__main__":
+    #create_notam_db()
+    import_notam_ZA(overwrite_existing=True)
