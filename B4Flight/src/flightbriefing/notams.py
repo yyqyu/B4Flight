@@ -74,7 +74,7 @@ class Notam(Base):
     Flightrule_Code = Column(String(4)) #Flightrule - I/V/K or combination
     Purpose_Code = Column(String(4)) #ICAO code describing the purpose of NOTAM 
     Scope_Code = Column(String(3)) #Scope of NOTAM - A(erodrome) / E(n-route) / W(Nav Warning) / K(Checklist)
-    Scope_Aerodrame = Column(Boolean) #Is scope for Aerodrome?
+    Scope_Aerodrome = Column(Boolean) #Is scope for Aerodrome?
     Scope_EnRoute = Column(Boolean) #Is Scope for En-Route?
     Scope_Nav_Warning = Column(Boolean) #Is scope for Nav Warning?
     Scope_Checklist = Column(Boolean) #Is scopt for Checklist?
