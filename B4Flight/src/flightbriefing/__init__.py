@@ -4,6 +4,9 @@ import os
 from flask import Flask
 
 
+#SET FLASK_APP=flightbriefing
+#SET FLASK_ENV=development
+
 def create_app(test_config=None):
     # create and configure the app
     import configparser
@@ -12,13 +15,12 @@ def create_app(test_config=None):
 
     cfg = configparser.ConfigParser()
     cfg.read(os.path.join(app.root_path,'flightbriefing.ini'))
-    db_connect = cfg.get('database','connect_string')
     secret_key = cfg.get('application','secret_key')
     mapbox_token = cfg.get('maps','mapbox_token')
+    
 
     app.config.from_mapping(
         SECRET_KEY='dev', #secret_key 
-        DATABASE=db_connect, #os.path.join(app.instance_path, 'flaskr.sqlite'),
         MAPBOX_TOKEN=mapbox_token,
     )
 
@@ -37,12 +39,16 @@ def create_app(test_config=None):
 
     from . import maptest
     app.register_blueprint(maptest.bp)
-
+    from .data_handling import sqa_session
+    
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        sqa_session.remove()
 
     # a simple page that says hello
     @app.route('/hello')
     def hello():
-        return f'Hello, World! {db_connect}'
+        return f'Hello, World! '
 
     return app
 
