@@ -75,3 +75,13 @@ def convert_bounded_dms_to_dd(bounded_coords, lat_lon_separator=",", coord_group
             converted_coords += f'{convert_dms_to_dd(coord_split[ordr[0]])}{lat_lon_separator}{convert_dms_to_dd(coord_split[ordr[1]])}'
         
     return converted_coords
+
+def convert_rgb_to_hex(r,g,b):
+    hex_colour='#'
+    hex_colour += hex(r)[2:]
+    hex_colour += hex(g)[2:]
+    hex_colour += hex(b)[2:]
+    
+    return hex_colour
+    
+    
