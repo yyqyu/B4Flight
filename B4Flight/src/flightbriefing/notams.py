@@ -26,6 +26,8 @@ class QCode_2_3_Lookup(Base):
     Code = Column(String(2), primary_key=True)
     Description = Column(String)
     Abbreviation = Column(String)
+    Grouping = Column(String)
+    Group_Colour = Column(String)
     
     Notams = relationship("Notam")
 
@@ -123,7 +125,8 @@ def create_new_db(sql_script_folder):
     with open(os.path.join(sql_script_folder, 'Q_Code_2_3.csv')) as imp_file:
         csv_reader = csv.DictReader(imp_file)
         for row in csv_reader:
-            ref = QCode_2_3_Lookup(Code = row['Code'], Description = row['Description'], Abbreviation = row['Abbreviation'])
+            ref = QCode_2_3_Lookup(Code = row['Code'], Description = row['Description'], 
+                                   Abbreviation = row['Abbreviation'], Grouping = row['Grouping'], Group_Colour = row['Group_Colour'])
             ses.add(ref)
     print('Imported QCode Lookups: QCode_2_3_Lookup')
 
@@ -225,7 +228,7 @@ def tidy_notam(notam):
     #Below is unique ID to allow grouping of similar NOTAMS based on lat+lon+radius
     notam.Unique_Geo_ID = notam.Coord_Lat + '_' + notam.Coord_Lon + '_' + notam.Radius
     
-#    #Generate either a bounded "Shapely" polygon, circle or point for this NOTAM 
+    #Generate either a bounded "Shapely" polygon, circle or point for this NOTAM 
 #    if len(notamDict['Bounded_Area']) > 0:
 #        notamShape = Polygon(switchLatLon(reBoundedCoords, True)) #Use the co-ordinates from earlier
 #    elif notamDict['Radius'] == 1:

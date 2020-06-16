@@ -33,5 +33,3 @@ def create_db():
 
     notams.init_db(sqa_engine)
     notams.create_new_db(sql_script_folder)
-
-

@@ -273,5 +273,5 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
 
 
 if __name__ == "__main__":
-    #create_notam_db()
+#    create_notam_db()
     import_notam_ZA(overwrite_existing=True)
