@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
+
+  <h1>{% block title %}A First Map{% endblock %}</h1>
+  {% if g.user %}
+	<p>username here</p>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-flow">
+	<p>Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+	<div id="testing"><a id="clicktest" href=#>Testing</a></div>
+
+	<div class="row">
+		<div class="col-3">
+			<ul id="group-filter" class="list-group small">
+			{% for group in used_groups %}
+				<li class="list-group-item py-1" style="background-color: #e6f2ff;">
+			    <input id="{{group}}" type="checkbox" class="form-check-input" checked>{{group}}
+				</li>
+			{% endfor %}
+			</ul>
+
+			<label>
+			
+		</div>
+	
+		<div id='map' style='width: 75%; height: 400px;'></div>
+	</div>
+</div>
+<script>
+
+//geojson data for notams
+var notamGeoData={{notam_geojson|safe}};
+
+//layers that need to be created to house the notams (format: group_type, eg. obstacle_polygon)
+//this same ref is included in the "Layer_Group" property in the geojson file, to allow filtering 
+var usedLayers={{used_layers|safe}};
+
+var usedGroups={{used_groups|safe}};
+
+//assign the mapbox token
+mapboxgl.accessToken = '{{mapbox_token}}';
+
+//create the map
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
+    center: [28.5, -26], // starting position [lng, lat]
+    zoom: 9 // starting zoom
+});
+
+map.on('load', function() {
+
+	//Add the notam datasource
+	map.addSource("notams", {
+		"type": "geojson",
+		"data": notamGeoData
+	});
+	
+	//Loop through the usedLayers, and create a layer for each (eg. layer for obstacle_polygon, obstacle_circle, rpas_polygon, etc.)
+	for (var i = 0; i < usedLayers.length; i++) {
+		var layerId = usedLayers[i];
+		var layerType = usedLayers[i].split("_")[1]; //split the type - circle or polygon - to ensure the correct layer properties are set
+		
+		if (layerType=='polygon') {
+
+			map.addLayer({
+				"id": layerId,
+				"type": "fill",
+				"source": "notams",
+				"paint": {
+					"fill-color": ["get","fill"],
+					"fill-opacity": ["get", "fill-opacity"]
+				},
+				layout : {
+					"visibility": "visible"
+				},
+				'filter': ['==', ["get", "Layer_Group"], layerId]
+			});
+		}
+		else if (layerType=='circle') {
+			map.addLayer({
+				"id": layerId,
+				"type": "circle",
+				"source": "notams",
+				"paint": {
+					"circle-radius": 10,
+					"circle-color": ["get","fill"],
+					"circle-opacity": ["get", "fill-opacity"]
+				},
+				layout : {
+					"visibility": "visible"
+				},
+				'filter': ['==', ["get", "Layer_Group"], layerId]
+			});
+			
+		}
+
+		// Change the cursor to a pointer when the mouse is over the layer.
+		map.on('mouseenter', layerId, function() {
+		map.getCanvas().style.cursor = 'pointer';
+		});
+
+		// Change it back to a pointer when it leaves.
+		map.on('mouseleave', layerId, function() {
+		map.getCanvas().style.cursor = '';
+		});
+		
+		//Create a pop-up when the item is clicked on
+		map.on('click', layerId, function(e) {
+			new mapboxgl.Popup()
+			.setLngLat(e.lngLat)
+			.setHTML(e.features[0].properties.text_htm)
+			.addTo(map);
+		});
+
+
+	};
+	
+
+});
+
+//Loop through the groups that have been used, and attach click events
+for (var i = 0; i < usedGroups.length; i++) {
+
+	var grpElement=document.getElementById(usedGroups[i]);
+
+	grpElement.onclick = function(e) {
+	//	e.preventDefault();
+	//	e.stopPropogation();
+
+		var clicked = this.checked
+		var polygonLayer = this.id + '_polygon';
+		var circleLayer = this.id + '_circle';
+		
+		// toggle layer visibility by changing the layout object's visibility property
+		if (clicked === false) {
+			map.setLayoutProperty(polygonLayer, 'visibility', 'none');
+			map.setLayoutProperty(circleLayer, 'visibility', 'none');
+		} else {
+			map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
+			map.setLayoutProperty(circleLayer, 'visibility', 'visible');
+		};
+	};
+};
+
+
+</script>
+
+{% endblock %}

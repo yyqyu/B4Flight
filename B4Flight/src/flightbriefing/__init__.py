@@ -37,8 +37,8 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import maptest
-    app.register_blueprint(maptest.bp)
+    from flightbriefing import viewmap
+    app.register_blueprint(viewmap.bp)
     from .data_handling import sqa_session
     
     @app.teardown_appcontext
