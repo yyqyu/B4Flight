@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from flightbriefing import notams
+from flightbriefing import notams, auth
 
 import configparser
     
@@ -33,3 +33,5 @@ def create_db():
 
     notams.init_db(sqa_engine)
     notams.create_new_db(sql_script_folder)
+    
+    auth.create_new_db()

@@ -14,20 +14,22 @@
 {% block content %}
 <div class="container-flow">
 	<p>Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
-	<div id="testing"><a id="clicktest" href=#>Testing</a></div>
-
 	<div class="row">
 		<div class="col-3">
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
 				<li class="list-group-item py-1" style="background-color: #e6f2ff;">
-			    <input id="{{group}}" type="checkbox" class="form-check-input" checked>{{group}}
+			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
 				</li>
 			{% endfor %}
 			</ul>
-
-			<label>
-			
+			<div class="small">
+				Show Notams Radius < <span id="radius-display">xx</span>:
+				<div class="slidecontainer">
+					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter">
+					<button onclick="filterRadius()">Apply</button>
+				</div>		
+			</div>
 		</div>
 	
 		<div id='map' style='width: 75%; height: 400px;'></div>
@@ -36,10 +38,10 @@
 <script>
 
 //geojson data for notams
-var notamGeoData={{notam_geojson|safe}};
+notamGeoData={{notam_geojson|safe}};
 
 //layers that need to be created to house the notams (format: group_type, eg. obstacle_polygon)
-//this same ref is included in the "Layer_Group" property in the geojson file, to allow filtering 
+//this same ref is included in the "layer_group" property in the geojson file, to allow filtering 
 var usedLayers={{used_layers|safe}};
 
 var usedGroups={{used_groups|safe}};
@@ -55,12 +57,21 @@ var map = new mapboxgl.Map({
     zoom: 9 // starting zoom
 });
 
+// Create a popup, but don't add it to the map yet.
+var popup = new mapboxgl.Popup({
+	closeButton: true
+});
+ 
 map.on('load', function() {
 
 	//Add the notam datasource
 	map.addSource("notams", {
 		"type": "geojson",
-		"data": notamGeoData
+		"data": {
+			"type": "FeatureCollection",
+			"features": notamGeoData
+		}
+		//"data": notamGeoData
 	});
 	
 	//Loop through the usedLayers, and create a layer for each (eg. layer for obstacle_polygon, obstacle_circle, rpas_polygon, etc.)
@@ -81,7 +92,7 @@ map.on('load', function() {
 				layout : {
 					"visibility": "visible"
 				},
-				'filter': ['==', ["get", "Layer_Group"], layerId]
+				'filter': ['==', ["get", "layer_group"], layerId]
 			});
 		}
 		else if (layerType=='circle') {
@@ -91,46 +102,86 @@ map.on('load', function() {
 				"source": "notams",
 				"paint": {
 					"circle-radius": 10,
+					"circle-stroke-color": ["get","fill"],
 					"circle-color": ["get","fill"],
 					"circle-opacity": ["get", "fill-opacity"]
 				},
 				layout : {
 					"visibility": "visible"
 				},
-				'filter': ['==', ["get", "Layer_Group"], layerId]
+				'filter': ['==', ["get", "layer_group"], layerId]
 			});
 			
 		}
 
 		// Change the cursor to a pointer when the mouse is over the layer.
 		map.on('mouseenter', layerId, function() {
-		map.getCanvas().style.cursor = 'pointer';
+			map.getCanvas().style.cursor = 'pointer';
 		});
-
+	
 		// Change it back to a pointer when it leaves.
 		map.on('mouseleave', layerId, function() {
-		map.getCanvas().style.cursor = '';
+			map.getCanvas().style.cursor = '';
 		});
-		
+			
 		//Create a pop-up when the item is clicked on
 		map.on('click', layerId, function(e) {
-			new mapboxgl.Popup()
-			.setLngLat(e.lngLat)
-			.setHTML(e.features[0].properties.text_htm)
-			.addTo(map);
+			
+			var popHtml = '';
+			
+			var feats = map.queryRenderedFeatures(e.point);
+			for (var i = 0; i < feats.length; i++) {
+				if (usedLayers.indexOf(feats[i].layer.id) >=0) {
+//					popHtml = '<tr class="bg-dark text-white"><td><b>' + feats[i].properties.notam_location + '</b></td>' + 
+//					'<td><b>' + feats[i].properties.notam_number + '</b></td></tr>'+
+//					'<tr><td><b>FROM:</b> ' + feats[i].properties.from_date + '</td> ' +
+//					'<td><b>TO:</b> ' + feats[i].properties.to_date + '</td></tr>' +
+//					'<tr><td colspan="2">'+ feats[i].properties.notam_text + '</td></tr>' +
+//					'<tr><td> </td><td class="text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></td></tr>';
+
+					popHtml += '<div class="row bg-dark text-white"><div class="col"><b>' + feats[i].properties.notam_location + '</b></div>' + 
+					'<div class="col"><b>' + feats[i].properties.notam_number + '</b></div></div>'+
+					'<div class="row"><div class="col"><b>FROM:</b> ' + feats[i].properties.from_date + '</div> ' +
+					'<div class="col"><b>TO:</b> ' + feats[i].properties.to_date + '</div></div>' +
+					'<div class="row">' + feats[i].properties.notam_text + '</div>' +
+					'<div class="row"><div class="col"> </div><div class="col text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></div></div>';
+
+
+//					popHtml += feats[i].properties.text_htm;
+//					popHtml += '<a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a>';
+				};
+			};
+			if (popHtml.length > 0) {
+//				popHtml = '<table class="table table-borderless table-sm">' + popHtml + '</table>';
+				popHtml = '<div class="container">' + popHtml + '</div>';
+			}
+			
+			popup
+				.setLngLat(e.lngLat)
+				.setHTML(popHtml)
+				.setMaxWidth('75%')
+				.addTo(map);
+			
+			//e.stopPropogation();
+
+//			new mapboxgl.Popup()
+//				.setLngLat(e.lngLat)
+//				.setHTML(e.features[0].properties.text_htm + hide_htm)
+//				.addTo(map);
 		});
+	}
 
-
-	};
-	
 
 });
+
 
 //Loop through the groups that have been used, and attach click events
 for (var i = 0; i < usedGroups.length; i++) {
 
 	var grpElement=document.getElementById(usedGroups[i]);
 
+	grpElement.checked=true;
+	
 	grpElement.onclick = function(e) {
 	//	e.preventDefault();
 	//	e.stopPropogation();
@@ -141,14 +192,85 @@ for (var i = 0; i < usedGroups.length; i++) {
 		
 		// toggle layer visibility by changing the layout object's visibility property
 		if (clicked === false) {
-			map.setLayoutProperty(polygonLayer, 'visibility', 'none');
-			map.setLayoutProperty(circleLayer, 'visibility', 'none');
+			if (usedLayers.indexOf(polygonLayer) > -1) {
+				map.setLayoutProperty(polygonLayer, 'visibility', 'none');
+			}
+			if (usedLayers.indexOf(circleLayer) > -1) {
+				map.setLayoutProperty(circleLayer, 'visibility', 'none');
+			}
 		} else {
-			map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
-			map.setLayoutProperty(circleLayer, 'visibility', 'visible');
+			if (usedLayers.indexOf(polygonLayer) > -1) {
+				map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
+			}
+			if (usedLayers.indexOf(circleLayer) > -1) {
+				map.setLayoutProperty(circleLayer, 'visibility', 'visible');
+			}
 		};
 	};
 };
+
+//This is the slider to filter elements based on radius
+var radiusSlider = document.getElementById("radius-filter");
+var radiusFilterDisplay = document.getElementById("radius-display");
+
+//default at 500
+radiusSlider.value = 500;
+radiusFilterDisplay.innerHTML = radiusSlider.value; // Display the default slider value
+
+
+// Update the displayed slider value (each time you drag the slider handle)
+radiusSlider.oninput = function() {
+	radiusFilterDisplay.innerHTML = this.value;
+};
+
+//Hide a feature by setting its layer property to a non-existent layer.
+function hideFeature(notamNumber) {
+	
+	//Loop through all features in the GEOJson dataset, looking for the one with matching notam_number
+	notamGeoData.forEach(function(a) {
+		if (a.properties.notam_number == notamNumber) {
+			//Append "-hide" to the layer name
+			a.properties.layer_group = a.properties.layer_group + '-hide';
+		};
+	});
+	
+	//refresh the maps datasource
+	map.getSource('notams').setData({
+		"type": "FeatureCollection",
+		"features": notamGeoData
+		});
+
+	//Close the popup
+	popup.remove();
+}
+
+
+//Hide features based on Radius, by setting their layer properties to a non-existent layer.
+function filterRadius() {
+
+	//get the max radius to show from the slider
+	radius = radiusSlider.value;
+
+	//Loop through all features in the GEOJson dataset
+	notamGeoData.forEach(function(a) {
+		//If this feature has already been filtered, unfilter it - filtered features are suffixed with -radius.
+		if (a.properties.layer_group.indexOf('-radius') > 0) {
+			a.properties.layer_group = a.properties.layer_group.substr(0, a.properties.layer_group.indexOf('-radius'));
+		}
+
+		//Filter this feature based on its radius, by adding suffix of -radius to its layer name.
+		if (a.properties.radius > radius) {
+			a.properties.layer_group = a.properties.layer_group + '-radius';
+		};
+	});
+
+	//refresh the maps datasource
+	map.getSource('notams').setData({
+		"type": "FeatureCollection",
+		"features": notamGeoData
+		});
+}
+
 
 
 </script>

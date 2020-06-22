@@ -15,6 +15,9 @@ import sys
 from datetime import datetime
 import os
 
+from polycircles import polycircles
+
+from . import helpers
 
 #SQLAlchemny - A declarative base class  
 Base = declarative_base() 
@@ -105,7 +108,30 @@ class Notam(Base):
     QCode_2_3_Lookup = relationship("QCode_2_3_Lookup")
     QCode_4_5_Lookup = relationship("QCode_4_5_Lookup")
     
+    def is_circle(self):
+        if self.Radius > 1 and self.Bounded_Area == '':
+            return True
+        else:
+            return False
 
+    def circle_bounded_area(self):
+        
+        radius_m = self.Radius * 1853 #convert radius from nautical miles to metres
+        
+        poly_coords = ''
+        
+        #create the circle
+        polycircle = polycircles.Polycircle(latitude=helpers.convert_dms_to_dd(self.Coord_Lat), longitude=helpers.convert_dms_to_dd(self.Coord_Lon), radius=radius_m, number_of_vertices=20)
+        circ_coords = polycircle.to_lat_lon()
+
+        #convert circle's decimal degree lat,lon tuples into DMS and convert to string in same format as bounded area (i.e. LAT,LON LAT,LON)
+        for coord in circ_coords:
+            lat, lon = helpers.convert_dd_to_dms(coord[0], coord[1])
+            poly_coords += f'{lat},{lon} '
+            
+        return poly_coords.strip()
+    
+    
 def init_db(sqa_engine):
     #The declarative Base is bound to the database engine.
     Base.metadata.bind = sqa_engine
@@ -311,13 +337,20 @@ def parse_notam_text_file(filename, country_code):
 
             #if this is the first line of a NOTAM - i.e. matches the format similar to C4544/19 NOTAMN
             #OR if it's the "End of Document"
-            if regNotamMatch.match(in_line) != None or in_line.upper().find('END OF DOCUMENT')>=0:
+            #OR if it's the start of a new series sections
+            if regNotamMatch.match(in_line) != None or in_line.upper().find('END OF DOCUMENT')>=0 or in_line.upper()[0:5] == 'SERIE':
 
                 #if we are already processing another NOTAM, close it off
                 if processing_notam == True:
                     
                     #Extract more accurate co-ordinates from the "E" line
-                    reACoord = regACoord.search(this_notam.Notam_Text)
+                    try:
+                        reACoord = regACoord.search(this_notam.Notam_Text)
+                    except:
+                        print('****Q-Line for NOTAM not correctly formatted*****')
+                        print(in_line)
+                        sys.exit()
+                        
                     if reACoord is not None:
                         this_notam.E_Coord_Lat = reACoord['coord_lat']
                         this_notam.E_Coord_Lon = reACoord['coord_lon']
@@ -334,8 +367,8 @@ def parse_notam_text_file(filename, country_code):
                     #Create new NOTAM object
                     this_notam = Notam()
 
-                #if this is not the end of document, then start a new NOTAM
-                if in_line.upper().find('END OF DOCUMENT') < 0:
+                #if this is not the end of document, and not the "SERIE" line then start a new NOTAM
+                if in_line.upper().find('END OF DOCUMENT') < 0 and in_line.upper()[0:5] != 'SERIE':
                     notam_ref = in_line[0:in_line.find("NOTAM")-1]  #Extract NOTAM ref number
                     this_notam.Notam_Series = notam_ref[0:1]
                     this_notam.Notam_Number = notam_ref
