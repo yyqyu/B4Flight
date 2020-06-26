@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="text-center">{% block title %}You're Registered!{% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row bg-light" style="height:20pc;">
+		<div class="col-sm-12 text-center my-auto">
+			<h2>Thank You, {{firstname}}!</h2>
+			<p>Thanks for registering.  We've sent you a mail with details on how to activate your account.</p>
+		</div>
+	</div>
+</div>
+{% endblock %}
