@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from flightbriefing import notams, auth
+from flightbriefing import notams, db
 
 import configparser
     
@@ -24,7 +24,7 @@ db_connect = cfg.get('database','connect_string')
 sqa_engine = create_engine(db_connect)
 sqa_session = scoped_session(sessionmaker(bind=sqa_engine))
 
-Base = declarative_base()
+Base = declarative_base(bind=sqa_engine)
 
 
 def create_db():
@@ -34,4 +34,5 @@ def create_db():
     notams.init_db(sqa_engine)
     notams.create_new_db(sql_script_folder)
     
-    auth.create_new_db()
+    db.create_new_db()
+    db.create_admin_user("artech@live.co.za")

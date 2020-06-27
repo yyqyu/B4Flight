@@ -254,17 +254,6 @@ def tidy_notam(notam):
     #Below is unique ID to allow grouping of similar NOTAMS based on lat+lon+radius
     notam.Unique_Geo_ID = notam.Coord_Lat + '_' + notam.Coord_Lon + '_' + notam.Radius
     
-    #Generate either a bounded "Shapely" polygon, circle or point for this NOTAM 
-#    if len(notamDict['Bounded_Area']) > 0:
-#        notamShape = Polygon(switchLatLon(reBoundedCoords, True)) #Use the co-ordinates from earlier
-#    elif notamDict['Radius'] == 1:
-#        #long then lat
-#        notamShape = Point(convertDmsToDd(notamDict['FinalCoord_Lon']), convertDmsToDd(notamDict['FinalCoord_Lat'])) #Shapely Point
-#    else:
-#        notamShape = generateCircleShapely(notamDict['FinalCoord_Lat'], notamDict['FinalCoord_Lon'], int(notamDict['Radius']))
-#    
-#    notamDict['Shapely'] = notamShape
-
 
 
 '''---------------------------------------

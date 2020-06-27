@@ -4,6 +4,10 @@ Created on 07 Jun 2020
 @author: aretallack
 '''
 
+from polycircles import polycircles
+from shapely.geometry import Polygon
+from .db import FlightPlan, FlightPlanPoint
+
 def read_db_connect():
     import configparser
     
@@ -15,7 +19,6 @@ def read_db_connect():
 
     return db_connect
 
-
 '''---------------------------------------
  convert_dms_to_dd(coord_DMS):
 
@@ -26,7 +29,7 @@ def read_db_connect():
 
  RETURNS: Decimal Degrees (Float)
 ---------------------------------------'''
-        
+
 def convert_dms_to_dd(coord_DMS):
     
     coord_DD = 0.0 #start with 0
@@ -54,6 +57,42 @@ def convert_dms_to_dd(coord_DMS):
 
     return coord_DD
 
+'''---------------------------------------
+ convert_dd_to_dms(lat_coord_DD, lon_coord_DD):
+
+ PURPOSE: converts a co-ordinate pair from Decimal Degrees to Degrees-Minutes-Seconds
+
+ INPUT: coord_DMS
+
+ RETURNS: lat and lon in Degrees Minutes Seconds in format dddmmssX (X=N/S/W/E)
+---------------------------------------'''
+
+def convert_dd_to_dms(lat_coord_DD, lon_coord_DD):
+    
+    working_lat_dd = abs(lat_coord_DD)
+    working_lon_dd = abs(lon_coord_DD)
+    
+    lat_coord_dms = f'{int(working_lat_dd)}'.zfill(2)
+    lon_coord_dms = f'{int(working_lon_dd)}'.zfill(3)
+    
+    working_lat_dd = (working_lat_dd - int(working_lat_dd)) * 60
+    working_lon_dd = (working_lon_dd - int(working_lon_dd)) * 60
+    
+    lat_coord_dms += f'{int(working_lat_dd)}'.zfill(2)
+    lon_coord_dms += f'{int(working_lon_dd)}'.zfill(2)
+    
+    working_lat_dd = (working_lat_dd - int(working_lat_dd)) * 60
+    working_lon_dd = (working_lon_dd - int(working_lon_dd)) * 60
+    
+    lat_coord_dms += f'{int(round(working_lat_dd,0))}'.zfill(2)
+    lon_coord_dms += f'{int(round(working_lon_dd,0))}'.zfill(2)
+    
+    lat_coord_dms += 'N' if lat_coord_DD >= 0 else 'S'
+    lon_coord_dms += 'E' if lon_coord_DD >= 0 else 'W'
+
+    return lat_coord_dms, lon_coord_dms
+
+
 def convert_bounded_dms_to_dd(bounded_coords, lat_lon_separator=",", coord_group_separator=" ", return_as_tuples=True, reverse_coords=False):
     if return_as_tuples == True:
         converted_coords = []
@@ -76,6 +115,43 @@ def convert_bounded_dms_to_dd(bounded_coords, lat_lon_separator=",", coord_group
         
     return converted_coords
 
+
+'''---------------------------------------
+ switch_lat_lon(coords)
+
+ PURPOSE: switched co-ordinate pairs - eg. lat, lon pairs need to be
+          respresented as x, y on a graph - therefore switch around
+
+ INPUT: coords = pairs of co-ordinates (lat, lon or x, y)
+        convert_DMS_DD = set to True to convert co-ordinates from Degrees Minutes Seconds to Decimal Degrees
+ RETURNS: pairs of co-ordinates
+
+---------------------------------------'''
+
+def switch_lat_lon(coords, convert_DMS_DD = False):
+    switched = []
+    for c in coords:
+        if convert_DMS_DD == True:
+            switched.append((convert_dms_to_dd(c[1]), convert_dms_to_dd(c[0])))
+        else:
+            switched.append((c[1], c[0]))
+    return switched
+
+
+def get_flight_bounds(flight_plan, offset_dd=0.25):
+    min_x = 360
+    min_y = 360
+    max_x = -360
+    max_y = -360
+    
+    for fp_point in flight_plan.FlightPlanPoints:
+        min_x = min(min_x, fp_point.Longitude)
+        min_y = min(min_y, fp_point.Latitude)
+        max_x = max(max_x, fp_point.Longitude)
+        max_y = max(max_y, fp_point.Latitude)
+    
+    return [[min_x - offset_dd, min_y - offset_dd], [max_x + offset_dd, max_y + offset_dd]]
+
 def convert_rgb_to_hex(r,g,b):
     hex_colour='#'
     hex_colour += hex(r)[2:]
@@ -84,4 +160,25 @@ def convert_rgb_to_hex(r,g,b):
     
     return hex_colour
     
+
+'''---------------------------------------
+ generate_circle_shapely(centerLat, centerLon, radius_nm):
+
+ PURPOSE: Creates a "Shapely" library circle
+
+ INPUT: latitude and longitude of centre of circle - in Degrees Minutes Seconds
+        radius of circle in nautical miles
+
+ RETURNS: shapely Polygon
+---------------------------------------'''
+
+def generate_circle_shapely(centerLat, centerLon, radius_nm):
+    
+    radius_m = radius_nm * 1853 #convert radius from nautical miles to metres
+    
+    #create the circle
+    polycircle = polycircles.Polycircle(latitude=convert_dms_to_dd(centerLat), longitude=convert_dms_to_dd(centerLon), radius=radius_m, number_of_vertices=20)
+    circ_coord = polycircle.to_lat_lon()
+    spolygon = Polygon(switch_lat_lon(circ_coord)) #Shapely Polygon
+    return spolygon
     

@@ -12,7 +12,7 @@ from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flightbriefing import helpers
-from flightbriefing.users import User
+from flightbriefing.db import User
 from flightbriefing.data_handling import sqa_session    #sqa_session is the Session object for the site
 
 

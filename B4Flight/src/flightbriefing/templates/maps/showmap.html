@@ -40,6 +40,11 @@
 //geojson data for notams
 notamGeoData={{notam_geojson|safe}};
 
+{% if flight_geojson %}
+//geojsaon data for flightplan
+flightGeoData={{flight_geojson|safe}};
+{% endif %}
+
 //layers that need to be created to house the notams (format: group_type, eg. obstacle_polygon)
 //this same ref is included in the "layer_group" property in the geojson file, to allow filtering 
 var usedLayers={{used_layers|safe}};
@@ -52,9 +57,9 @@ mapboxgl.accessToken = '{{mapbox_token}}';
 //create the map
 var map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
+    style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
     center: [28.5, -26], // starting position [lng, lat]
-    zoom: 9 // starting zoom
+    zoom: 3 // starting zoom
 });
 
 // Create a popup, but don't add it to the map yet.
@@ -71,8 +76,9 @@ map.on('load', function() {
 			"type": "FeatureCollection",
 			"features": notamGeoData
 		}
-		//"data": notamGeoData
 	});
+
+	
 	
 	//Loop through the usedLayers, and create a layer for each (eg. layer for obstacle_polygon, obstacle_circle, rpas_polygon, etc.)
 	for (var i = 0; i < usedLayers.length; i++) {
@@ -113,6 +119,8 @@ map.on('load', function() {
 			});
 			
 		}
+
+
 
 		// Change the cursor to a pointer when the mouse is over the layer.
 		map.on('mouseenter', layerId, function() {
@@ -170,6 +178,31 @@ map.on('load', function() {
 //				.addTo(map);
 		});
 	}
+
+{% if flight_geojson %}
+	//Add the flight datasource
+	map.addSource("flights", {
+		"type": "geojson",
+		"data": {
+			"type": "FeatureCollection",
+			"features": flightGeoData
+		}
+	});
+
+	map.addLayer({
+		"id": "flight",
+		"type": "line",
+		"source": "flights",
+		"paint": {
+			"line-color": ["get","line-color"],
+			"line-width": 6
+		}
+	});
+
+	map.fitBounds({{flight_bounds}});
+
+{% endif %}	
+
 
 
 });

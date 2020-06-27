@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
+
+  <h1>{% block title %}Upload Flight Route{% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-flow">
+	<div class="offset-sm-2 col-sm-8 bg-light form-container">
+		<p>Use this form to upload a flightplan route.  The route will be saved to your profile, allowing you to view only those NOTAMS applicable to this route</p>
+		<p>Currently <b><a href="https://www.topografix.com/gpx.asp" target="_blank">.GPX</a></b> (GPS Exchange Format) files are supported by many devices, and can be exported from flight-planning software.</p> 		
+		<form method="POST" enctype="multipart/form-data">
+			<div class="form-group">
+				<label for="filename" class="col-sm-3 col-form-label">Select File to Upload (*.GPX, max 3MB)</label>
+				<div class="col-sm-8">
+					<input type="file" class="form-control-file" id="filename" name="filename"required>
+				</div>
+			</div>
+			<div class="form-group row">
+				<div class="col-sm-6">
+					<button type="submit" class="btn btn-primary">Upload</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

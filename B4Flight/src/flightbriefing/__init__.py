@@ -17,11 +17,16 @@ def create_app(test_config=None):
     cfg.read(os.path.join(app.root_path,'flightbriefing.ini'))
     secret_key = cfg.get('application','secret_key')
     mapbox_token = cfg.get('maps','mapbox_token')
+    working_folder = cfg.get('application','working_folder')
+    upload_archive_folder = cfg.get('application','upload_archive_folder')
     
 
     app.config.from_mapping(
         SECRET_KEY='dev', #secret_key 
         MAPBOX_TOKEN=mapbox_token,
+        WORKING_FOLDER=working_folder,
+        UPLOAD_ARCHIVE_FOLDER=upload_archive_folder,
+        MAX_CONTENT_LENGTH=3*1024*1024,
     )
 
     if test_config is None:
@@ -37,10 +42,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from flightbriefing import viewmap
+    from . import viewmap
     app.register_blueprint(viewmap.bp)
+    
+    from . import auth
+    app.register_blueprint(auth.bp)
+
     from .data_handling import sqa_session
     
+
+
     @app.teardown_appcontext
     def shutdown_session(exception=None):
         sqa_session.remove()

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
+
+  <h1>{% block title %}Your Flight{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  {% if session['userid'] %}
+
+	<div class="container">
+		<div class="row">
+	
+			<div id='map' class='col-sm-4' style='height: 200px;'></div>
+	
+			<div class="col-sm-8 bg-light">
+				<p>You have successfully uploaded your flight route.  This will be stored for you, so you can re-use it at a later stage.</p>
+				<p> a_key={{fp_id}}</p>
+				<p><a href="{{ url_for('viewmap.flightmap', flightid=fp_id) }}">Click Here</a> to view your flight with applicable NOTAMS</p>
+			</div>
+			
+		</div>
+	</div>
+
+
+
+<script>
+
+//geojson data for notams
+flightGeoData={{flight_geojson|safe}};
+
+//assign the mapbox token
+mapboxgl.accessToken = '{{mapbox_token}}';
+
+//create the map
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
+    center: {{flight_centre}}, // starting position [lng, lat]
+    zoom: 3 // starting zoom
+});
+
+map.on('load', function() {
+
+	//Add the flight datasource
+	map.addSource("flights", {
+		"type": "geojson",
+		"data": {
+			"type": "FeatureCollection",
+			"features": flightGeoData
+		}
+	});
+
+	map.addLayer({
+		"id": "flight",
+		"type": "line",
+		"source": "flights",
+		"paint": {
+			"line-color": ["get","line-color"],
+			"line-width": 6
+		}
+	});
+
+	map.fitBounds({{flight_bounds}});
+});
+
+
+</script>
+
+  {% else %}
+	<h2>You need to be logged in to view this page</h2>
+  {% endif %}
+
+{% endblock %}
