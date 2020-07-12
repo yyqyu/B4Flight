@@ -16,8 +16,8 @@ AV,Upper advisory area,uda,Airspace / ATC,#33cc33
 AX,Significant point,sig,Airspace / ATC,#33cc33
 AZ,Aerodrome traffic zone,atz,Airspace / ATC,#33cc33
 CA,Air/ground facility (specify service and frequency),a/g fac,Airspace / ATC,#33cc33
-CB,Automatic dependent surveillance — broadcast (details),ads-b,Airspace / ATC,#33cc33
-CC,Automatic dependent surveillance — contract (details),ads-c,Airspace / ATC,#33cc33
+CB,Automatic dependent surveillance â€” broadcast (details),ads-b,Airspace / ATC,#33cc33
+CC,Automatic dependent surveillance â€” contract (details),ads-c,Airspace / ATC,#33cc33
 CD,Controller-pilot data link communications (details),cpdlc,Airspace / ATC,#33cc33
 CE,En-route surveillance radar,rsr,Airspace / ATC,#33cc33
 CG,Ground controlled approach system,gca,Airspace / ATC,#33cc33
