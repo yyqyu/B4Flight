@@ -14,7 +14,14 @@
 			<h3>NOTAM ACTIVITY</h3>
 			<p>The latest CAA NOTAM Briefing was on <b>{{briefing.Briefing_Date}} {{briefing.Briefing_Time}}</b> with the briefing reference of <b>{{briefing.Briefing_Ref}}</b></p>
 			<p>There are <b>{{notam_count}}</b> active NOTAMS:  View these as <a href="{{url_for('viewmap.detailnotams')}}"> text</a> or on a <a href="{{url_for('viewmap.viewmap')}}">map</a></p>
-			<p><b>{{new_notams}}</b> NOTAMS have been added, and <b>{{deleted_notams}}</b> have expired, over the past week (based on the briefing from {{last_wk_brief_date}}). View the new NOTAMS on a <a href="{{url_for('viewmap.newnotams')}}">map</a></p>
+			<p>
+			{% if new_notams %}
+			<b>{{new_notams}}</b> NOTAMS have been added 
+			{% endif %}
+			{% if deleted_notams %}
+			<b>{{deleted_notams}}</b> have expired
+			{% endif %}
+			over the past week (based on the briefing from {{last_wk_brief_date}}). View the new NOTAMS on a <a href="{{url_for('viewmap.newnotams')}}">map</a></p>
 		</div>
 		<div class="col-sm-4 bg-light m-1 p-2">
 			<h3>HOME NOTAMS</h3>
