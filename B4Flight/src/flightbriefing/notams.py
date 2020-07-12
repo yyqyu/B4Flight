@@ -27,10 +27,10 @@ class QCode_2_3_Lookup(Base):
     __tablename__ = "QCodes_2_3_Lookup"
     
     Code = Column(String(2), primary_key=True)
-    Description = Column(String)
-    Abbreviation = Column(String)
-    Grouping = Column(String)
-    Group_Colour = Column(String)
+    Description = Column(String(255))
+    Abbreviation = Column(String(50))
+    Grouping = Column(String(50))
+    Group_Colour = Column(String(50))
     
     Notams = relationship("Notam")
 
@@ -39,8 +39,8 @@ class QCode_4_5_Lookup(Base):
     __tablename__ = "QCodes_4_5_Lookup"
     
     Code = Column(String(2), primary_key=True)
-    Description = Column(String)
-    Abbreviation = Column(String)
+    Description = Column(String(255))
+    Abbreviation = Column(String(50))
     
     Notams = relationship("Notam")
 
@@ -72,7 +72,7 @@ class Notam(Base):
     BriefingID = Column(Integer, ForeignKey("Briefings.BriefingID"))
     Notam_Number = Column(String(20)) #CAA-assigned Notam number - e.g. A1543/20
     Notam_Series = Column(String(1)) #Notam Series - e.g. A/B/C/D
-    Raw_Text = Column(String) #The raw NOTAM text - primarily for troubleshooting
+    Raw_Text = Column(String(2048)) #The raw NOTAM text - primarily for troubleshooting
     FIR = Column(String(4)) #ICAO FIR Notam applies to
     Q_Code_2_3 = Column(String(2), ForeignKey("QCodes_2_3_Lookup.Code")) #Q-code letters 2+3 from the Q) field in Notam
     Q_Code_4_5 = Column(String(2), ForeignKey("QCodes_4_5_Lookup.Code")) #Q-code letters 4+5 from the Q) field in Notam
@@ -93,7 +93,7 @@ class Notam(Base):
     To_Date = Column(DateTime) #Date Notam applies To - C) Section of Notam
     To_Date_Estimate = Column(Boolean) #Is the To Date an Estimated To Date?
     To_Date_Permanent = Column(Boolean) #Is the To Date Permanent?
-    Notam_Text = Column(String) #Text of the Notam - E) section of Notam
+    Notam_Text = Column(String(2048)) #Text of the Notam - E) section of Notam
     Duration = Column(String(50)) #Duration of Notam - D) section of Notam
     Level_Lower = Column(String(10)) #Lower Level for Notam - combines F) section and Q) section
     Level_Upper = Column(String(10)) #Upper Level for Notam - combines G) section, Q) section E) Secion (text)
@@ -101,7 +101,7 @@ class Notam(Base):
     E_Coord_Lon = Column(String(8)) #Co-ordinates extracted from the E) section (text)
     Coord_Lat = Column(String(8)) #Final co-ordinates to use for the Notam Mapping
     Coord_Lon = Column(String(8)) #Final co-ordinates to use for the Notam Mapping
-    Bounded_Area = Column(String) # Co-ordinates of a bounded area defined in the Notam
+    Bounded_Area = Column(String(255)) # Co-ordinates of a bounded area defined in the Notam
     Unique_Geo_ID = Column(String(25)) #Combination of Lat + Lon + Radius to allow grouping of 
         
     Briefing = relationship("Briefing", back_populates='Notams')
