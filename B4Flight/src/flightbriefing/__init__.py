@@ -32,7 +32,7 @@ def create_app(test_config=None):
     
 
     app.config.from_mapping(
-        SECRET_KEY='dev', #secret_key 
+        SECRET_KEY=secret_key, 
         MAPBOX_TOKEN=mapbox_token,
         WORKING_FOLDER=working_folder,
         UPLOAD_ARCHIVE_FOLDER=upload_archive_folder,
@@ -85,6 +85,6 @@ def create_app(test_config=None):
     return app
 
 #-----Remove this for the Production Version
-if __name__ == "__main__":
-    x = create_app()
-    x.run(debug=True)
+#if __name__ == "__main__":
+#    x = create_app()
+#    x.run(debug=True)
