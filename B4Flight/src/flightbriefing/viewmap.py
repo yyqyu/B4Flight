@@ -207,6 +207,7 @@ def newnotams():
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers, last_wk_briefing_date=lw_briefing_date)
 
+
 @bp.route('/uploadroute', methods=('GET', 'POST'))
 @requires_login
 def uploadroute():
@@ -228,6 +229,11 @@ def uploadroute():
             return redirect(request.url)
             
         filename = f"{session['userid']}__{datetime.strftime(datetime.utcnow(), '%Y%m%d%H%M%S%f')}__{secure_filename(up_file.filename)}"
+        
+        #Check the upload folder exists - if not, create it
+        if not os.path.exists(current_app.config['UPLOAD_ARCHIVE_FOLDER']):
+            os.makedirs(current_app.config['UPLOAD_ARCHIVE_FOLDER'])
+
         
         full_path = os.path.join(current_app.config['UPLOAD_ARCHIVE_FOLDER'], filename)
         
