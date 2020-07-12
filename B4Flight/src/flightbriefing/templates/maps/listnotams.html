@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1>{% block title %}Briefings for flight on {{default_date}} {% endblock %}</h1>
+  {% if g.user %}
+	<p>username here</p>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+	<div class="container">
+	{% if flight_date %}
+		<p>Flight Date format was {{flight_date}} </p>
+	{% endif %}
+	<form method="post">
+		<div class="row">
+		<div class="form-group col">
+			<label for="briefing">Select a Briefing</label>
+			<select id="briefing" name="briefing" class="form-control">
+			{% for briefing in briefings %}
+				<option value={{briefing.BriefingID}}>{{briefing.Briefing_Ref}} on {{briefing.Briefing_Date}}</option>
+			{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col">
+			<label for="flight_date">Date of Flight</label>
+			<input type="date" id="flight_date" name="flight_date" class="form-control" value="{{default_date}}">
+		</div>
+		</div>
+		<input type="submit" class="btn bflight-btn" value="Choose">
+	</form>
+	</div>
+
+	<div class="container">
+		{% if notams %}
+			<table class="table table-striped table-bordered">
+				<thead class="thead-dark">
+				<tr>
+					<th>Number</th>
+					<th>From</th>
+					<th>To</th>
+					<th>Location</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for notam in notams %}
+				<tr>
+					<td>{{notam.Notam_Number}}</td>
+					<td>{{notam.From_Date}}</td>
+					
+					<td>
+						{% if notam.To_Date_Permanent == True %}
+						PERM
+						{% else %}
+							{{notam.To_Date}}
+							
+							{% if notam.To_Date_Estimate == True %}
+							*
+							{% endif %}
+						{% endif %}
+						</td>
+					<td>{{notam.A_Location}}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		{% else %}
+			<p> no notams yet </p>
+		{% endif %}
+	</div>
+{% endblock %}

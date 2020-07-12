@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Detailed Notam Listing{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+	<div class="container">
+		{% if briefing_id %}
+			<h2>Flight Briefing:</p>
+		{% endif %}
+		<form class="form-inline" method="post">
+				<div class="form-group mx-4">
+					<label for="briefing" class="mr-2">Select a Briefing</label>
+					<select id="briefing" name="briefing" class="form-control">
+					{% for briefing in briefings %}
+						<option value={{briefing.BriefingID}}>{{briefing.Briefing_Ref}} on {{briefing.Briefing_Date}}</option>
+					{% endfor %}
+					</select>
+				</div>
+				<div class="form-group mx-4">
+					<label for="flight_date" class="mr-2">Date of Flight</label>
+					<input type="date" id="flight_date" name="flight_date" class="form-control" value="{{default_date}}">
+				</div>
+				<input type="submit" class="btn bflight-btn" value="Refresh">
+		</form>
+	</div>
+	<div class="container">
+		{% if notams %}
+			{% for notam in notams %}
+			<div class="container-fluid">
+			<p>
+			<b>{{notam.Notam_Number}}</b>
+			<br>
+			<b>Q)</b> {{notam.FIR}}/Q{{notam.Q_Code_2_3}}{{notam.Q_Code_4_5}}/{{notam.Flightrule_Code}}/{{notam.Purpose_Code}}/{{notam.Scope_Code}}/{{notam.Q_Level_Lower}}/{{notam.Q_Level_Upper}}/{{notam.Q_Coord_Lat}}{{notam.Q_Coord_Lon}}/{{notam.Radius}}
+			<br>
+			<b>A)</b> {{notam.A_Location}} <b>B)</b> {{notam.From_Date}} <b>C)</b> 
+			{{notam.To_Date}}
+			<br>
+			{% if notam.Duration %}
+				<b>D) </b> {{notam.Duration}}
+				<br>
+			{% endif %}
+			<b>E)</b> {{notam.Notam_Text}}
+			<br>
+			<b>F)</b> {{notam.Level_Lower}} <b>G)</b> {{notam.Level_Upper}}
+			</p>
+			</div>
+			{% endfor %}
+		{% else %}
+				<p> no notams yet </p>
+		{% endif %}
+	</div>
+{% endblock %}

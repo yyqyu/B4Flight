@@ -4,7 +4,7 @@ Created on 23 Jun 2020
 @author: aretallack
 '''
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, Float, ForeignKey
@@ -12,7 +12,10 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from werkzeug.security import check_password_hash, generate_password_hash
+import jwt
 
+from flask import current_app
+from flightbriefing.data_handling import sqa_session
 
 #SQLAlchemny - A declarative base class  
 Base = declarative_base() 
@@ -28,7 +31,7 @@ class User(Base):
     Status_Pending = Column(Boolean(), default=True)
     Status_Active = Column(Boolean(), default=False)
     Access_Admin = Column(Boolean(), default=False)
-    Create_Date = Column(DateTime(), default=datetime.now())
+    Create_Date = Column(DateTime(), default=datetime.utcnow())
     Activation_Mail_Date = Column(DateTime())
     
     FlightPlans = relationship("FlightPlan")
@@ -41,6 +44,26 @@ class User(Base):
     def Password(self, Password):
         self._password = generate_password_hash(Password)
 
+    def get_activation_token(self, expires_hrs=240):
+        expry = datetime.utcnow() + timedelta(hours=expires_hrs)
+        expry = datetime.strftime(expry,"%Y-%m-%d %H:%M:%S")
+        tkn = jwt.encode({'activate_user' : self.UserID, 'expires': expry}, current_app.config['SECRET_KEY'], 'HS256').decode('utf-8')
+        return tkn
+        
+    @staticmethod
+    def activate_user(activation_token):
+        try:
+            id = jwt.decode(activation_token, current_app.config['SECRET_KEY'], 'HS256')['activate_user']
+        except:
+            return 
+
+        sqa_sess = sqa_session()
+        usr = sqa_sess.query(User).get(id)
+        usr.Status_Pending = False
+        usr.Status_Active = True
+        sqa_sess.commit()
+        return usr
+        
 
 
 class FlightPlan(Base):
@@ -51,10 +74,14 @@ class FlightPlan(Base):
     File_Name = Column(String())
     Flight_Date = Column(Date())
     Flight_Name = Column(String())
-    
+    Flight_Desc = Column(String())
     
     User = relationship("User")
     FlightPlanPoints = relationship("FlightPlanPoint", back_populates="FlightPlan")
+    
+    @property
+    def Import_Date_Text(self):
+        return self.Import_Date.strftime("%Y-%m-%d")
 
 class FlightPlanPoint(Base):
     __tablename__ = 'FlightPlanPoints'
@@ -63,6 +90,7 @@ class FlightPlanPoint(Base):
     Latitude = Column(Float())
     Longitude = Column(Float())
     Elevation = Column(Integer())
+    Name = Column(String())
     
     FlightPlan = relationship("FlightPlan", back_populates="FlightPlanPoints")
 

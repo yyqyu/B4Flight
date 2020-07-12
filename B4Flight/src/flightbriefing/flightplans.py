@@ -11,6 +11,8 @@ import xml.etree.ElementTree as ET
 from polycircles import polycircles
 from shapely import geometry 
 
+import re
+
 from geojson import LineString, Feature
 
 from flightbriefing.db import User, FlightPlan, FlightPlanPoint
@@ -23,16 +25,19 @@ from . import helpers
 
 
 '''---------------------------------------
- read_gpx_file(filename)
+ read_gpx_file(filename, user_id, flight_description)
 
  PURPOSE: Reads a GPX file and extracts the routes in the file
 
  INPUT: gpxFilename = path and filename to read
+    user_id = user_id
+    flight_description = user-entered description
+
  RETURNS: List of FlightPlan Objects
 
 ---------------------------------------'''
 
-def read_gpx_file(filename, user_id):
+def read_gpx_file(filename, user_id, flight_description):
     #open GPX file - it is in XML format
     tree = ET.parse(filename)
     root = tree.getroot()
@@ -54,8 +59,9 @@ def read_gpx_file(filename, user_id):
             rtname = 'Imported Flight'
             
         this_route.Flight_Name = rtname
+        this_route.Flight_Desc = flight_description
         this_route.UserID = user_id
-        this_route.Import_Date = datetime.today()
+        this_route.Import_Date = datetime.utcnow()
         this_route.File_Name = filename
 
         routePts = []
@@ -64,16 +70,71 @@ def read_gpx_file(filename, user_id):
             this_pt = FlightPlanPoint()
             this_pt.Latitude = float(routePt.attrib['lat'])
             this_pt.Longitude = float(routePt.attrib['lon'])
-            elev = routePt.find(ns+'ele').text
+            #Elevation not always included.
+            try:
+                elev = routePt.find(ns+'ele').text
+            except:
+                elev = 0
+                
             if elev == "":
                 elev = 0
             this_pt.Elevation = elev
+            name = routePt.find(ns+'name').text
+            this_pt.Name = name
             routePts.append(this_pt)
         
         this_route.FlightPlanPoints = routePts
         routes.append(this_route)
 
     return routes
+
+
+'''---------------------------------------
+ read_easyplan_file(filename, user_id, flight_description)
+
+ PURPOSE: Reads an EasyPlan EP1 file and extracts the route in the file
+
+ INPUT: filename = path and filename to read
+    user_id = user_id
+    flight_description = user-entered description
+
+ RETURNS: List of FlightPlan Objects
+
+---------------------------------------'''
+
+def read_easyplan_file(filename, user_id, flight_description):
+
+    regPts = re.compile(r"^Name='(?P<point_name>[\w\s\.,;:\(\)/\\!@#$%^&\*\+\=\-_]+)'\s.*Elevation='(?P<elev>[0-9]+)'\s.*Lat=(?P<lat>[0-9\.]+)\s.*Long=(?P<lon>[0-9\.]+)\s.*")
+    routePts = []
+    routes = []
+
+    with open(filename, "r") as ep_file:
+        for in_line in ep_file:
+            if in_line[:6] == "Route=":
+                rtname = in_line.strip()[7:-1]
+                rtname = rtname.replace("'", "")
+            elif in_line[:5] == "Name=":
+                regPt = regPts.match(in_line.strip())
+
+                this_pt = FlightPlanPoint()
+                this_pt.Latitude = float(regPt['lat']) * -1 #EasyPlan doesn't sign the southern hemisphere
+                this_pt.Longitude = float(regPt['lon'])
+                this_pt.Elevation = int(regPt['elev'])
+                this_pt.Name = regPt['point_name']
+                routePts.append(this_pt)
+    
+    if len(routePts)>0:            
+        this_route = FlightPlan()
+        this_route.Flight_Name = rtname
+        this_route.Flight_Desc = flight_description
+        this_route.UserID = user_id
+        this_route.Import_Date = datetime.utcnow()
+        this_route.File_Name = filename
+        this_route.FlightPlanPoints = routePts
+        routes.append(this_route)
+
+    return routes
+
 
 def generate_geojson(flightplan_id):
     

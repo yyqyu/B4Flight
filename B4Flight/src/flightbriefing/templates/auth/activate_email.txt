@@ -1,0 +1,12 @@
+
+Hello {{user_fname}}
+
+Thanks for registering for B4Flight - a project that I started to make it easier to fly safely in ZA airspace.  I hope that the ability for you to focus on relevant NOTAMS for your flights makes your planning process faster and more intuitive.
+In order to activate your account, please click on the below link, or copy and paste it into your browser:
+
+{{ url_for('auth.activate', token=token, _external=True) }}
+
+Please get in touch with any feedback and suggestions you have!
+
+Cheers
+Andrew

@@ -6,6 +6,7 @@ __pycache__/
 instance/
 working_files/
 notam_archives/
+upload_archives/
 
 .pytest_cache/
 .coverage

@@ -8,6 +8,9 @@ from flask import (
 )
 
 from datetime import datetime
+from email.headerregistry import Address
+
+import functools
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -18,7 +21,21 @@ from flightbriefing.data_handling import sqa_session    #sqa_session is the Sess
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+def requires_login(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if session.get("userid") is None:
+            return redirect(url_for("auth.login"))
+        
+        return view(**kwargs)
+    return wrapped_view
 
+def is_logged_in():
+    if session.get("userid") is None:
+        return False
+    else:
+        return True
+    
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -58,11 +75,16 @@ def register():
             
             sess.add(new_user)
             sess.commit()
-            g.user_fname = new_user.Firstname
-##
-##        Need to send e-mail here
-##            
-            return redirect(url_for("auth.regsuccess", firstname=g.user_fname))
+            
+            activation_token = new_user.get_activation_token()
+            msg_html = render_template('auth/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
+            msg_txt = render_template('auth/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
+            user_fullname = new_user.Firstname + ' ' + new_user.Lastname
+            mail_to = Address(display_name = user_fullname.rstrip(), addr_spec = new_user.Email)
+            mail_from = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_ADMIN_ADDRESS'])
+            helpers.send_mail(mail_from, mail_to,'Confirm your registration wiht B4Flight', msg_txt, msg_html)
+            
+            return redirect(url_for("auth.regsuccess", firstname=new_user.Firstname))
         
         flash(error_msg)
         
@@ -79,6 +101,13 @@ def regsuccess():
     
     return render_template('auth/regsuccess.html', firstname = user_fname)
 
+
+@bp.route('/activate/<token>', methods=('GET', 'POST'))
+def activate(token):
+    usr_activated = User.activate_user(token)
+
+    return render_template('auth/activated.html', firstname = usr_activated.Firstname)
+        
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
@@ -113,7 +142,7 @@ def login():
                 session['username'] = usr.Username
                 session['user_fname'] = usr.Firstname
 
-                return redirect(url_for("viewmap.viewmap"))
+                return redirect(url_for("home.index"))
         
         flash(error_msg)
         

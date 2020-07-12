@@ -1,0 +1,20 @@
+<!--This is the Index Page for users not logged in -->
+
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="text-center">{% block title %}Welcome To B4Flight {% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row bg-light" style="height:20pc;">
+		<div class="col-sm-12 text-center my-auto">
+			<h2>Better Briefings</h2>
+			<p>An interactive view of NOTAMS in South Africa</p>
+		</div>
+	</div>
+</div>
+{% endblock %}

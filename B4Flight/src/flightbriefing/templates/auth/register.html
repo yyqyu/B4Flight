@@ -14,7 +14,7 @@
 		<h1>Register for B4Flight</h1>
 		</div>
 	<div class="col-sm-6 bg-light form-container">	
-		<form method="POST">
+		<form id="reg-form" method="POST">
 			<div class="form-group row">
 				<label for="username" class="col-sm-3 col-form-label">Username</label>
 				<div class="col-sm-8">
@@ -43,11 +43,32 @@
 				</div>
 			</div>
 			<div class="form-group row">
-				<div class="col-sm-6">
-					<button type="submit" class="btn btn-primary">Register</button>
+				<div class="col-sm-4">
+					<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">
+						<span id="btn-processing" style="display: none;">
+							<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+							Registering...
+						</span>
+						<span id="btn-active">
+						Register
+						</span>
+						</button>
+				</div>
+					<div id="wait" style="display:none;">
+					  <strong>Please standby...</strong>
+					  <div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>
+					</div>					
 				</div>
 			</div>
 		</form>
 	</div>
 	</div>
+	<script>
+	function submitClick() {
+		document.getElementById("submit-button").disabled = true;
+		document.getElementById("btn-active").style.display = "none";
+		document.getElementById("btn-processing").style.display = "inline";
+		document.getElementById("reg-form").submit();
+	}
+	</script>
 {% endblock %}

@@ -7,6 +7,12 @@ Created on 07 Jun 2020
 from polycircles import polycircles
 from shapely.geometry import Polygon
 from .db import FlightPlan, FlightPlanPoint
+from flask import current_app
+from email.message import EmailMessage
+from threading import Thread
+
+import smtplib, ssl
+
 
 def read_db_connect():
     import configparser
@@ -181,4 +187,28 @@ def generate_circle_shapely(centerLat, centerLon, radius_nm):
     circ_coord = polycircle.to_lat_lon()
     spolygon = Polygon(switch_lat_lon(circ_coord)) #Shapely Polygon
     return spolygon
+
+
+def send_mail(sender, recipients_to, subject, body_text, body_html):
     
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = sender #Address(display_name = EMAIL_ADMIN_NAME, addr_spec = EMAIL_ADMIN_ADDRESS)
+    msg['To'] = recipients_to #Address(display_name = 'Andrew', addr_spec = 'artech@live.co.za')
+    
+    msg.set_content(body_text)
+    msg.add_alternative(body_html, subtype='html')
+
+    context = ssl.create_default_context()
+    if current_app.config['EMAIL_USE_TLS'] == True:
+
+        with smtplib.SMTP(current_app.config['EMAIL_HOST'], current_app.config['EMAIL_PORT']) as server:
+            server.starttls(context=context)
+            server.login(current_app.config['EMAIL_HOST_USER'], current_app.config['EMAIL_HOST_PASSWORD'])
+            server.send_message(msg)
+
+    elif current_app.config['EMAIL_USE_SSL'] == True:
+        with smtplib.SMTP_SSL(current_app.config['EMAIL_HOST'], current_app.config['EMAIL_PORT'], context=context) as server:
+            server.login(current_app.config['EMAIL_HOST_USER'], current_app.config['EMAIL_HOST_PASSWORD'])
+            server.send_message(msg)
+

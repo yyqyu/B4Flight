@@ -1,0 +1,17 @@
+<html>
+<body style="font-family: Calibri, Arial, Helvetica, sans-serif; color: rgb(0, 77, 77);">
+
+	<div style="background-color: rgb(0, 128, 128); color: rgb(230,255,255); padding:1px 1em 1px 25px;">
+		<h2>B4Flight <span style="font-size: medium; float:right; margin-top:0.75em">Thanks for registering</span></h2>
+	</div>
+	<p>Hello {{user_fname}}</p>
+	<p>Thanks for registering for B4Flight - a project that I started to make it easier to fly safely in ZA airspace.  
+	I hope that the ability for you to focus on relevant NOTAMS for your flights makes your planning process faster and more intuitive.</p> 
+	<p>In order to activate your account, please <a href="{{ url_for('auth.activate', token=token, _external=True) }}">click here</a>.  
+	Alternatively, copy and paste the link below into your browser<p>
+	<p>{{ url_for('auth.activate', token=token, _external=True) }}</p>
+	<p>Please get in touch with any feedback and suggestions you have!</p>
+	<p>Cheers <br>Andrew</p>
+
+</body>	
+</html>

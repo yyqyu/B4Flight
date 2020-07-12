@@ -17,9 +17,14 @@
 			<div id='map' class='col-sm-4' style='height: 200px;'></div>
 	
 			<div class="col-sm-8 bg-light">
-				<p>You have successfully uploaded your flight route.  This will be stored for you, so you can re-use it at a later stage.</p>
-				<p> a_key={{fp_id}}</p>
-				<p><a href="{{ url_for('viewmap.flightmap', flightid=fp_id) }}">Click Here</a> to view your flight with applicable NOTAMS</p>
+				<p>You have successfully uploaded and stored your flight route:
+				<ul>
+				<li>{{fplan.Flight_Name}}</li>
+				<li>{{fplan.Flight_Desc}}</li>
+				</ul>
+				</p>
+				<p>You can access your flights at a later stage from your dashboard</p>
+				<p><a href="{{ url_for('viewmap.flightmap', flightid=fplan.FlightplanID) }}">Click Here</a> to view your flight with applicable NOTAMS</p>
 			</div>
 			
 		</div>

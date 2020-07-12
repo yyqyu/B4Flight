@@ -6,34 +6,50 @@
 	    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+		
+		<link rel="stylesheet" href="{{ url_for('static', filename='b4flight.css') }}">
 		
 		<title>{% block title %}{% endblock %}</title>
 	
 	</head>
-	<body
-		<div class="container">
-		<h1>B4Flight Briefing</h1>
-		</div>
-			<nav class="navbar navbar-expand-sm bg-light justify-content-end">
-			  <ul class="navbar-nav">
-			    {% if g.user %}
-			      <li class="nav-item mx3">{{ g.user['username'] }}
-			      <li class="nav-item">Log Out
+	<body>
+		<section class="content">
+		<header class="navbar navbar navbar-expand-sm flex-column flex-md-row bflight-head">
+			<a class="navbar-brand bflight-title" href="/">B4Flight Briefing</a>
+			<div class="navbar-nav-scroll bflight-navbar">
+				<ul class="navbar-nav flex-row">
+				<li class="nav-item bflight-navitem">
+					<a href="/">Home</a>
+				</li>
+			    {% if session['username'] %}
+				<li class="nav-item bflight-navitem">
+					<a href="/">Notams</a>
+				</li>
+				<li class="nav-item bflight-navitem">
+					<a href="/">Flights</a>
+				</li>
+				{% endif %}
+				</ul>
+			</div>
+			  <ul class="navbar-nav ml-md-auto">
+			    {% if session['username'] %}
+			      <li class="nav-item mx-2 bflight-navitem bflight-nav-user">{{ session['username'] }}</li>
+			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
 			    {% else %}
-			      <li class="nav-item mx3">Register
-			      <li class="nav-item mx3">Log In
+			      <li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('auth.register') }}">Register</a></li>
+			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.login') }}">Log In</a></li>
 			    {% endif %}
 			  </ul>
-			</nav>
-		<section class="content">
-		  <header>
-		    {% block header %}{% endblock %}
 		  </header>
+			<div class="row ">
+			</div>
+		    {% block header %}{% endblock %}
 		  {% for message in get_flashed_messages() %}
-		    <div class="flash">{{ message }}</div>
+		    <div class="flash alert alert-danger">{{ message }}</div>
 		  {% endfor %}
+		  <div class="container">
 		  {% block content %}{% endblock %}
+		  </div>
 		</section>
 	
 	

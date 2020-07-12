@@ -1,0 +1,102 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@800&display=swap');
+
+
+body {
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+	color: rgb(0, 77, 77);
+}
+
+.bflight-head {
+	background-color: rgb(0, 128, 128);
+	color: rgb(230,255,255);
+	padding-top: 0.25%;
+	padding-bottom: 0.25%;
+	padding-left: 1%;
+}
+
+.bflight-title {
+	font-family: 'Merriweather Sans', sans-serif;
+	font-size: 1.4em;
+	color: rgb(230,255,255);
+	padding-right: 1em;
+}
+
+.bflight-title:hover {
+	color: rgb(255,255,255);
+	text-decoration: none;
+}
+.bflight-title {
+	color: rgb(230,255,255);
+}
+
+.bflight-navbar {
+	color: rgb(230,255,255);
+	padding-top: 0.4em;
+	padding-bottom: 0.4em;
+}
+
+.bflight-navitem {
+	color: rgb(230,255,255);
+	font-weight: bold;
+	margin-top: 0.5em;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+
+.bflight-navitem a:hover {
+	color: rgb(255,255,255);
+	text-decoration: none;
+}
+.bflight-navitem a {
+	color: rgb(230,255,255);
+}
+
+.bflight-nav-user {
+	background-color: rgb(230,255,255);
+	color: rgb(0, 77, 77);
+	font-weight: bold;
+	margin-top: 0.5em;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	border-radius: 5px;
+}
+
+.bflight-table-head {
+	background-color: rgb(0, 128, 128);
+	color: rgb(230,255,255);
+}
+
+.bflight-btn {
+	background-color: rgb(0, 128, 128);
+	color: rgb(230,255,255);
+}
+
+.bflight-btn:hover {
+	background-color: rgb(0, 110, 110);
+	color: rgb(255,255,255);
+}
+
+.bflight-file {
+	background-color: rgb(255, 255, 255);
+	padding: 0.5em;
+	border: solid;
+	border-width: 1px;
+	border-color: rgb(217, 217, 217);
+	border-radius: 5px;
+	
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	font-size: 1.5em;
+}
+
+.form-container {
+	padding-top: 20px;
+	padding-bottom: 10px; 
+	padding-left:25px;
+}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}B4Flight - Registered!{% endblock %}
+
+{% block header %}
+
+  <h1 class="text-center">You're Activated!</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row bg-light" style="height:20pc;">
+		<div class="col-sm-12 text-center my-auto">
+			<h2>Welcome, {{firstname}}!</h2>
+			<p>Thanks for activating your account.  We can't wait for you to start exploring.  
+			Please <a href="{{url_for('auth.login')}}">login</a> to get started</p>
+			<p>See you inside...</p>
+		</div>
+	</div>
+</div>
+{% endblock %}

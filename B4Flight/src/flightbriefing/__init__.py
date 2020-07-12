@@ -3,6 +3,8 @@ import os
 
 from flask import Flask
 
+#PythonAnywhere SQL Pass:
+#pyth0n@ny
 
 #SET FLASK_APP=flightbriefing
 #SET FLASK_ENV=development
@@ -19,6 +21,14 @@ def create_app(test_config=None):
     mapbox_token = cfg.get('maps','mapbox_token')
     working_folder = cfg.get('application','working_folder')
     upload_archive_folder = cfg.get('application','upload_archive_folder')
+    email_host = cfg.get('email','email_host')
+    email_host_user = cfg.get('email','email_host_user')
+    email_host_password = cfg.get('email','email_host_password')
+    email_admin_name = cfg.get('email','email_admin_name')
+    email_admin_address = cfg.get('email','email_admin_address')
+    email_port = cfg.get('email','email_port')
+    email_use_ssl = cfg.get('email','email_use_ssl') == '1'
+    email_use_tls = cfg.get('email','email_use_tls') == '1'
     
 
     app.config.from_mapping(
@@ -27,6 +37,14 @@ def create_app(test_config=None):
         WORKING_FOLDER=working_folder,
         UPLOAD_ARCHIVE_FOLDER=upload_archive_folder,
         MAX_CONTENT_LENGTH=3*1024*1024,
+        EMAIL_HOST = email_host,
+        EMAIL_HOST_USER = email_host_user,
+        EMAIL_HOST_PASSWORD = email_host_password,
+        EMAIL_ADMIN_NAME = email_admin_name,
+        EMAIL_ADMIN_ADDRESS = email_admin_address,
+        EMAIL_PORT = email_port,
+        EMAIL_USE_SSL = email_use_ssl,
+        EMAIL_USE_TLS = email_use_tls,
     )
 
     if test_config is None:
@@ -42,13 +60,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import viewmap
+    from flightbriefing import viewmap
     app.register_blueprint(viewmap.bp)
     
-    from . import auth
+    from flightbriefing import auth
     app.register_blueprint(auth.bp)
 
-    from .data_handling import sqa_session
+    from flightbriefing import home
+    app.register_blueprint(home.bp)
+
+    from flightbriefing.data_handling import sqa_session
     
 
 
@@ -63,3 +84,7 @@ def create_app(test_config=None):
 
     return app
 
+#-----Remove this for the Production Version
+if __name__ == "__main__":
+    x = create_app()
+    x.run(debug=True)

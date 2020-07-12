@@ -132,6 +132,7 @@ class Notam(Base):
         return poly_coords.strip()
     
     
+
 def init_db(sqa_engine):
     #The declarative Base is bound to the database engine.
     Base.metadata.bind = sqa_engine
@@ -315,7 +316,7 @@ def parse_notam_text_file(filename, country_code):
                 this_briefing.Briefing_Country = country_code
                 this_briefing.Briefing_Date = datetime.strptime(in_line[10:17],briefing_date_format[country_code]).date()
                 this_briefing.Briefing_Time = datetime.strptime(in_line[18:22],briefing_time_format[country_code]).time()
-                this_briefing.Import_DateTime = datetime.now()
+                this_briefing.Import_DateTime = datetime.utcnow()
                 
                 footer_date_time = in_line[10:22]
             
@@ -415,7 +416,7 @@ def parse_notam_text_file(filename, country_code):
 
                         to_date = reResult['ToDate'].strip()
                         if to_date == 'PERM':
-                            this_notam.To_Date = datetime(datetime.now().year+10,12,31,23,59)
+                            this_notam.To_Date = datetime(datetime.utcnow().year+10,12,31,23,59)
                             this_notam.To_Date_Permanent = True
                         elif to_date[-3:] == 'EST':
                             this_notam.To_Date = datetime.strptime(to_date[:-4],'%y%m%d%H%M') #2003301600 EST

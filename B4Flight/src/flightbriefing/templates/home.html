@@ -1,0 +1,68 @@
+<!--This is the Index Page for users who ARE logged in -->
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="text-center">{% block title %}Dashboard{% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-sm-7 bg-light m-1 p-2">
+			<h3>NOTAM ACTIVITY</h3>
+			<p>The latest CAA NOTAM Briefing was on <b>{{briefing.Briefing_Date}} {{briefing.Briefing_Time}}</b> with the briefing reference of <b>{{briefing.Briefing_Ref}}</b></p>
+			<p>There are <b>{{notam_count}}</b> active NOTAMS:  View these as <a href="{{url_for('viewmap.detailnotams')}}"> text</a> or on a <a href="{{url_for('viewmap.viewmap')}}">map</a></p>
+			<p><b>{{new_notams}}</b> NOTAMS have been added, and <b>{{deleted_notams}}</b> have expired, over the past week (based on the briefing from {{last_wk_brief_date}}). View the new NOTAMS on a <a href="{{url_for('viewmap.newnotams')}}">map</a></p>
+		</div>
+		<div class="col-sm-4 bg-light m-1 p-2">
+			<h3>HOME NOTAMS</h3>
+			<p>Latest NOTAMS within 10nm of your home aerodrome</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-7 bg-light m-1 p-2">
+			<h3>YOUR RECENT FLIGHTS</h3>
+			<table class="table table-striped table-bordered">
+			<thead class="bflight-table-head">
+				<tr>
+				<th>Upload Date</th>
+				<th>Flight Name</th>
+				<th>Description</th>
+				<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if flights %}
+				{% for fpl in flights %}
+				<tr>
+				<td>{{fpl.Import_Date_Text}}</td>
+				<td>{{fpl.Flight_Name}}</td>
+				<td>{{fpl.Flight_Desc}}</td>
+				<td>
+					<a href="{{url_for('viewmap.flightmap', flightid=fpl.FlightplanID)}}" class="btn bflight-btn btn-sm" role="button">View</a>
+					<a href="{{url_for('viewmap.flightmap', flightid=fpl.FlightplanID)}}" class="btn bflight-btn btn-sm" role="button">Edit</a>
+				</td>
+				</tr>
+				{% endfor %}
+			{% else %}
+				<tr>
+				<td colspan="4">No Flights Uploaded Yet</td>
+				</tr>
+			{% endif %}
+			</tbody>
+			</table>
+			<div class="float-right">
+				<a href="{{url_for('viewmap.uploadroute')}}" class="btn bflight-btn" role="button">New Flight</a>
+			</div>
+
+		</div>
+		<div class="col-sm-4 bg-light m-1 p-2">
+			<h3>YOUR SETTINGS</h3>
+			<p>You are permanently hiding xx NOTAMS</p>
+			<p>Your home field is xx</p>
+		</div>
+	</div>
+</div>
+{% endblock %}

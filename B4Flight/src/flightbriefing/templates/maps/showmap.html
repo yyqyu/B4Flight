@@ -1,21 +1,40 @@
 {% extends 'base.html' %}
 
+  {% block title %}
+    {% if flight %}
+      Flight Briefing
+    {% else %}
+		{% if last_wk_briefing_date %}
+			New NOTAMS
+		{% else %}
+	      Current NOTAMS
+		{% endif %}
+    {% endif %}
+  {% endblock %}
+
 {% block header %}
 
 	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
 	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
-
-  <h1>{% block title %}A First Map{% endblock %}</h1>
-  {% if g.user %}
-	<p>username here</p>
-  {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="container-flow">
-	<p>Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+	{% if flight %}
+		<h2>Flight Briefing</h2>
+		<p>Briefing for flight <b>{{flight.Flight_Name}}</b> using NOTAM Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+	{% else %}
+		{% if last_wk_briefing_date %}
+			<h2>New NOTAMS</h2>
+			<p>New NOTAMS since {{last_wk_briefing_date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+		{% else %}
+			<h2>Current NOTAMS</h2>
+			<p>NOTAM Overview for Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+		{% endif %}
+	{% endif %}
 	<div class="row">
 		<div class="col-3">
+			<div class="bflight-table-head text-center"><b>FILTER NOTAMS</b></div>
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
 				<li class="list-group-item py-1" style="background-color: #e6f2ff;">
@@ -24,11 +43,11 @@
 			{% endfor %}
 			</ul>
 			<div class="small">
-				Show Notams Radius < <span id="radius-display">xx</span>:
 				<div class="slidecontainer">
+				Filter NOTAM Radius < <span id="radius-display">xx</span>nm:
 					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter">
-					<button onclick="filterRadius()">Apply</button>
-				</div>		
+					<button class="btn btn-sm bflight-btn ml-2" onclick="filterRadius()">Apply</button>
+				</div>
 			</div>
 		</div>
 	
@@ -137,22 +156,27 @@ map.on('load', function() {
 			
 			var popHtml = '';
 			
+			//Sometimes we get duplicates - prevent this by tracking what's already added
+			var alreadyListed = [];
+			
 			var feats = map.queryRenderedFeatures(e.point);
 			for (var i = 0; i < feats.length; i++) {
 				if (usedLayers.indexOf(feats[i].layer.id) >=0) {
-//					popHtml = '<tr class="bg-dark text-white"><td><b>' + feats[i].properties.notam_location + '</b></td>' + 
-//					'<td><b>' + feats[i].properties.notam_number + '</b></td></tr>'+
-//					'<tr><td><b>FROM:</b> ' + feats[i].properties.from_date + '</td> ' +
-//					'<td><b>TO:</b> ' + feats[i].properties.to_date + '</td></tr>' +
-//					'<tr><td colspan="2">'+ feats[i].properties.notam_text + '</td></tr>' +
-//					'<tr><td> </td><td class="text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></td></tr>';
-
-					popHtml += '<div class="row bg-dark text-white"><div class="col"><b>' + feats[i].properties.notam_location + '</b></div>' + 
-					'<div class="col"><b>' + feats[i].properties.notam_number + '</b></div></div>'+
-					'<div class="row"><div class="col"><b>FROM:</b> ' + feats[i].properties.from_date + '</div> ' +
-					'<div class="col"><b>TO:</b> ' + feats[i].properties.to_date + '</div></div>' +
-					'<div class="row">' + feats[i].properties.notam_text + '</div>' +
-					'<div class="row"><div class="col"> </div><div class="col text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></div></div>';
+					
+					//If this notam not already added to popup then add it
+					if (alreadyListed.indexOf(feats[i].properties.notam_number) < 0) {
+						alreadyListed.push(feats[i].properties.notam_number);
+						popHtml += '<div id="popup-' + feats[i].properties.notam_number + '">' + 
+						'<div class="row bg-dark text-white"><div class="col"><b>' + feats[i].properties.notam_location + '</b></div>' + 
+						'<div class="col"><b>' + feats[i].properties.notam_number + '</b></div></div>'+
+						'<div class="row"><div class="col"><b>FROM:</b> ' + feats[i].properties.from_date + '</div> ' +
+						'<div class="col"><b>TO:</b> ' + feats[i].properties.to_date + '</div></div>' +
+						'<div class="row">' + feats[i].properties.notam_text + '</div>'
+						if (feats[i].properties.duration != '') {
+							popHtml += '<div class="row">' + feats[i].properties.duration + '</div>';
+						}
+						popHtml += '<div class="row"><div class="col"> </div><div class="col text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></div></div></div>';
+					}
 
 
 //					popHtml += feats[i].properties.text_htm;
@@ -161,7 +185,7 @@ map.on('load', function() {
 			};
 			if (popHtml.length > 0) {
 //				popHtml = '<table class="table table-borderless table-sm">' + popHtml + '</table>';
-				popHtml = '<div class="container">' + popHtml + '</div>';
+				popHtml = '<div class="container" id="popup-container" style="max-height:300px; overflow:auto;">' + popHtml + '</div>';
 			}
 			
 			popup
@@ -273,8 +297,22 @@ function hideFeature(notamNumber) {
 		"features": notamGeoData
 		});
 
-	//Close the popup
-	popup.remove();
+	//Hide the clicked NOTAM from the popup
+	ntm = document.getElementById('popup-' + notamNumber);
+	ntm.style.display = 'none';
+
+	//Close the popup if no more visible elements, 
+	var c = document.getElementById('popup-container').children;
+	var visiblePops = 0;
+	for (var i = 0; i < c.length; i++) {
+		if (c[i].style.display != 'none') {
+			visiblePops += 1;
+		}
+	} 	
+
+	if (visiblePops == 0) {
+		popup.remove();
+	}
 }
 
 
