@@ -36,7 +36,7 @@ def read_settings_ZA():
     settings['status_url'] = cfg.get('notam_import_ZA', 'convert_status_url')
     settings['download_url'] = cfg.get('notam_import_ZA', 'convert_download_url')
     settings['sql_script_folder'] = cfg.get('database', 'sql_script_folder')
-    settings['pool_recycle'] = cfg.get('database', 'pool_recycle')
+    settings['pool_recycle'] = int(cfg.get('database', 'pool_recycle'))
     
     
     return settings
