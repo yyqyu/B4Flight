@@ -4,7 +4,7 @@ import os
 from flask import Flask
 
 #PythonAnywhere SQL Pass:
-#pyth0n@ny
+#pyth0n_Any
 
 #SET FLASK_APP=flightbriefing
 #SET FLASK_ENV=development

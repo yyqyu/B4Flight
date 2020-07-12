@@ -36,6 +36,8 @@ def read_settings_ZA():
     settings['status_url'] = cfg.get('notam_import_ZA', 'convert_status_url')
     settings['download_url'] = cfg.get('notam_import_ZA', 'convert_download_url')
     settings['sql_script_folder'] = cfg.get('database', 'sql_script_folder')
+    settings['pool_recycle'] = cfg.get('database', 'pool_recycle')
+    
     
     return settings
 
@@ -144,7 +146,7 @@ def create_notam_db():
     #Get database connection string
     db_connect = helpers.read_db_connect()
     #create SQLAlchemy engine
-    sqa_engine = create_engine(db_connect)
+    sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
 
     #initialise notams module with the engine
     notams.init_db(sqa_engine)
@@ -231,7 +233,7 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
         #Get database connection string
         db_connect = helpers.read_db_connect()
         #create SQLAlchemy engine
-        sqa_engine = create_engine(db_connect)
+        sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
 
     #initialise sqlalchemy db
     notams.init_db(sqa_engine)

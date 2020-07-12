@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 
 
 db_connect = helpers.read_db_connect()
-eng = create_engine(db_connect)
+eng = create_engine(db_connect, pool_recycle=280)
 
 def initialise_notam_db():
     notams.init_db(eng)
@@ -93,10 +93,10 @@ def test_circles():
 def initialise_user_db():
     db.init_db(eng)
     db.create_new_db()
-#    users.create_admin_user('artech@live.co.za')
+    db.create_admin_user('artech@live.co.za')
 
 
-#initialise_notam_db()
+initialise_notam_db()
 #import_notams()
 
 #test_top_notams()

@@ -20,8 +20,9 @@ cfg = configparser.ConfigParser()
 app_path = os.path.dirname(os.path.abspath( __file__ ))
 cfg.read(os.path.join(app_path,'flightbriefing.ini'))
 db_connect = cfg.get('database','connect_string')
+pool_recycle = cfg.get('database','pool_recycle')
 
-sqa_engine = create_engine(db_connect)
+sqa_engine = create_engine(db_connect, pool_recycle=pool_recycle)
 sqa_session = scoped_session(sessionmaker(bind=sqa_engine))
 
 Base = declarative_base(bind=sqa_engine)
