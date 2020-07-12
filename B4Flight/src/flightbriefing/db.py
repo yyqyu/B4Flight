@@ -24,7 +24,7 @@ class User(Base):
     __tablename__ = 'Users'
     UserID = Column(Integer(), primary_key = True)
     Username = Column(String(50), nullable=False, unique=True)
-    _password = Column("Password", String(50), nullable=False)
+    _password = Column("Password", String(1024), nullable=False)
     Firstname = Column(String(75))
     Lastname = Column(String(75))
     Email = Column(String(75), nullable=False, unique=True)
