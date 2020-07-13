@@ -101,7 +101,7 @@ class Notam(Base):
     E_Coord_Lon = Column(String(8)) #Co-ordinates extracted from the E) section (text)
     Coord_Lat = Column(String(8)) #Final co-ordinates to use for the Notam Mapping
     Coord_Lon = Column(String(8)) #Final co-ordinates to use for the Notam Mapping
-    Bounded_Area = Column(String(255)) # Co-ordinates of a bounded area defined in the Notam
+    Bounded_Area = Column(String(4096)) # Co-ordinates of a bounded area defined in the Notam
     Unique_Geo_ID = Column(String(25)) #Combination of Lat + Lon + Radius to allow grouping of 
         
     Briefing = relationship("Briefing", back_populates='Notams')
