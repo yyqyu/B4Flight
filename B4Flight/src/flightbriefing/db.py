@@ -7,15 +7,18 @@ Created on 23 Jun 2020
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date, DateTime, Float, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash
 import jwt
 
+import click
 from flask import current_app
-from flightbriefing.data_handling import sqa_session
+from flask.cli import with_appcontext
+
+from .data_handling import sqa_session
 
 #SQLAlchemny - A declarative base class  
 Base = declarative_base() 
@@ -103,8 +106,9 @@ def init_db(sqa_engine):
 def create_new_db():
 
     print('----------Initialising Database for Initial Use----------')
-
+    sqa_engine = create_engine(current_app.config['DATABASE_CONNECT_STRING'], pool_recycle = current_app.config['DATABASE_POOL_RECYCLE'])
     #Create defined tables
+    Base.metadata.bind = sqa_engine
     Base.metadata.create_all()
 
     print('----------Created Data Tables----------')
@@ -128,3 +132,13 @@ def create_admin_user(admin_email, admin_user='b4admin', admin_pass='b4admin'):
     ses.commit()
 
     print('----------Admin User Added----------')
+
+@click.command('create-core-db')
+@with_appcontext
+def create_core_db_command():
+    click.echo("Ready to create the core B4Flight databases - User, Flights, etc")
+    create_new_db()
+    click.echo("Databases Created")
+    
+def init_app(app):
+    app.cli.add_command(create_core_db_command)

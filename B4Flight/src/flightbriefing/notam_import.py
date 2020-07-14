@@ -16,8 +16,8 @@ import sys
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
-from flightbriefing import helpers
-from flightbriefing import notams
+from . import helpers
+from . import notams
 
 
 def read_settings_ZA():
@@ -167,12 +167,6 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
     pdf_file_name = os.path.join(settings['working_folder'], f'ZA_{settings["file_name_base"]}_{file_date}.pdf')
     txt_file_name = os.path.join(settings['working_folder'], f'ZA_{settings["file_name_base"]}_{file_date}.txt')
 
-    #Check that the working folder and the archive folder exist - if not, create them
-    if not os.path.exists(settings['working_folder']):
-        os.makedirs(settings['working_folder'])
-
-    if not os.path.exists(settings['archive_folder']):
-        os.makedirs(settings['archive_folder'])
     
     #Setup the logging
     log_file = os.path.join(settings['archive_folder'], 'pdf_convert.log')

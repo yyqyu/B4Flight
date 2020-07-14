@@ -15,9 +15,9 @@ import re
 
 from geojson import LineString, Feature
 
-from flightbriefing.db import User, FlightPlan, FlightPlanPoint
-from flightbriefing.notams import Notam, Briefing
-from flightbriefing.data_handling import sqa_session    #sqa_session is the Session object for the site
+from .db import User, FlightPlan, FlightPlanPoint
+from .notams import Notam, Briefing
+from .data_handling import sqa_session    #sqa_session is the Session object for the site
 from . import helpers
 
 

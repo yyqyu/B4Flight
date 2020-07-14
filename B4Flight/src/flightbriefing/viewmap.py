@@ -17,11 +17,11 @@ from werkzeug.utils import secure_filename
 
 from datetime import datetime, timedelta
 
-from flightbriefing import helpers, flightplans
-from flightbriefing.auth import requires_login
-from flightbriefing.notams import Notam, Briefing
-from flightbriefing.db import FlightPlan
-from flightbriefing.data_handling import sqa_session    #sqa_session is the Session object for the site
+from . import helpers, flightplans
+from .auth import requires_login
+from .notams import Notam, Briefing
+from .db import FlightPlan
+from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 bp = Blueprint('viewmap', __name__)
 

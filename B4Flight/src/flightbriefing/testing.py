@@ -10,12 +10,12 @@ from sqlalchemy.orm import sessionmaker
 from geojson import Polygon, Feature, FeatureCollection
 import re
 
-from flightbriefing import helpers
-from flightbriefing import notams
-from flightbriefing import flightplans
+from . import helpers
+from . import notams
+from . import flightplans
 
-from flightbriefing import db
-from flightbriefing.db import User, FlightPlan, FlightPlanPoint
+from . import db
+from .db import User, FlightPlan, FlightPlanPoint
 
 from polycircles import polycircles
 from datetime import datetime, timedelta

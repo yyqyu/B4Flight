@@ -1,4 +1,3 @@
-
 import os
 
 from flask import Flask
@@ -19,8 +18,11 @@ def create_app(test_config=None):
     cfg.read(os.path.join(app.root_path,'flightbriefing.ini'))
     secret_key = cfg.get('application','secret_key')
     mapbox_token = cfg.get('maps','mapbox_token')
-    working_folder = cfg.get('application','working_folder')
-    upload_archive_folder = cfg.get('application','upload_archive_folder')
+    working_folder = os.path.join(app.instance_path, cfg.get('application','working_folder'))
+    upload_archive_folder = os.path.join(app.instance_path, cfg.get('application','upload_archive_folder'))
+    notam_archive_folder = os.path.join(app.instance_path, cfg.get('notam_import_ZA','archive_folder'))
+    database_connect_string = cfg.get('database','connect_string')
+    database_pool_recycle = int(cfg.get('database','pool_recycle'))
     email_host = cfg.get('email','email_host')
     email_host_user = cfg.get('email','email_host_user')
     email_host_password = cfg.get('email','email_host_password')
@@ -36,6 +38,9 @@ def create_app(test_config=None):
         MAPBOX_TOKEN=mapbox_token,
         WORKING_FOLDER=working_folder,
         UPLOAD_ARCHIVE_FOLDER=upload_archive_folder,
+        NOTAM_ARCHIVE_FOLDER=notam_archive_folder,
+        DATABASE_CONNECT_STRING=database_connect_string,
+        DATABASE_POOL_RECYCLE=database_pool_recycle,
         MAX_CONTENT_LENGTH=3*1024*1024,
         EMAIL_HOST = email_host,
         EMAIL_HOST_USER = email_host_user,
@@ -55,32 +60,39 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # ensure the instance folder exists
-    try:
+    if not os.path.exists(app.instance_path):
         os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
-    from flightbriefing import viewmap
+    #Check that the working folder and the archive folder exist - if not, create them
+    if not os.path.exists(app.config['WORKING_FOLDER']):
+        os.makedirs(app.config['WORKING_FOLDER'])
+
+    if not os.path.exists(app.config['UPLOAD_ARCHIVE_FOLDER']):
+        os.makedirs(app.config['UPLOAD_ARCHIVE_FOLDER'])
+
+    if not os.path.exists(app.config['NOTAM_ARCHIVE_FOLDER']):
+        os.makedirs(app.config['NOTAM_ARCHIVE_FOLDER'])
+
+    from . import db
+    db.init_app(app)
+    
+
+    from . import viewmap
     app.register_blueprint(viewmap.bp)
     
-    from flightbriefing import auth
+    from . import auth
     app.register_blueprint(auth.bp)
 
-    from flightbriefing import home
+    from . import home
     app.register_blueprint(home.bp)
 
-    from flightbriefing.data_handling import sqa_session
-    
+    from .data_handling import sqa_session
 
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
         sqa_session.remove()
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return f'Hello, World! '
 
     return app
 
