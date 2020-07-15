@@ -7,12 +7,11 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
 )
 
-from datetime import datetime
 from email.headerregistry import Address
 
 import functools
 
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
 from . import helpers
 from .db import User

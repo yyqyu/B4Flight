@@ -76,6 +76,8 @@ def create_app(test_config=None):
     from . import db
     db.init_app(app)
     
+    from . import notam_import
+    notam_import.init_app(app)
 
     from . import viewmap
     app.register_blueprint(viewmap.bp)

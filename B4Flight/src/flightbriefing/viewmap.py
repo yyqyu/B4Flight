@@ -19,8 +19,7 @@ from datetime import datetime, timedelta
 
 from . import helpers, flightplans
 from .auth import requires_login
-from .notams import Notam, Briefing
-from .db import FlightPlan
+from .db import FlightPlan, Notam, Briefing
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 bp = Blueprint('viewmap', __name__)

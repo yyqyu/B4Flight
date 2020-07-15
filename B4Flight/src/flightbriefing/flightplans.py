@@ -8,19 +8,15 @@ from datetime import datetime
 from sqlalchemy import func, and_
 
 import xml.etree.ElementTree as ET
-from polycircles import polycircles
 from shapely import geometry 
 
 import re
 
 from geojson import LineString, Feature
 
-from .db import User, FlightPlan, FlightPlanPoint
-from .notams import Notam, Briefing
+from .db import FlightPlan, FlightPlanPoint, Notam, Briefing
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 from . import helpers
-
-
 
 
 

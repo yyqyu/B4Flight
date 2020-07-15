@@ -6,10 +6,8 @@ Created on 07 Jun 2020
 
 from polycircles import polycircles
 from shapely.geometry import Polygon
-#from .db import FlightPlan, FlightPlanPoint
 from flask import current_app
 from email.message import EmailMessage
-from threading import Thread
 
 import smtplib, ssl
 

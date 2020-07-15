@@ -16,8 +16,14 @@ import sys
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
+import click
+from flask import current_app
+from flask.cli import with_appcontext
+
 from . import helpers
-from . import notams
+from .notams import parse_notam_text_file
+from .db import Briefing, Notam
+from .data_handling import sqa_session
 
 
 def read_settings_ZA():
@@ -25,9 +31,9 @@ def read_settings_ZA():
     settings = {}
     
     cfg = configparser.ConfigParser()
-    cfg.read('flightbriefing.ini')
-    settings['working_folder'] = cfg.get('application','working_folder')
-    settings['archive_folder'] = cfg.get('notam_import_ZA', 'archive_folder')
+    cfg.read(os.path.join(current_app.root_path, 'flightbriefing.ini'))
+#    settings['working_folder'] = cfg.get('application','working_folder')
+#    settings['archive_folder'] = cfg.get('notam_import_ZA', 'archive_folder')
     settings['file_name_base'] = cfg.get('notam_import_ZA', 'file_name_base')
     settings['api_key'] = cfg.get('notam_import_ZA', 'key')
     settings['caa_notam_url'] = cfg.get('notam_import_ZA', 'caa_notam_url')
@@ -35,7 +41,6 @@ def read_settings_ZA():
     settings['upload_url'] = cfg.get('notam_import_ZA', 'convert_upload_url')
     settings['status_url'] = cfg.get('notam_import_ZA', 'convert_status_url')
     settings['download_url'] = cfg.get('notam_import_ZA', 'convert_download_url')
-    settings['sql_script_folder'] = cfg.get('database', 'sql_script_folder')
     settings['pool_recycle'] = int(cfg.get('database', 'pool_recycle'))
     
     
@@ -139,22 +144,6 @@ def download_conv_file(api_key, download_url, local_filename, file_id):
 
 
 
-def create_notam_db():
-
-    settings = read_settings_ZA()
-
-    #Get database connection string
-    db_connect = helpers.read_db_connect()
-    #create SQLAlchemy engine
-    sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
-
-    #initialise notams module with the engine
-    notams.init_db(sqa_engine)
-    #create the database structure
-    notams.create_new_db(settings['sql_script_folder'])
-
-
-
 def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
 
     #Read settings from INI file
@@ -164,12 +153,12 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
     
     
     #build the filenames for the PDF download file, and the converted text file
-    pdf_file_name = os.path.join(settings['working_folder'], f'ZA_{settings["file_name_base"]}_{file_date}.pdf')
-    txt_file_name = os.path.join(settings['working_folder'], f'ZA_{settings["file_name_base"]}_{file_date}.txt')
+    pdf_file_name = os.path.join(current_app.config['WORKING_FOLDER'], f'ZA_{settings["file_name_base"]}_{file_date}.pdf')
+    txt_file_name = os.path.join(current_app.config['WORKING_FOLDER'], f'ZA_{settings["file_name_base"]}_{file_date}.txt')
 
     
     #Setup the logging
-    log_file = os.path.join(settings['archive_folder'], 'pdf_convert.log')
+    log_file = os.path.join(current_app.config['NOTAM_ARCHIVE_FOLDER'], 'pdf_convert.log')
     logging.basicConfig(filename=log_file, level=logging.INFO, format='%(levelname)s - %(funcName)s - %(asctime)s - %(message)s')
     
 
@@ -219,27 +208,26 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
     else:
         download_conv_file(settings['api_key'], settings['download_url'], txt_file_name, fileid)
 
-
+    
     #------------------------
     #Now we parse the NOTAMS, and write to DB
     #------------------------
-    if sqa_engine is None:
-        #Get database connection string
-        db_connect = helpers.read_db_connect()
-        #create SQLAlchemy engine
-        sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
+#    if sqa_engine is None:
+#        #Get database connection string
+#        db_connect = helpers.read_db_connect()
+#        #create SQLAlchemy engine
+#        sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
 
     #initialise sqlalchemy db
-    notams.init_db(sqa_engine)
+#    notams.init_db(sqa_engine)
     
     #parse the notam text file, returning a Briefing Object
-    brf = notams.parse_notam_text_file(txt_file_name, 'ZA')
+    brf = parse_notam_text_file(txt_file_name, 'ZA')
     
     #Create a SQL Alchemy session 
-    Session = sessionmaker(bind=sqa_engine)
-    session = Session()
+    sess = sqa_session()
     
-    rs = session.query(notams.Briefing).filter(and_(notams.Briefing.Briefing_Ref == brf.Briefing_Ref, notams.Briefing.Briefing_Country == brf.Briefing_Country))
+    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
     if rs.count() > 0:
         logging.error(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
         print(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
@@ -248,27 +236,66 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
         os.remove(pdf_file_name)
         os.remove(txt_file_name)
 
-        session.close()
+        sess.close()
         sys.exit()
     
     
     #Write the briefing and attached NOTAMS to teh DB
-    session.add(brf)
-    session.commit()
+    sess.add(brf)
+    sess.commit()
     
     logging.info(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
     print(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
     
-    session.close()
-    
     #Copy the files to the archive
-    shutil.copy(pdf_file_name, settings['archive_folder'])
-    shutil.copy(txt_file_name, settings['archive_folder'])
+    shutil.copy(pdf_file_name, current_app.config['NOTAM_ARCHIVE_FOLDER'])
+    shutil.copy(txt_file_name, current_app.config['NOTAM_ARCHIVE_FOLDER'])
     #delete the originals
     os.remove(pdf_file_name)
     os.remove(txt_file_name)
+    
+    return brf
 
-
-if __name__ == "__main__":
+#if __name__ == "__main__":
 #    create_notam_db()
-    import_notam_ZA(overwrite_existing=True)
+#    import_notam_ZA(overwrite_existing=True)
+
+@click.command('import-notams')
+@with_appcontext
+def import_notams_command():
+    click.echo("Ready to import NOTAMS")
+    brf = import_notam_ZA(overwrite_existing=True)
+    click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
+
+@click.command('import-notam-text-file')
+@click.argument('filename')
+@with_appcontext
+def import_notam_text_command(filename):
+    
+    click.echo(f'Ready to import NOTAM text file: {filename}...')
+    
+    #parse the notam text file, returning a Briefing Object
+    brf = parse_notam_text_file(filename, 'ZA')
+
+    sess = sqa_session()
+
+    
+    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
+    if rs.count() > 0:
+        click.echo(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
+
+        sess.close()
+        sys.exit()
+    
+    
+    #Write the briefing and attached NOTAMS to teh DB
+    sess.add(brf)
+    sess.commit()
+    
+    click.echo(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
+    
+    
+
+def init_app(app):
+    app.cli.add_command(import_notams_command)
+    app.cli.add_command(import_notam_text_command)

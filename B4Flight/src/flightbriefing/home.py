@@ -10,9 +10,8 @@ from sqlalchemy import func, and_
 
 from datetime import datetime, timedelta
 
-from .auth import is_logged_in, User
-from .flightplans import FlightPlan, FlightPlanPoint 
-from .notams import Briefing, Notam
+from .db import Briefing, Notam, FlightPlan, FlightPlanPoint, User
+from .auth import is_logged_in
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 bp = Blueprint('home', __name__)
