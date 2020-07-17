@@ -263,6 +263,7 @@ def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
 @click.command('import-notams')
 @with_appcontext
 def import_notams_command():
+    """Download current NOTAM briefing from CAA website, convert, and import into the database""" 
     click.echo("Ready to import NOTAMS")
     brf = import_notam_ZA(overwrite_existing=True)
     click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
@@ -271,7 +272,7 @@ def import_notams_command():
 @click.argument('filename')
 @with_appcontext
 def import_notam_text_command(filename):
-    
+    """Import a NOTAM briefing from a specific text file - used to catch-up on past/failed notams"""
     click.echo(f'Ready to import NOTAM text file: {filename}...')
     
     #parse the notam text file, returning a Briefing Object
