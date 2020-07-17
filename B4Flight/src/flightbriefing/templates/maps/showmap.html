@@ -7,7 +7,7 @@
 		{% if last_wk_briefing_date %}
 			New NOTAMS
 		{% else %}
-	      Current NOTAMS
+	      Visual NOTAMS
 		{% endif %}
     {% endif %}
   {% endblock %}
@@ -51,7 +51,7 @@
 			</div>
 		</div>
 	
-		<div id='map' style='width: 75%; height: 400px;'></div>
+		<div id='map' style='width: 75%; height:75vh;'></div>
 	</div>
 </div>
 <script>
@@ -96,7 +96,8 @@ map.on('load', function() {
 			"features": notamGeoData
 		}
 	});
-
+	
+	map.addControl(new mapboxgl.FullscreenControl());
 	
 	
 	//Loop through the usedLayers, and create a layer for each (eg. layer for obstacle_polygon, obstacle_circle, rpas_polygon, etc.)
@@ -275,8 +276,12 @@ radiusSlider.value = 500;
 radiusFilterDisplay.innerHTML = radiusSlider.value; // Display the default slider value
 
 
-// Update the displayed slider value (each time you drag the slider handle)
+// Update the displayed slider value (each time you drag the slider handle) - does not work on IE, so we have onchange to handle that
 radiusSlider.oninput = function() {
+	radiusFilterDisplay.innerHTML = this.value;
+};
+// Update the displayed slider value (each time you drag the slider handle) - works on IE
+radiusSlider.onchange = function() {
 	radiusFilterDisplay.innerHTML = this.value;
 };
 
