@@ -274,6 +274,7 @@ def create_admin_user(admin_email, admin_user='b4admin', admin_pass='b4admin'):
 @click.command('create-db')
 @with_appcontext
 def create_db_command():
+    """Create the B4Flight Databases"""
     click.echo("Ready to create the core B4Flight databases")
     create_new_db()
     click.echo("Databases Created")
@@ -282,6 +283,7 @@ def create_db_command():
 @click.argument('csv_folder')
 @with_appcontext
 def import_lookup_command(csv_folder):
+    """Import the Q-Code lookup CSV Files.  Must be named Q_Code_2_3.csv and Q_Code_4_5.csv. Encoding UTF8"""
     click.echo("Ready to import lookup files")
     import_ref_tables(csv_folder)
     click.echo("Databases Created")
