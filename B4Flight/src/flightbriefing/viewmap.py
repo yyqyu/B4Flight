@@ -193,7 +193,7 @@ def newnotams():
     lw_briefing_date = sqa_sess.query(Briefing).get(lw_briefing_id).Briefing_Date
     tw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == latest_brief_id)
     lw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == lw_briefing_id)
-    new_notams = tw_notams.except_(lw_notams)
+    new_notams = tw_notams.filter(~Notam.Notam_Number.in_(lw_notams))
     
     notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.Notam_Number.in_(new_notams))).order_by(Notam.A_Location).all()
     

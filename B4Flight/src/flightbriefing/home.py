@@ -38,10 +38,8 @@ def index():
     lw_briefing_date = sqa_sess.query(Briefing).get(lw_briefing_id).Briefing_Date
     tw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == latest_brief_id)
     lw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == lw_briefing_id)
-    ##new_notams = tw_notams.except_(lw_notams).count()
-    ##deleted_notams = lw_notams.except_(tw_notams).count()
-    new_notams=None
-    deleted_notams=None
+    new_notams = tw_notams.filter(~Notam.Notam_Number.in_(lw_notams)).count()
+    deleted_notams = lw_notams.filter(~Notam.Notam_Number.in_(tw_notams)).count()
     
     
     return render_template("home.html", briefing=briefing, notam_count=len(briefing.Notams), flights=flights, 
