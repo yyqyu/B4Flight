@@ -10,12 +10,12 @@ from sqlalchemy.orm import sessionmaker
 from geojson import Polygon, Feature, FeatureCollection
 import re
 
-from . import helpers
-from . import notams
-from . import flightplans
+from flightbriefing import helpers
+from flightbriefing import notams
+from flightbriefing import flightplans
 
-from . import db
-from .db import User, FlightPlan, FlightPlanPoint
+from flightbriefing import db
+from flightbriefing.db import User, FlightPlan, FlightPlanPoint, Notam, Briefing
 
 from polycircles import polycircles
 from datetime import datetime, timedelta
@@ -24,28 +24,28 @@ from datetime import datetime, timedelta
 db_connect = helpers.read_db_connect()
 eng = create_engine(db_connect, pool_recycle=280)
 
-def initialise_notam_db():
-    notams.init_db(eng)
-    notams.create_new_db(eng)
+#def initialise_notam_db():
+#    notams.init_db(eng)
+#    notams.create_new_db(eng)
 
             
     
 
-def import_notams():
-    notams.init_db(eng)
+#def import_notams():
+#    notams.init_db(eng)
 #    file_name = '..\\working_files\\Summary.txt'
-    file_name = '..\\working_files\\Summary_dl.txt'
-    
-    brf,ntm = notams.parse_notam_text_file(file_name, 'ZA')
-    
-    Session = sessionmaker(bind=eng)
-    session = Session()
-    session.add(brf)
-    session.commit()
-    
-    print(f'Completed - written {len(ntm)} NOTAMS')
-    
-    pass
+#    file_name = '..\\working_files\\Summary_dl.txt'
+#    
+#    brf,ntm = notams.parse_notam_text_file(file_name, 'ZA')
+#    
+#    Session = sessionmaker(bind=eng)
+#    session = Session()
+#    session.add(brf)
+#    session.commit()
+#    
+#    print(f'Completed - written {len(ntm)} NOTAMS')
+#    
+#    pass
 
 
 def test_top_notams():
@@ -96,7 +96,7 @@ def initialise_user_db():
     db.create_admin_user('artech@live.co.za')
 
 
-initialise_notam_db()
+#initialise_notam_db()
 #import_notams()
 
 #test_top_notams()
@@ -127,18 +127,22 @@ def test_except():
     Session = sessionmaker(bind=eng)
     session = Session()
     
-    print(session.query(func.max(notams.Briefing.BriefingID)).filter(notams.Briefing.Briefing_Date < (datetime.utcnow().date() - timedelta(days=7))).first()[0])
+    print(session.query(func.max(db.Briefing.BriefingID)).filter(db.Briefing.Briefing_Date < (datetime.utcnow().date() - timedelta(days=7))).first()[0])
     print('---------')
-    q1 = session.query(notams.Notam.Notam_Number).filter(notams.Notam.BriefingID == 3)
-    q2 = session.query(notams.Notam.Notam_Number).filter(notams.Notam.BriefingID == 4)
+    #q1 = session.query(notams.Notam.Notam_Number).filter(notams.Notam.BriefingID == 3)
+    #q2 = session.query(notams.Notam.Notam_Number).filter(notams.Notam.BriefingID == 4)
     #q3 = q1.except_(q2).all() #Deleted
-    q3 = q2.except_(q1).all() #Deleted
-    print(len(q3))
+    #q3 = q2.except_(q1).all() #Deleted
+    q1 = session.query(db.Notam.Notam_Number).filter(db.Notam.BriefingID == 13)
+    q2 = session.query(db.Notam.Notam_Number).filter(db.Notam.BriefingID == 14)
+    #q2 = session.query(db.Notam.Notam_Number).filter(and_(db.Notam.BriefingID == 14, ~db.Notam.Notam_Number.in_(q1)))
+    q3 = q1.filter(~db.Notam.Notam_Number.in_(q2))
+    #print(len(q2))
     
     for x in q3:
         print(x.Notam_Number)
     
-#test_except()
+test_except()
 
 def test_mail():
     import smtplib, ssl
