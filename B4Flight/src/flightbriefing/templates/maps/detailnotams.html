@@ -1,20 +1,22 @@
 {% extends 'base.html' %}
 
+{% block title %}Detailed Notam Listing{% endblock %}
+
 {% block header %}
-  <h1>{% block title %}Detailed Notam Listing{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
 	<div class="container">
-		{% if briefing_id %}
-			<h2>Flight Briefing:</p>
-		{% endif %}
+	
+		<h2>NOTAM BRIEFING</h2>
 		<form class="form-inline" method="post">
 				<div class="form-group mx-4">
 					<label for="briefing" class="mr-2">Select a Briefing</label>
 					<select id="briefing" name="briefing" class="form-control">
 					{% for briefing in briefings %}
-						<option value={{briefing.BriefingID}}>{{briefing.Briefing_Ref}} on {{briefing.Briefing_Date}}</option>
+						<option value={{briefing.BriefingID}} {% if briefing.BriefingID|string == briefing_id %}selected{% endif %} >
+						{{briefing.Briefing_Ref}} on {{briefing.Briefing_Date}}
+						</option>
 					{% endfor %}
 					</select>
 				</div>

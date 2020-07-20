@@ -197,14 +197,14 @@ class Notam(Base):
         else:
             return False
 
-    def circle_bounded_area(self):
+    def circle_bounded_area(self, number_vertices=32):
         
         radius_m = self.Radius * 1853 #convert radius from nautical miles to metres
         
         poly_coords = ''
         
         #create the circle
-        polycircle = polycircles.Polycircle(latitude=helpers.convert_dms_to_dd(self.Coord_Lat), longitude=helpers.convert_dms_to_dd(self.Coord_Lon), radius=radius_m, number_of_vertices=20)
+        polycircle = polycircles.Polycircle(latitude=helpers.convert_dms_to_dd(self.Coord_Lat), longitude=helpers.convert_dms_to_dd(self.Coord_Lon), radius=radius_m, number_of_vertices=number_vertices)
         circ_coords = polycircle.to_lat_lon()
 
         #convert circle's decimal degree lat,lon tuples into DMS and convert to string in same format as bounded area (i.e. LAT,LON LAT,LON)

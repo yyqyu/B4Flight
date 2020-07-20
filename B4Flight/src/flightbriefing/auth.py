@@ -4,7 +4,7 @@ Created on 22 Jun 2020
 @author: aretallack
 '''
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app, make_response
 )
 
 from email.headerregistry import Address
@@ -23,18 +23,56 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def requires_login(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        if session.get("userid") is None:
+
+        if is_logged_in():
+            return view(**kwargs)
+        else:
             return redirect(url_for("auth.login"))
         
-        return view(**kwargs)
     return wrapped_view
 
 def is_logged_in():
-    if session.get("userid") is None:
-        return False
-    else:
-        return True
     
+    if session.get("username") is not None:
+        uname=session.get("username")
+    
+    else:
+        uname = request.cookies.get("remember_username")
+        
+    if uname:
+        if log_user_in(uname) is None:
+            return True
+    
+    session.clear()
+    return False
+
+
+def log_user_in(username, password=None):
+    error_msg = None
+    
+    sess = sqa_session()
+
+    usr = sess.query(User).filter(User.Username == username).first()
+    if usr is None:
+        error_msg = 'Username or password is incorrect'
+    
+    elif password is not None:
+        if check_password_hash(usr.Password, password) == False:
+            error_msg = 'Username or password is incorrect'
+    
+    if usr.Status_Pending == True:
+        error_msg = "Your account hasn't been activated yet"
+    
+    if usr.Status_Active == False:
+        error_msg = "Your account is no longer active"
+    
+    if error_msg is None:
+        session.clear()
+        session['userid'] = usr.UserID
+        session['username'] = usr.Username
+        session['user_fname'] = usr.Firstname
+    
+    return error_msg
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -110,13 +148,13 @@ def activate(token):
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+    
     if request.method == 'POST':
         
         username = request.form['username']
         passwd = request.form['password']
+        remember = request.form.get('remember')
 
-        sess = sqa_session()
-        
         error_msg = None
         
         if not username:
@@ -125,23 +163,17 @@ def login():
             error_msg = 'Please enter a password.'
 
         else:
-            usr = sess.query(User).filter(User.Username == username).first()
-            if usr is None:
-                error_msg = 'Username does not exist'
-            elif check_password_hash(usr.Password, passwd) == False:
-                error_msg = 'Incorrect password'
-            elif usr.Status_Pending == True:
-                error_msg = "Your account hasn't been activated yet"
-            elif usr.Status_Active == False:
-                error_msg = "Your account is no longer active"
             
-            else:
-                session.clear()
-                session['userid'] = usr.UserID
-                session['username'] = usr.Username
-                session['user_fname'] = usr.Firstname
+            error_msg = log_user_in(username, passwd)
+            if error_msg is None:
+                ret = make_response(redirect(url_for("home.index")))
 
-                return redirect(url_for("home.index"))
+                if remember is not None:
+                    ret.set_cookie('remember_username', username, max_age = 60*60*24*365, samesite = "strict")
+                else:
+                    ret.set_cookie('remember_username', "", max_age = 0, samesite = "strict")
+                
+                return ret#redirect(url_for("home.index"))
         
         flash(error_msg)
         
@@ -150,5 +182,8 @@ def login():
 @bp.route('/logout')
 def logout():
     session.clear()
+    #clear Cookie
+    ret = make_response(redirect(url_for("auth.login")))
+    ret.set_cookie('remember_username', "", max_age = 0, samesite = "strict")
     
-    return redirect(url_for("auth.login"))
+    return ret

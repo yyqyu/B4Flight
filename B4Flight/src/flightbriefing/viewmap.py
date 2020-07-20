@@ -21,6 +21,7 @@ from . import helpers, flightplans
 from .auth import requires_login
 from .db import FlightPlan, Notam, Briefing
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
+from .notams import get_new_deleted_notams
 
 bp = Blueprint('viewmap', __name__)
 
@@ -50,10 +51,31 @@ def detailnotams():
     else:
         notam_list = sqa_sess.query(Notam).filter(Notam.BriefingID == briefing_id)
         
-##    session.remove()
     
-    return render_template('maps/detailnotams.html', briefings = briefings, notams = notam_list, default_date = default_date, flight_date = flight_date)
+    return render_template('maps/detailnotams.html', briefings = briefings, notams = notam_list, 
+                           briefing_id = briefing_id, default_date = default_date, flight_date = flight_date)
     
+@bp.route('/changednotams', methods=('GET', 'POST'))
+@requires_login
+def changednotamdetail():
+
+    sqa_sess = sqa_session()
+    since_date = datetime.utcnow().date() - timedelta(days=60)
+    latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
+    briefings = sqa_sess.query(Briefing.BriefingID, Briefing.Briefing_Ref, Briefing.Briefing_Date).filter(and_(Briefing.Briefing_Date > since_date, Briefing.BriefingID < latest_brief_id)).order_by(Briefing.BriefingID.desc()).all()
+    
+    if request.method == "POST":
+        briefing_id = request.form['briefing']
+        prev_briefing, new_notams, del_notams = get_new_deleted_notams(briefing_id=briefing_id, return_count_only=False)
+    
+    else:
+        since_date = datetime.utcnow().date() - timedelta(days=7)
+        prev_briefing, new_notams, del_notams = get_new_deleted_notams(since_date, return_count_only=False)
+        briefing_id = prev_briefing.BriefingID
+
+    
+    return render_template('maps/changednotams.html', briefings = briefings, since_date = prev_briefing.Briefing_Date, prev_briefing_id=str(briefing_id), 
+                           new_notams = new_notams, deleted_notams = del_notams)
 
 
 @bp.route('/listnotams', methods=('GET', 'POST'))
@@ -73,7 +95,6 @@ def listnotams():
         
         notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == briefing_id, Notam.From_Date <= flight_date, Notam.To_Date > flight_date))
 
-##    session.remove()
     
     return render_template('maps/listnotams.html', briefings = briefings, notams = notam_list, default_date = default_date, briefing_id = briefing_id)
 
@@ -113,8 +134,13 @@ def generate_notam_geojson(notam_list):
             ntm_duration = ntm.Duration
         else:
             ntm_duration = ''
+        col_r = int(ntm.QCode_2_3_Lookup.Group_Colour[1:3],16)
+        col_g = int(ntm.QCode_2_3_Lookup.Group_Colour[3:5],16)
+        col_b = int(ntm.QCode_2_3_Lookup.Group_Colour[5:7],16)
         
-        notam_features.append(Feature(geometry=geojson_geom, properties={'fill':ntm.QCode_2_3_Lookup.Group_Colour, 'fill-opacity':0.4, 
+        fill_col=f'rgba({col_r},{col_g},{col_b},0.4)'
+        line_col=f'rgba({col_r},{col_g},{col_b},1)'
+        notam_features.append(Feature(geometry=geojson_geom, properties={'fill':fill_col, 'line':line_col, 
                                                                  'group': ntm.QCode_2_3_Lookup.Grouping,
                                                                  'layer_group': ntm.QCode_2_3_Lookup.Grouping + type_suffix, 
                                                                  'notam_number': ntm.Notam_Number,
@@ -142,24 +168,39 @@ def generate_notam_geojson(notam_list):
 @requires_login
 def viewmap():
     
+    flight_date = None
+    
+    if request.method == "POST":
+        flight_date = request.form['flight-date']
+
+        
     sqa_sess = sqa_session()
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
     briefing = sqa_sess.query(Briefing).get(latest_brief_id)
 
-    notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id)).order_by(Notam.A_Location).all()
+    if flight_date:
+        notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.From_Date <= flight_date, Notam.To_Date >= flight_date)).order_by(Notam.A_Location).all()
+    else:
+        notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id)).order_by(Notam.A_Location).all()
     
     notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
-                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers)
+                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
+                           default_flight_date = flight_date)
 
 
 
-@bp.route('/flightmap', methods=('GET', 'POST'))
+@bp.route('/flightmap/<int:flight_id>', methods=('GET', 'POST'))
 @requires_login
-def flightmap():
-    if request.method == "GET":
-        flight_id = request.args.get('flightid')
+def flightmap(flight_id):
+#    if request.method == "GET":
+#        flight_id = request.args.get('flightid')
+
+    flight_date = None
+    
+    if request.method == "POST":
+        flight_date = request.form['flight-date']
     
     sqa_sess = sqa_session()
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
@@ -167,7 +208,10 @@ def flightmap():
 
     flight = sqa_sess.query(FlightPlan).get(flight_id)
 
-    notam_list = flightplans.filter_route_notams(flight_id, 5)
+    if flight_date:
+        notam_list = flightplans.filter_route_notams(flight_id, 5, date_of_flight=flight_date)
+    else:
+        notam_list = flightplans.filter_route_notams(flight_id, 5)
     
     notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
 
@@ -177,8 +221,9 @@ def flightmap():
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
-                           flight=flight,
+                           flight=flight, default_flight_date = flight_date,
                            flight_geojson=flight_geojson, flight_bounds=flight_bounds, flight_centre=flight_centre)
+
 
 
 @bp.route('/newnotams', methods=('GET', 'POST'))
@@ -187,20 +232,12 @@ def newnotams():
     sqa_sess = sqa_session()
 
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
-
-    #Find the new NOTAMS
-    lw_briefing_id = sqa_sess.query(func.max(Briefing.BriefingID)).filter(Briefing.Briefing_Date < (datetime.utcnow().date() - timedelta(days=7))).first()[0]
-    lw_briefing_date = sqa_sess.query(Briefing).get(lw_briefing_id).Briefing_Date
-    tw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == latest_brief_id)
-    lw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == lw_briefing_id)
-    new_notams = tw_notams.filter(~Notam.Notam_Number.in_(lw_notams))
-    
-    notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.Notam_Number.in_(new_notams))).order_by(Notam.A_Location).all()
+    lw_briefing_date, new_notams, del_notams = get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), return_count_only=False)
     
     
     briefing = sqa_sess.query(Briefing).get(latest_brief_id)
     
-    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
+    notam_features, used_groups, used_layers = generate_notam_geojson(new_notams)
 
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 

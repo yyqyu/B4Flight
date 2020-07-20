@@ -21,20 +21,20 @@
 {% block content %}
 <div class="container-flow">
 	{% if flight %}
-		<h2>Flight Briefing</h2>
+		<h2>FLIGHT BRIEFING</h2>
 		<p>Briefing for flight <b>{{flight.Flight_Name}}</b> using NOTAM Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
 	{% else %}
 		{% if last_wk_briefing_date %}
-			<h2>New NOTAMS</h2>
+			<h2>NEW NOTAMS</h2>
 			<p>New NOTAMS since {{last_wk_briefing_date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
 		{% else %}
-			<h2>Current NOTAMS</h2>
+			<h2>CURRENT NOTAMS</h2>
 			<p>NOTAM Overview for Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
 		{% endif %}
 	{% endif %}
 	<div class="row">
 		<div class="col-3">
-			<div class="bflight-table-head text-center"><b>FILTER NOTAMS</b></div>
+			<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
 				<li class="list-group-item py-1" style="background-color: #e6f2ff;">
@@ -42,12 +42,26 @@
 				</li>
 			{% endfor %}
 			</ul>
-			<div class="small">
-				<div class="slidecontainer">
-				Filter NOTAM Radius < <span id="radius-display">xx</span>nm:
-					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter">
-					<button class="btn btn-sm bflight-btn ml-2" onclick="filterRadius()">Apply</button>
+			<div class="bflight-table-head text-center"><b>NOTAM RADIUS</b></div>
+			<div class="small border py-1">
+				<div class="slidecontainer px-1">
+				Filter NOTAM Radius < <span id="radius-display">xx</span>nm: <br>
+					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter" style="width:70%;">
+					<button class="btn btn-sm bflight-btn m-2" onclick="filterRadius()">Apply</button>
 				</div>
+			</div>
+			<div class="bflight-table-head text-center"><b>FLIGHT DATE</b></div>
+			<div class="small border py-2">
+				<form id="date-filter" class="form-inline pl-2" method="post">
+					<div class="form-row">
+						<div class="col-auto">
+							<input type="date" class="form-control-sm" name="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
+						</div>
+						<div class="col-auto">
+							<input type="submit" class="btn btn-sm bflight-btn mx-1" value="Filter">
+						</div>
+					</div>
+				</form>
 			</div>
 		</div>
 	
@@ -113,7 +127,7 @@ map.on('load', function() {
 				"source": "notams",
 				"paint": {
 					"fill-color": ["get","fill"],
-					"fill-opacity": ["get", "fill-opacity"]
+					"fill-outline-color": ["get","line"]
 				},
 				layout : {
 					"visibility": "visible"
@@ -128,9 +142,8 @@ map.on('load', function() {
 				"source": "notams",
 				"paint": {
 					"circle-radius": 10,
-					"circle-stroke-color": ["get","fill"],
-					"circle-color": ["get","fill"],
-					"circle-opacity": ["get", "fill-opacity"]
+					"circle-stroke-color": ["get","line"],
+					"circle-color": ["get","fill"]
 				},
 				layout : {
 					"visibility": "visible"

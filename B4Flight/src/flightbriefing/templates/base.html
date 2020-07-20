@@ -15,18 +15,21 @@
 	<body>
 		<section class="content">
 		<header class="navbar navbar navbar-expand-sm flex-column flex-md-row bflight-head">
-			<a class="navbar-brand bflight-title" href="/">B4Flight Briefing</a>
+			<a class="navbar-brand bflight-title" href="/">B4Flight</a>
 			<div class="navbar-nav-scroll bflight-navbar">
 				<ul class="navbar-nav flex-row">
 				<li class="nav-item bflight-navitem">
-					<a href="/">Home</a>
+					<a href="/">HOME</a>
 				</li>
 			    {% if session['username'] %}
 				<li class="nav-item bflight-navitem">
-					<a href="/">Notams</a>
+					<a href="{{url_for('viewmap.viewmap')}}">MAP</a>
 				</li>
 				<li class="nav-item bflight-navitem">
-					<a href="/">Flights</a>
+					<a href="{{url_for('viewmap.detailnotams')}}">NOTAMS</a>
+				</li>
+				<li class="nav-item bflight-navitem">
+					<a href="{{url_for('viewmap.changednotamdetail')}}">CHANGES</a>
 				</li>
 				{% endif %}
 				</ul>
@@ -55,7 +58,7 @@
 	
 		<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js" integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd" crossorigin="anonymous"></script>
 		
 	</body>
 </html>

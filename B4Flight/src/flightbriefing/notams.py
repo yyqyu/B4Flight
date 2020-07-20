@@ -6,9 +6,12 @@ Module to import NOTAMS (NOtice To AirMen) from CAA source(s) and store in a str
 
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from sqlalchemy import func, and_
     
 from .db import Briefing, Notam
+from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 
 
@@ -315,3 +318,39 @@ def parse_notam_text_file(filename, country_code):
     
     return this_briefing #return the Briefing Object (which contains all the notams)
 
+
+def get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), briefing_id=None, return_count_only=True):
+    sqa_sess = sqa_session()
+    
+    #get latest briefing
+    latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
+
+    #get the first briefing prior to since_date
+    if briefing_id:
+        prev_briefing_id = briefing_id
+    else:
+        prev_briefing_id = sqa_sess.query(func.max(Briefing.BriefingID)).filter(Briefing.Briefing_Date <= since_date).first()[0]
+        
+    prev_briefing = sqa_sess.query(Briefing).get(prev_briefing_id)
+    
+    #get the notams
+    latest_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == latest_brief_id)
+    prev_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == prev_briefing_id)
+    
+    #Compare Notams...
+    #Only return the count...
+    if return_count_only == True:
+        #compare and get new/deleted notams
+        new_notams = latest_notams.filter(~Notam.Notam_Number.in_(prev_notams)).count()
+        deleted_notams = prev_notams.filter(~Notam.Notam_Number.in_(latest_notams)).count()
+    
+    #Return the detailed notams...
+    else:
+        new_notam_nos = latest_notams.filter(~Notam.Notam_Number.in_(prev_notams))
+        deleted_notam_nos = prev_notams.filter(~Notam.Notam_Number.in_(latest_notams))
+        
+        new_notams = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.Notam_Number.in_(new_notam_nos))).order_by(Notam.Notam_Number).all()
+        deleted_notams = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == prev_briefing_id, Notam.Notam_Number.in_(deleted_notam_nos))).order_by(Notam.Notam_Number).all()
+
+
+    return prev_briefing, new_notams, deleted_notams

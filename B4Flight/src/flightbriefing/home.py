@@ -11,6 +11,7 @@ from sqlalchemy import func, and_
 from datetime import datetime, timedelta
 
 from .db import Briefing, Notam, FlightPlan, FlightPlanPoint, User
+from .notams import get_new_deleted_notams
 from .auth import is_logged_in
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
@@ -34,13 +35,8 @@ def index():
     flights = sqa_sess.query(FlightPlan).filter(FlightPlan.UserID == session.get("userid")).order_by(FlightPlan.FlightplanID.desc()).limit(5).all()
     
     #Show what's changed over the last week
-    lw_briefing_id = sqa_sess.query(func.max(Briefing.BriefingID)).filter(Briefing.Briefing_Date < (datetime.utcnow().date() - timedelta(days=7))).first()[0]
-    lw_briefing_date = sqa_sess.query(Briefing).get(lw_briefing_id).Briefing_Date
-    tw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == latest_brief_id)
-    lw_notams = sqa_sess.query(Notam.Notam_Number).filter(Notam.BriefingID == lw_briefing_id)
-    new_notams = tw_notams.filter(~Notam.Notam_Number.in_(lw_notams)).count()
-    deleted_notams = lw_notams.filter(~Notam.Notam_Number.in_(tw_notams)).count()
-    
+    prev_briefing, new_notams, deleted_notams = get_new_deleted_notams(datetime.utcnow().date() - timedelta(days=7))
+    lw_briefing_date = prev_briefing.Briefing_Date
     
     return render_template("home.html", briefing=briefing, notam_count=len(briefing.Notams), flights=flights, 
                            last_wk_brief_date=lw_briefing_date, new_notams=new_notams, deleted_notams=deleted_notams)

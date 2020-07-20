@@ -1,10 +1,28 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@700&display=swap');
 
 
 body {
 	font-family: Calibri, Arial, Helvetica, sans-serif;
 	color: rgb(0, 77, 77);
+}
+
+.bflight-form-login {
+	width: 100%;
+	max-width: 480px;
+	padding: 5rem;
+	margin: 5% auto;
+	background-color: rgb(240, 245, 245);
+	border-radius: 5px;
+}
+
+.bflight-form-register {
+	width: 100%;
+	max-width: 600px;
+	padding: 1rem;
+	margin: 5% auto;
+	background-color: rgb(240, 245, 245);
+	border-radius: 5px;
 }
 
 .bflight-head {
@@ -17,9 +35,9 @@ body {
 
 .bflight-title {
 	font-family: 'Merriweather Sans', sans-serif;
-	font-size: 1.4em;
+	font-size: 1.2rem;
 	color: rgb(230,255,255);
-	padding-right: 1em;
+	padding-right: 5rem;
 }
 
 .bflight-title:hover {
@@ -32,16 +50,16 @@ body {
 
 .bflight-navbar {
 	color: rgb(230,255,255);
-	padding-top: 0.4em;
-	padding-bottom: 0.4em;
+	padding-top: 0.4rem;
+	padding-bottom: 0.4rem;
 }
 
 .bflight-navitem {
 	color: rgb(230,255,255);
 	font-weight: bold;
-	margin-top: 0.5em;
-	padding-left: 0.5em;
-	padding-right: 0.5em;
+	margin-top: 0.5rem;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
 }
 
 .bflight-navitem a:hover {
@@ -56,15 +74,24 @@ body {
 	background-color: rgb(230,255,255);
 	color: rgb(0, 77, 77);
 	font-weight: bold;
-	margin-top: 0.5em;
-	padding-left: 0.5em;
-	padding-right: 0.5em;
+	margin-top: 0.5rem;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
 	border-radius: 5px;
 }
 
 .bflight-table-head {
 	background-color: rgb(0, 128, 128);
 	color: rgb(230,255,255);
+}
+
+.bflight-home-panel {
+	padding: 5rem;
+	background-color: rgb(240, 245, 245);
+	margin-right: 0.75rem;
+	margin-bottom: 0.75rem;
+	padding: 1rem;
+	border-radius: 5px;
 }
 
 .bflight-btn {
@@ -79,7 +106,7 @@ body {
 
 .bflight-file {
 	background-color: rgb(255, 255, 255);
-	padding: 0.5em;
+	padding: 0.5rem;
 	border: solid;
 	border-width: 1px;
 	border-color: rgb(217, 217, 217);
@@ -87,16 +114,35 @@ body {
 	
 }
 
+.bflight-new-notam {
+	font-weight: 600;
+	color: rgb(0, 153, 0);
+} 
+
+h2.bflight-new-notam {
+	color: rgb(255, 255, 255);
+	background-color: rgb(0, 128, 0);
+	margin-top: 0.5rem;
+	padding: 0.1rem 1rem 0.1rem 1rem;
+}
+
+.bflight-expired-notam {
+	font-weight: 600;
+	color: rgb(153, 0, 0);
+} 
+
+h2.bflight-expired-notam {
+	color: rgb(255, 255, 255);
+	background-color: rgb(128, 0, 0);
+	margin-top: 0.5rem;
+	padding: 0.1rem 1rem 0.1rem 1rem;
+}
+
 h1 {
-	font-size: 2em;
+	font-size: 2rem;
 }
 
 h2 {
-	font-size: 1.5em;
+	font-size: 1.5rem;
 }
 
-.form-container {
-	padding-top: 20px;
-	padding-bottom: 10px; 
-	padding-left:25px;
-}
