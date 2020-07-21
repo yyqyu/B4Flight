@@ -291,7 +291,6 @@ radiusSlider.value = {{radius_default}};
 radiusSlider.value = 125;
 {% endif %}
 radiusFilterDisplay.innerHTML = radiusSlider.value; // Display the default slider value
-filterRadius();
 
 // Update the displayed slider value (each time you drag the slider handle) - does not work on IE, so we have onchange to handle that
 radiusSlider.oninput = function() {
@@ -364,6 +363,7 @@ function filterRadius() {
 		});
 }
 
+filterRadius();
 
 
 </script>
