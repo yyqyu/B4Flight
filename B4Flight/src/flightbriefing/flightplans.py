@@ -100,7 +100,9 @@ def read_gpx_file(filename, user_id, flight_description):
 
 def read_easyplan_file(filename, user_id, flight_description):
 
-    regPts = re.compile(r"^Name='(?P<point_name>[\w\s\.,;:\(\)/\\!@#$%^&\*\+\=\-_]+)'\s.*Elevation='(?P<elev>[0-9]+)'\s.*Lat=(?P<lat>[0-9\.]+)\s.*Long=(?P<lon>[0-9\.]+)\s.*")
+    #regPts = re.compile(r"^Name='(?P<point_name>[\w\s\.,;:\(\)/\\!@#$%^&\*\+\=\-'\"_]+)' Desig\s.*Elevation='(?P<elev>[0-9]+)'\s.*Lat=(?P<lat>[0-9\.]+)\s.*Long=(?P<lon>[0-9\.]+)\s.*")
+    #regPts = re.compile(r"Desig=.*Elevation='(?P<elev>[0-9]+)'\s.*Lat=(?P<lat>[0-9\.]+)\s.*Long=(?P<lon>[0-9\.]+)\s.*")
+    regPts = re.compile(r"^Name='(?P<point_name>[\w\s\.,;:\(\)/\\!@#$%^&\*\+\=\-'\"_]+)'\sDesig=.*Elevation='(?P<elev>[0-9]+)'\s.*Lat=(?P<lat>[0-9\.]+)\s.*Long=(?P<lon>[0-9\.]+)\s.*")
     routePts = []
     routes = []
 
@@ -186,12 +188,17 @@ def filter_route_notams(flightplan_id, buffer_width_nm, includeMatches=True, dat
 
     
     #-----To plot the RouteBuffer, split the route to prevent the polygon closing and filling.
-    rl = int(len(route.coords)/2.0)
-    route1 = geometry.LineString(route.coords[:rl])
-    route2 = geometry.LineString(route.coords[rl-1:])
-    #Create the buffer
-    fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
-    fplShapelyBuffers.append(route2.buffer(buffer_width_deg))
+    if len(route.coords)>2:
+        rl = int(len(route.coords)/2.0)
+        if rl==1: rl=2
+        route1 = geometry.LineString(route.coords[:rl])
+        route2 = geometry.LineString(route.coords[rl-1:])
+        #Create the buffer
+        fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
+        fplShapelyBuffers.append(route2.buffer(buffer_width_deg))
+    else:
+        route1 = geometry.LineString(route.coords)
+        fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
 
     
     #Now process each NOTAM, and check for intersection with the route buffer.
