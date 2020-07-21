@@ -285,9 +285,13 @@ var radiusSlider = document.getElementById("radius-filter");
 var radiusFilterDisplay = document.getElementById("radius-display");
 
 //default at 500
-radiusSlider.value = 500;
+{% if redius_default %}
+radiusSlider.value = {{radius_default}};
+{% else %}
+radiusSlider.value = 125;
+{% endif %}
 radiusFilterDisplay.innerHTML = radiusSlider.value; // Display the default slider value
-
+filterRadius();
 
 // Update the displayed slider value (each time you drag the slider handle) - does not work on IE, so we have onchange to handle that
 radiusSlider.oninput = function() {
