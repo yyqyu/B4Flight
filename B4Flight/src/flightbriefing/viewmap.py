@@ -232,7 +232,7 @@ def newnotams():
     sqa_sess = sqa_session()
 
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
-    lw_briefing_date, new_notams, del_notams = get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), return_count_only=False)
+    prev_briefing, new_notams, del_notams = get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), return_count_only=False)
     
     
     briefing = sqa_sess.query(Briefing).get(latest_brief_id)
@@ -241,7 +241,7 @@ def newnotams():
 
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
-                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers, last_wk_briefing_date=lw_briefing_date)
+                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers, prev_briefing=prev_briefing)
 
 
 @bp.route('/uploadroute', methods=('GET', 'POST'))

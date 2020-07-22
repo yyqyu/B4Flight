@@ -24,9 +24,9 @@
 		<h2>FLIGHT BRIEFING</h2>
 		<p>Briefing for flight <b>{{flight.Flight_Name}}</b> using NOTAM Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
 	{% else %}
-		{% if last_wk_briefing_date %}
+		{% if prev_briefing %}
 			<h2>NEW NOTAMS</h2>
-			<p>New NOTAMS since {{last_wk_briefing_date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+			<p>New NOTAMS since {{prev_briefing.Briefing_Date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
 		{% else %}
 			<h2>CURRENT NOTAMS</h2>
 			<p>NOTAM Overview for Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
@@ -45,7 +45,7 @@
 			<div class="bflight-table-head text-center"><b>NOTAM RADIUS</b></div>
 			<div class="small border py-1">
 				<div class="slidecontainer px-1">
-				Filter NOTAM Radius < <span id="radius-display">xx</span>nm: <br>
+				Filter NOTAM Radius &lt; <span id="radius-display">xx</span>nm: <br>
 					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter" style="width:70%;">
 					<button class="btn btn-sm bflight-btn m-2" onclick="filterRadius()">Apply</button>
 				</div>
