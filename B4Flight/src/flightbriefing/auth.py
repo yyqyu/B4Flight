@@ -169,9 +169,9 @@ def login():
                 ret = make_response(redirect(url_for("home.index")))
 
                 if remember is not None:
-                    ret.set_cookie('remember_username', username, max_age = 60*60*24*365, samesite = "strict")
+                    ret.set_cookie('remember_username', username, max_age = 60*60*24*365, samesite = "strict", httponly=True)
                 else:
-                    ret.set_cookie('remember_username', "", max_age = 0, samesite = "strict")
+                    ret.set_cookie('remember_username', "", max_age = 0, samesite = "strict", httponly=True)
                 
                 return ret#redirect(url_for("home.index"))
         

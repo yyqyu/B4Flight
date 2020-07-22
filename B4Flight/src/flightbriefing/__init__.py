@@ -34,7 +34,9 @@ def create_app(test_config=None):
     
 
     app.config.from_mapping(
-        SECRET_KEY=secret_key, 
+        SECRET_KEY=secret_key,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='strict', 
         MAPBOX_TOKEN=mapbox_token,
         WORKING_FOLDER=working_folder,
         UPLOAD_ARCHIVE_FOLDER=upload_archive_folder,
