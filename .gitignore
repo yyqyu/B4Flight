@@ -17,3 +17,8 @@ build/
 *.egg-info/
 
 bin
+/runway info.xml
+/aerodrome coords.xml
+/aerodrome FIR.xml
+/RSA DATA - 16JUL2020.kml
+/signif points.xml
