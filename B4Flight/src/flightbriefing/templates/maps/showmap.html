@@ -6,6 +6,8 @@
     {% else %}
 		{% if last_wk_briefing_date %}
 			New NOTAMS
+		{% elif home_aerodrome %}
+			{{home_aerodrome}} NOTAMS
 		{% else %}
 	      Visual NOTAMS
 		{% endif %}
@@ -27,6 +29,10 @@
 		{% if prev_briefing %}
 			<h2>NEW NOTAMS</h2>
 			<p>New NOTAMS since {{prev_briefing.Briefing_Date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+		{% elif home_aerodrome %}
+			<h2>HOME NOTAMS for {{home_aerodrome}}</h2>
+			<p>Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+		
 		{% else %}
 			<h2>CURRENT NOTAMS</h2>
 			<p>NOTAM Overview for Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
@@ -92,7 +98,8 @@ var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
     center: [28.5, -26], // starting position [lng, lat]
-    zoom: 3 // starting zoom
+    zoom: 3, // starting zoom
+    preserveDrawingBuffer: true
 });
 
 // Create a popup, but don't add it to the map yet.
@@ -237,10 +244,11 @@ map.on('load', function() {
 		}
 	});
 
-	map.fitBounds({{flight_bounds}});
-
 {% endif %}	
 
+{% if flight_bounds %}
+	map.fitBounds({{flight_bounds}});
+{% endif %}
 
 
 });

@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 from . import helpers, flightplans
 from .auth import requires_login
-from .db import FlightPlan, Notam, Briefing
+from .db import FlightPlan, Notam, Briefing, UserSetting, NavPoint
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 from .notams import get_new_deleted_notams
 
@@ -208,10 +208,11 @@ def flightmap(flight_id):
 
     flight = sqa_sess.query(FlightPlan).get(flight_id)
 
+    buffer_nm = UserSetting.get_setting(session['userid'], 'route_buffer').SettingValue
     if flight_date:
-        notam_list = flightplans.filter_route_notams(flight_id, 5, date_of_flight=flight_date)
+        notam_list = flightplans.filter_route_notams(flight_id, buffer_nm, date_of_flight=flight_date)
     else:
-        notam_list = flightplans.filter_route_notams(flight_id, 5)
+        notam_list = flightplans.filter_route_notams(flight_id, buffer_nm)
     
     notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
 
@@ -242,6 +243,41 @@ def newnotams():
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers, prev_briefing=prev_briefing)
+
+
+@bp.route('/homenotams', methods=('GET', 'POST'))
+@requires_login
+def homenotams():
+    flight_date = None
+    
+    if request.method == "POST":
+        flight_date = request.form['flight-date']
+    
+    sqa_sess = sqa_session()
+    latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
+    briefing = sqa_sess.query(Briefing).get(latest_brief_id)
+
+    home_aerodrome = UserSetting.get_setting(session['userid'], "home_aerodrome").SettingValue
+    home_radius = UserSetting.get_setting(session['userid'], "home_radius").SettingValue
+    home_navpt = sqa_sess.query(NavPoint).filter(NavPoint.ICAO_Code == home_aerodrome).first()
+    
+    radius = helpers.generate_circle_shapely(home_navpt.Latitude, home_navpt.Longitude, int(home_radius), format_is_dms=False)
+    
+    flight_bounds = helpers.get_shape_bounds(radius)
+    
+    if flight_date:
+        notam_list = flightplans.filter_point_notams(home_navpt.Longitude, home_navpt.Latitude, home_radius, date_of_flight=flight_date)
+    else:
+        notam_list = flightplans.filter_point_notams(home_navpt.Longitude, home_navpt.Latitude, home_radius)
+    
+    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
+
+    flight_centre = [home_navpt.Longitude, home_navpt.Latitude]
+
+    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
+                           default_flight_date = flight_date, home_aerodrome=home_aerodrome,
+                           flight_bounds=flight_bounds, flight_centre=flight_centre)
 
 
 @bp.route('/uploadroute', methods=('GET', 'POST'))

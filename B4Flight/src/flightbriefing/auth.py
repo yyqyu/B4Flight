@@ -14,7 +14,7 @@ import functools
 from werkzeug.security import check_password_hash
 
 from . import helpers
-from .db import User
+from .db import User, UserSetting
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 
@@ -93,6 +93,8 @@ def register():
             error_msg = 'Please enter a password.'
         elif len(passwd) < 8:
             error_msg = 'Please enter a password of at least 8 characters.'
+        elif passwd != request.form['passwordcheck']:
+            error_msg = 'You did not re-enter your password correctly.'
         elif not email:
             error_msg = 'Please enter your e-mail address.'
         
@@ -110,6 +112,13 @@ def register():
             new_user.Firstname = request.form['firstname']
             new_user.Lastname = request.form['lastname']
             
+            setts = []
+            setts.append(UserSetting(SettingName = "home_aerodrome", SettingValue = request.form['home_aerodrome']))
+            setts.append(UserSetting(SettingName = "home_radius", SettingValue = 25))
+            setts.append(UserSetting(SettingName = "route_buffer", SettingValue = 5))
+            new_user.Settings = setts
+            
+
             sess.add(new_user)
             sess.commit()
             

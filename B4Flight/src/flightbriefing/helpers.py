@@ -156,6 +156,15 @@ def get_flight_bounds(flight_plan, offset_dd=0.25):
     
     return [[min_x - offset_dd, min_y - offset_dd], [max_x + offset_dd, max_y + offset_dd]]
 
+def get_shape_bounds(shapely_geom, offset_dd=0.25):
+
+    min_x = shapely_geom.bounds[0]
+    min_y = shapely_geom.bounds[1]
+    max_x = shapely_geom.bounds[2]
+    max_y = shapely_geom.bounds[3]
+    
+    return [[min_x - offset_dd, min_y - offset_dd], [max_x + offset_dd, max_y + offset_dd]]
+
 def convert_rgb_to_hex(r,g,b):
     hex_colour='#'
     hex_colour += hex(r)[2:]
@@ -176,12 +185,16 @@ def convert_rgb_to_hex(r,g,b):
  RETURNS: shapely Polygon
 ---------------------------------------'''
 
-def generate_circle_shapely(centerLat, centerLon, radius_nm):
+def generate_circle_shapely(centerLat, centerLon, radius_nm, format_is_dms=True):
     
     radius_m = radius_nm * 1853 #convert radius from nautical miles to metres
     
     #create the circle
-    polycircle = polycircles.Polycircle(latitude=convert_dms_to_dd(centerLat), longitude=convert_dms_to_dd(centerLon), radius=radius_m, number_of_vertices=20)
+    if format_is_dms == True:
+        polycircle = polycircles.Polycircle(latitude=convert_dms_to_dd(centerLat), longitude=convert_dms_to_dd(centerLon), radius=radius_m, number_of_vertices=20)
+    else:
+        polycircle = polycircles.Polycircle(latitude=centerLat, longitude=centerLon, radius=radius_m, number_of_vertices=20)
+
     circ_coord = polycircle.to_lat_lon()
     spolygon = Polygon(switch_lat_lon(circ_coord)) #Shapely Polygon
     return spolygon

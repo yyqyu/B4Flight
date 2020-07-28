@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date, Time, DateTime, Float, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date, Time, DateTime, Float, Text, ForeignKey, UniqueConstraint, and_
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -45,7 +45,10 @@ class User(Base):
     Create_Date = Column(DateTime(), default=datetime.utcnow())
     Activation_Mail_Date = Column(DateTime())
     
-    FlightPlans = relationship("FlightPlan")
+    
+    FlightPlans = relationship("FlightPlan", back_populates="User")
+    Settings = relationship("UserSetting", back_populates="User")
+    
     
     @hybrid_property
     def Password(self):
@@ -76,7 +79,53 @@ class User(Base):
         return usr
         
 
+class UserSetting(Base):
+    __tablename__ = 'UserSettings'
+    ID = Column(Integer(), primary_key=True)
+    UserID = Column(Integer(), ForeignKey("Users.UserID"))
+    SettingName = Column(String(128))
+    SettingValue = Column(String(512))
+    
+    __table_args__ = (UniqueConstraint('UserID', 'SettingName'),)
+    
+    User = relationship("User")
 
+    @staticmethod
+    def get_setting(user_id, setting_name, create_if_missing=True):
+        sqa_sess = sqa_session()
+        setg = sqa_sess.query(UserSetting).filter(and_(UserSetting.UserID ==  user_id, UserSetting.SettingName == setting_name)).first()
+        
+        #If this setting doesn't exist, create it using default - this caters for new settings on existing users
+        if setg is None and create_if_missing == True:
+            default_set = current_app.config['DEFAULT_'+setting_name.upper()]
+            setg = UserSetting(UserID = user_id, SettingName = setting_name, SettingValue = default_set)
+            sqa_sess.add(setg)
+            sqa_sess.commit()
+        
+        return setg
+
+
+class NavPointCategory(Base):
+    __tablename__ = 'NavPointCategories'
+    Category_Code = Column(String(10), primary_key = True)
+    Description = Column(String(50))
+    
+    NavPoints = relationship("NavPoint", back_populates="Category")
+
+class NavPoint(Base):
+    __tablename__ = 'NavPoints'
+    NavPointID = Column(Integer(), primary_key=True)
+    Country_Code = Column(String(2))
+    ICAO_Code = Column(String(50))
+    Category_Code = Column(String(10), ForeignKey("NavPointCategories.Category_Code"))
+    Description = Column(String(500))
+    Latitude = Column(Float())
+    Longitude = Column(Float())
+    Active = Column(Boolean(), default=True)
+
+    Category = relationship("NavPointCategory")
+
+    
 class FlightPlan(Base):
     __tablename__ = 'FlightPlans'
     FlightplanID = Column(Integer(), primary_key=True)
@@ -106,6 +155,8 @@ class FlightPlanPoint(Base):
     FlightPlan = relationship("FlightPlan", back_populates="FlightPlanPoints")
 
 
+
+
 class QCode_2_3_Lookup(Base):
     __tablename__ = "QCodes_2_3_Lookup"
     
@@ -115,7 +166,7 @@ class QCode_2_3_Lookup(Base):
     Grouping = Column(String(50))
     Group_Colour = Column(String(50))
     
-    Notams = relationship("Notam")
+    Notams = relationship("Notam", back_populates="QCode_2_3_Lookup")
 
 
 class QCode_4_5_Lookup(Base):
@@ -125,7 +176,7 @@ class QCode_4_5_Lookup(Base):
     Description = Column(String(512))
     Abbreviation = Column(String(50))
     
-    Notams = relationship("Notam")
+    Notams = relationship("Notam", back_populates="QCode_4_5_Lookup")
 
 
 class Briefing(Base):
@@ -229,7 +280,7 @@ def create_new_db():
     Base.metadata.create_all()
 
 
-def import_ref_tables(csv_script_folder):
+def import_qcode_ref_tables(csv_script_folder):
 
     ses = sqa_session()
     
@@ -248,10 +299,36 @@ def import_ref_tables(csv_script_folder):
             ses.add(ref)
     
     print('Imported QCode Lookups: QCode_4_5_Lookup')
-
+    
     ses.commit()
     print('----------Committed and Completed----------')
 
+
+
+def import_navpoint_ref_tables(csv_script_folder):
+
+    ses = sqa_session()
+    
+    with open(os.path.join(csv_script_folder, 'NavPoint_Category.csv')) as imp_file:
+        csv_reader = csv.DictReader(imp_file)
+        for row in csv_reader:
+            ref = NavPointCategory(Category_Code = row['Category_Code'], Description = row['Description'])
+            ses.add(ref)
+    
+    print('Imported NavPoint Category File')
+
+    with open(os.path.join(csv_script_folder, 'NavPoints.csv')) as imp_file:
+        csv_reader = csv.DictReader(imp_file)
+        for row in csv_reader:
+            ref = NavPoint(Country_Code = row['Country_Code'], ICAO_Code = row['ICAO_Code'],
+                            Category_Code = row['Category_Code'], Description = row['Description'],
+                            Latitude = row['Latitude'], Longitude = row['Longitude'])
+            ses.add(ref)
+    
+    print('Imported NavPoints File')
+    
+    ses.commit()
+    print('----------Committed and Completed----------')
 
 def create_admin_user(admin_email, admin_user='b4admin', admin_pass='b4admin'):
 
@@ -279,16 +356,27 @@ def create_db_command():
     create_new_db()
     click.echo("Databases Created")
     
-@click.command('import-lookups')
+@click.command('import-qcode-lookups')
 @click.argument('csv_folder')
 @with_appcontext
-def import_lookup_command(csv_folder):
+def import_qcode_lookup_command(csv_folder):
     """Import the Q-Code lookup CSV Files.  Must be named Q_Code_2_3.csv and Q_Code_4_5.csv. Encoding UTF8"""
-    click.echo("Ready to import lookup files")
-    import_ref_tables(csv_folder)
-    click.echo("Databases Created")
+    click.echo("Ready to import QCode lookup files")
+    import_qcode_ref_tables(csv_folder)
+    click.echo("QCodes Imported")
+
+@click.command('import-navpoint-lookups')
+@click.argument('csv_folder')
+@with_appcontext
+def import_navpoint_lookup_command(csv_folder):
+    """Import the Navpoint lookup CSV Files.  Must be named Navpoint_Category.csv and Navpoints.csv. Encoding UTF8"""
+    click.echo("Ready to import NavPoint lookup files")
+    import_navpoint_ref_tables(csv_folder)
+    click.echo("NavPoints Imported")
+
 
 def init_app(app):
     app.cli.add_command(create_db_command)
-    app.cli.add_command(import_lookup_command)
+    app.cli.add_command(import_qcode_lookup_command)
+    app.cli.add_command(import_navpoint_lookup_command)
     

@@ -45,7 +45,8 @@ var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
     center: {{flight_centre}}, // starting position [lng, lat]
-    zoom: 3 // starting zoom
+    zoom: 3, // starting zoom
+    preserveDrawingBuffer: true
 });
 
 map.on('load', function() {

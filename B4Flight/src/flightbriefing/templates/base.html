@@ -36,7 +36,7 @@
 			</div>
 			  <ul class="navbar-nav ml-md-auto">
 			    {% if session['username'] %}
-			      <li class="nav-item mx-2 bflight-navitem bflight-nav-user">{{ session['username'] }}</li>
+			      <li class="nav-item px-2 mx-2 bflight-navitem bflight-nav-user"><a href="{{url_for('account_admin.settings')}}"> {{ session['username'] }}</a></li>
 			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
 			    {% else %}
 			      <li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('auth.register') }}">Register</a></li>
@@ -47,10 +47,21 @@
 			<div class="row ">
 			</div>
 		    {% block header %}{% endblock %}
-		  {% for message in get_flashed_messages() %}
-		    <div class="flash alert alert-danger">{{ message }}</div>
-		  {% endfor %}
-		  <div class="container">
+		  	{% with messages = get_flashed_messages(with_categories=true) %}
+				{%if messages %}
+					<ul class="list-group mb-1">
+					{% for category, message in messages %}
+					{% if category=='success' %}
+		    		<li class="flash list-group-item list-group-item-success py-2">{{ message }}</div>
+					{% else %}
+					<li class="flash list-group-item list-group-item-danger py-2">{{ message }}</div>
+					{% endif %}
+					{% endfor %}
+					</ul>
+				{% endif %}
+		  {% endwith %}
+		  
+		<div class="container">
 		  {% block content %}{% endblock %}
 		  </div>
 		</section>

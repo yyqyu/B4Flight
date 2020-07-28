@@ -1,0 +1,91 @@
+<!--This is the User's Settings Page -->
+{% extends 'base.html' %}
+{% block title %}
+B4Flight Account Preferences
+{% endblock %}
+
+{% block header %}
+
+  <h1 class="text-center bg-light">Set Your Preferences</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<form id="settings" method="POST" novalidate>
+		<div class="bflight-home-panel"> 
+			<h2 class="h3">Your Details</h2>
+			<div class="form-group row">
+				<label for="username" class="col-md-2 col-form-label">Username</label>
+				<div class="col-md-4">
+					<input type="text" class="form-control" name="username" readonly value={{user.Username}}>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label for="email" class="col-md-2 col-form-label">Email</label>
+				<div class="col-md-4">
+					<input type="email" class="form-control" name="email" readonly value={{user.Email}}>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label for="firstname" class="col-md-2 col-form-label">Full Name</label>
+				<div class="col-md-4">
+					<input type="text" class="form-control" name="firstname" value={{user.Firstname}} placeholder="First Name" required maxlength="35">
+				</div>
+				<div class="col-md-4">
+					<input type="text" class="form-control" name="lastname" value={{user.Lastname}} placeholder="Last Name" required maxlength="35">
+				</div>
+			</div>
+		</div>
+		
+		<div class="bflight-home-panel"> 
+			<h2 class="h3">Your Settings</h2>
+			<div class="form-group row">
+				<label for="home_aerodrome" class="col-md-2 col-form-label">Home Aerodrome</label>
+				<div class="col-md-2">
+					<input type="text" class="form-control" name="home_aerodrome" value="{{home_aerodrome}}" placeholder="HOME" maxlength="4" required>
+				</div>
+				<label for="home_radius" class="col-md-auto col-form-label">Show NOTAMS within  </label>
+				<input type="number" class="form-control col-md-1" name="home_radius" value="{{home_radius}}" placeholder="25" min="1" max="100">
+				<label for="home_radius" class="col-form-label col-md-auto">nm radius of home</label>
+			</div>
+			<div class="form-group row">
+				<label for="route_buffer" class="col-md-2 col-form-label">Route Buffer</label>
+				<div class="col-md-2">
+					<input type="number" class="form-control" name="route_buffer" value="{{route_buffer}}" placeholder="5" min="1" max="20">
+				</div>
+				<label for="route_buffer" class="col-form-label col-md-auto">nm either side of route</label>
+				</div>
+			</div>
+		</div>
+		<div class="form-group row">
+			<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">Save</button>
+		</div>
+	</form>
+</div>
+	
+	<script>
+	function submitClick() {
+		var isValid = true;
+		
+		//Clear existing invalid fields
+		document.querySelectorAll(".is-invalid").forEach(function(elem) {
+  			elem.classList.remove('is-invalid');
+		});
+
+		document.querySelectorAll("input").forEach(function(elem) {
+		  if (elem.checkValidity() == false) {
+			isValid = false;
+			elem.classList.add("is-invalid");
+		};
+		});
+		
+		
+		if (isValid == true) {
+			document.getElementById("settings").submit();
+		}  
+		
+		
+	}
+	</script>
+{% endblock %}

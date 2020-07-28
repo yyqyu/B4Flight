@@ -159,13 +159,35 @@ def generate_geojson(flightplan_id):
     return route_features
 
 
-
 def filter_route_notams(flightplan_id, buffer_width_nm, includeMatches=True, date_of_flight=None):
 
     sqa_sess = sqa_session()
     
     #retrieve the fligtplan for the specified ID
     flightplan = sqa_sess.query(FlightPlan).filter(FlightPlan.FlightplanID == flightplan_id).first()
+    
+    #loop through the Route Points, adding them to a LineString
+    lstring = []
+    for rtePoint in flightplan.FlightPlanPoints: 
+        lstring.append((float(rtePoint.Longitude),float(rtePoint.Latitude)))
+
+    #Create a Shapely linestring for the route
+    route = geometry.LineString(lstring)
+    
+    return filter_relevant_notams(route, buffer_width_nm, includeMatches=includeMatches, date_of_flight=date_of_flight)
+    
+
+def filter_point_notams(longitude, latitude, buffer_width_nm, includeMatches=True, date_of_flight=None):
+
+    point = geometry.Point(longitude, latitude)
+    
+    return filter_relevant_notams(point, buffer_width_nm, includeMatches=includeMatches, date_of_flight=date_of_flight)
+
+
+
+def filter_relevant_notams(shapely_geom, buffer_width_nm, includeMatches=True, date_of_flight=None):
+
+    sqa_sess = sqa_session()
     
     #retrieve the latest Briefing
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
@@ -175,30 +197,21 @@ def filter_route_notams(flightplan_id, buffer_width_nm, includeMatches=True, dat
     else:
         notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.From_Date <= date_of_flight, Notam.To_Date >= date_of_flight)).all()
         
-    #loop through the Route Points, adding them to a LineString
-    lstring = []
-    for rtePoint in flightplan.FlightPlanPoints: #First element is name, second is co-ordinates
-        lstring.append((float(rtePoint.Longitude),float(rtePoint.Latitude)))
-
-    #Create a Shapely linestring for the route
-    route = geometry.LineString(lstring)
 
     #create a buffer
-    buffer_width_deg = buffer_width_nm / 60.0  #approximate the NM buffer on the basis that 1 minute = 1 nm
+    buffer_width_deg = float(buffer_width_nm) / 60.0  #approximate the NM buffer on the basis that 1 minute = 1 nm
 
-    
     #-----To plot the RouteBuffer, split the route to prevent the polygon closing and filling.
-    if len(route.coords)>2:
-        rl = int(len(route.coords)/2.0)
+    if len(shapely_geom.coords)>2:
+        rl = int(len(shapely_geom.coords)/2.0)
         if rl==1: rl=2
-        route1 = geometry.LineString(route.coords[:rl])
-        route2 = geometry.LineString(route.coords[rl-1:])
+        route1 = geometry.LineString(shapely_geom.coords[:rl])
+        route2 = geometry.LineString(shapely_geom.coords[rl-1:])
         #Create the buffer
         fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
         fplShapelyBuffers.append(route2.buffer(buffer_width_deg))
     else:
-        route1 = geometry.LineString(route.coords)
-        fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
+        fplShapelyBuffers = [shapely_geom.buffer(buffer_width_deg)]
 
     
     #Now process each NOTAM, and check for intersection with the route buffer.

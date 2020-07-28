@@ -20,6 +20,8 @@ from flightbriefing.db import User, FlightPlan, FlightPlanPoint, Notam, Briefing
 from polycircles import polycircles
 from datetime import datetime, timedelta
 
+from xml.etree.ElementTree import ElementTree as ET
+import csv
 
 db_connect = helpers.read_db_connect()
 eng = create_engine(db_connect, pool_recycle=280)
@@ -31,13 +33,12 @@ eng = create_engine(db_connect, pool_recycle=280)
             
     
 
-#def import_notams():
+def test_import_notams():
 #    notams.init_db(eng)
-#    file_name = '..\\working_files\\Summary.txt'
-#    file_name = '..\\working_files\\Summary_dl.txt'
-#    
-#    brf,ntm = notams.parse_notam_text_file(file_name, 'ZA')
-#    
+    file_name = 'C:/Users/aretallack/git/B4Flight/B4Flight/src/instance/notam_archives/ZA_notam_2020-07-24.txt'
+    
+    brf = notams.parse_notam_text_file(file_name, 'ZA')
+    
 #    Session = sessionmaker(bind=eng)
 #    session = Session()
 #    session.add(brf)
@@ -142,7 +143,7 @@ def test_except():
     for x in q3:
         print(x.Notam_Number)
     
-test_except()
+#test_except()
 
 def test_mail():
     import smtplib, ssl
@@ -176,5 +177,66 @@ def test_mail():
     
 #test_mail()
 
+def extract_ATNS_data(filename, csv_filename):
+    
+    aip_data = []
+    
+    tree = ET()
+    tree.parse(filename)
+    
+    root = tree.getroot()
+    
+    if root.tag.find('{') > -1:
+        ns_name=root.tag[root.tag.find('{')+1:root.tag.find('}')]
+    else:
+        ns_name=''
+    
+    ns={'ns':ns_name}
+    
+    base = root.find('ns:Document', ns)
+    base = base.find('ns:Folder', ns)
+    folders = base.findall('ns:Folder', ns)
+    
+    for category in folders:
+        category_name = category[0].text
+        
+        if category_name not in ['Aerodromes', 'Helistops', 'VOR', 'NDB', 'Waypoints']:
+            break
+        
+        extract_ATNS_items(ns, category, category_name, aip_data)
+        
+        csv_columns = ['Category','ID', 'Description', 'Longitude', 'Latitude']
+        
+        with open(csv_filename, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+            writer.writeheader()
+            for data in aip_data:
+                writer.writerow(data)
+        print(f'Written to filename {csv_filename}')
 
+def extract_ATNS_items(ns, branch, category_name, data_list):
+    
+    sub_items = branch.findall('ns:Placemark', ns)
+    for this_item in sub_items:
+        x={}
+        x['Category'] = category_name
+        x['ID'] = this_item.find('ns:name', ns).text
+        try:
+            x['Description'] = this_item.find('ns:description', ns).text
+        except:
+            x['Description'] = x['ID']
+            print(f'No Description for {category_name} -- {x["ID"]}')
+            
+        point = this_item.find('ns:Point', ns)
+        coords = point.find('ns:coordinates', ns).text.split(',')
+        x['Longitude'] = coords[0]
+        x['Latitude'] = coords[1]
+        data_list.append(x)
+    
+    sub_folders = branch.findall('ns:Folder', ns)
+    for fldr in sub_folders:
+        extract_ATNS_items(ns, fldr, category_name, data_list)
 
+#extract_ATNS_data('C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.kml', 'C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.csv')
+
+test_import_notams()

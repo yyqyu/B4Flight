@@ -1,12 +1,8 @@
 venv/
+bflightenv/
 
 *.pyc
 __pycache__/
-
-instance/
-working_files/
-notam_archives/
-upload_archives/
 
 .pytest_cache/
 .coverage
@@ -17,8 +13,12 @@ build/
 *.egg-info/
 
 bin
-/runway info.xml
-/aerodrome coords.xml
-/aerodrome FIR.xml
-/RSA DATA - 16JUL2020.kml
-/signif points.xml
+
+instance/
+working_files/
+notam_archives/
+upload_archives/
+
+B4Flight/src/flightbriefing/flightbriefing.ini
+
+navdata_working/

@@ -10,61 +10,98 @@
 {% block content %}
 <div class="container">
 	<div class="row">
-		<div class="col-md-7 bflight-home-panel">
-			<h3>WHAT'S NEW?</h3>
-			<p>The latest CAA NOTAM Briefing was on <b>{{briefing.Briefing_Date}} {{briefing.Briefing_Time}}</b>,  briefing reference <b>{{briefing.Briefing_Ref}}</b></p>
-			<p>There are <b>{{notam_count}}</b> active NOTAMS:  View these in <a href="{{url_for('viewmap.detailnotams')}}">detail</a> or on a <a href="{{url_for('viewmap.viewmap')}}">map</a></p>
-			<p>
-			<b>{{new_notams}}</b> NOTAMS have been added and <b>{{deleted_notams}}</b> have expired over the past week (since {{last_wk_brief_date}}).<br> 
-			View these on a <a href="{{url_for('viewmap.newnotams')}}">map</a> or in <a href="{{url_for('viewmap.changednotamdetail')}}">detail</a></p>
+		<div class="col-md-5">
+			<div class="bflight-home-panel">
+				<h3>GET YOUR BRIEFING STARTED</h3>
+				<ul class="list-group">
+				<li class="list-group-item bflight-narrow-list">
+					Upload a new flightplan
+					<span class="float-right"><a class="btn bflight-slim-btn mx-1" style="width: 5rem;" href="{{url_for('viewmap.uploadroute')}}">Upload</a></span>
+				</li>
+				<li class="list-group-item bflight-narrow-list">
+					Choose a saved flightplan
+					<span class="float-right"><a class="btn bflight-slim-btn mx-1" style="width: 5rem;" href="" onclick="alert('Still working on it');" >Choose</a></span>
+				</li>
+				<li class="list-group-item bflight-narrow-list">
+					Enter a new point-by-point flight
+					<span class="float-right"><a class="btn bflight-slim-btn mx-1" style="width: 5rem;" href="" onclick="alert('Still working on it');" >Create</a></span>
+				</li>
+				</ul>
+			</div>
 		</div>
-		<div class="col-md-4 bflight-home-panel">
-			<h3>HOME NOTAMS</h3>
-			<p><b>***PLACEHOLDER***</b></p>
-			<p>Latest NOTAMS within 10nm of your home aerodrome</p>
+		<div class="col-md-7">
+			<div class="bflight-home-panel">
+				<ul class="list-group">
+					<li class="list-group-item bflight-narrow-list">
+						<b>Current CAA Briefing:</b> Reference {{briefing.Briefing_Ref}} as at {{briefing.Briefing_Date}} {{briefing.Briefing_Time}}
+					</li>
+					<li class="list-group-item  bflight-narrow-list">
+						<b># Active NOTAMs:</b> {{notam_count}} 
+						<span class="float-right"><a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.detailnotams')}}">Text</a> <a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.viewmap')}}">Map</a></span>
+					</li>
+					<li class="list-group-item  bflight-narrow-list">
+						<b>Changes since {{last_wk_brief_date}}:</b> {{new_notams}} New and {{deleted_notams}} Expired. 
+						<span class="float-right"><a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.changednotamdetail')}}">Text</a> <a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.newnotams')}}">Map</a></span>
+					</li>
+					<li class="list-group-item  bflight-narrow-list">
+						<b>Home NOTAMS:</b> 
+						{% if home_notams %}
+						 {{home_notams}} </b> 
+						{% else %}
+						No
+						{% endif %}
+				 		NOTAMS within {{home_radius}}nm of {{home_aerodrome}}
+						<span class="float-right"><a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.homenotams')}}">Map</a></span>
+					</li>
+					
+				</ul>
+<!--				<p>The latest CAA NOTAM Briefing was on <b>{{briefing.Briefing_Date}} {{briefing.Briefing_Time}}</b>,  briefing reference <b>{{briefing.Briefing_Ref}}</b></p>
+				<p>There are <b>{{notam_count}}</b> active NOTAMS:  View these in <a href="{{url_for('viewmap.detailnotams')}}">detail</a> or on a <a href="{{url_for('viewmap.viewmap')}}">map</a></p>
+				<p>
+				<b>{{new_notams}}</b> NOTAMS have been added and <b>{{deleted_notams}}</b> have expired over the past week (since {{last_wk_brief_date}}).<br> 
+				View these on a <a href="{{url_for('viewmap.newnotams')}}">map</a> or in <a href="{{url_for('viewmap.changednotamdetail')}}">detail</a></p>
+-->
+			</div>
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-md-7 bflight-home-panel">
-			<h3>YOUR RECENT FLIGHTS</h3>
-			<table class="table table-striped table-bordered">
-			<thead class="bflight-table-head">
-				<tr>
-				<th>Uploaded</th>
-				<th>Flight Name</th>
-				<th>Description</th>
-				<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% if flights %}
-				{% for fpl in flights %}
-				<tr>
-				<td>{{fpl.Import_Date_Text}}</td>
-				<td>{{fpl.Flight_Name}}</td>
-				<td>{{fpl.Flight_Desc}}</td>
-				<td>
-					<a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="btn bflight-btn btn-sm" role="button">View</a>
-				</td>
-				</tr>
-				{% endfor %}
-			{% else %}
-				<tr>
-				<td colspan="4">No Flights Uploaded Yet</td>
-				</tr>
-			{% endif %}
-			</tbody>
-			</table>
-			<div class="float-right">
-				<a href="{{url_for('viewmap.uploadroute')}}" class="btn bflight-btn" role="button">New Flight</a>
-			</div>
+		<div class="col-md-12">
+			<div class="bflight-home-panel">
 
-		</div>
-		<div class="col-md-4 bflight-home-panel">
-			<h3>YOUR SETTINGS</h3>
-			<p><b>***PLACEHOLDER***</b></p>
-			<p>You are permanently hiding xx NOTAMS</p>
-			<p>Your home field is xx</p>
+				<h3>YOUR RECENT BRIEFINGS</h3>
+				<table class="table table-striped table-bordered table-sm">
+				<thead class="bflight-table-head">
+					<tr>
+					<th >Uploaded</th>
+					<th>Flight Name</th>
+					<th>Description</th>
+					<th style="width: 5rem;"></th>
+					</tr>
+				</thead>
+				<tbody>
+				{% if flights %}
+					{% for fpl in flights %}
+					<tr>
+					<td>{{fpl.Import_Date_Text}}</td>
+					<td>{{fpl.Flight_Name}}</td>
+					<td>{{fpl.Flight_Desc}}</td>
+					<td class="text-right">
+						<a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="btn bflight-btn bflight-slim-btn mx-2" role="button">View</a>
+					</td>
+					</tr>
+					{% endfor %}
+				{% else %}
+					<tr>
+					<td colspan="4">No Flights Uploaded Yet</td>
+					</tr>
+				{% endif %}
+				</tbody>
+				</table>
+				<div class="text-right">
+					<a href="" onclick="alert('Still working on it');" style="width: 7rem;" class="btn bflight-btn" role="button">View All</a>
+					<a href="{{url_for('viewmap.uploadroute')}}" style="width: 7rem;" class="btn bflight-btn" role="button">Create New</a>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
