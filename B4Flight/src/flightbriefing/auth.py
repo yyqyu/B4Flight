@@ -67,7 +67,7 @@ def is_logged_in():
             uname = jwt.decode(baked, current_app.config['SECRET_KEY'], 'HS256')['username']
             
         except:
-            current_app.logger.error('Invalid _flightbriefing COOKIE was processed: {baked}')
+            current_app.logger.error(f'Invalid _flightbriefing COOKIE was processed: {baked}')
             uname = None
             
     # Try to validate the user is a username was found.  If successful, return TRUE
