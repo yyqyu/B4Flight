@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
 
+{% block title %}Upload Flight Route{% endblock %}
 {% block header %}
 
 	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
 	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
 
-  <h1>{% block title %}Upload Flight Route{% endblock %}</h1>
+  <h1 class="bflight-page-header">Upload a Flight Route</h1>
 
 {% endblock %}
 
 {% block content %}
-<div class="container-flow">
-	<div class="offset-sm-2 col-sm-8 bg-light form-container">
+<div class="container">
+	<div class="offset-sm-2 col-sm-8 bflight-panel form-container">
 		<p>Use this form to upload a flightplan route.  
 		The route will be saved to your profile, allowing you to view only those NOTAMS applicable to this route</p>
 		<p>Currently B4Flight supports
@@ -23,21 +24,52 @@
 			<b><a href="https://www.topografix.com/gpx.asp" target="_blank">GPS Exchange Format</a></b> files (.GPX) - exported by most flightplanning software packages (and online tools such as <a href="https://skyvector.com/" target="_blank">SkyVector</a>) and supported by many GPS devices.</p>
 		</li>
 		</p> 		
-		<form method="POST" enctype="multipart/form-data">
+		<form id="upload-form" method="POST" enctype="multipart/form-data">
 			<div class="form-group">
 				<label for="filename" class="col-form-label">Select File to Upload (*.gpx, *.ep1 - max 3MB)</label>
 				<input type="file" class="form-control-file bflight-file" id="filename" name="filename" required>
 			</div>
 			<div class="form-group">
 				<label for="routedesc" class="col-form-label">Flight Route Description</label>
-				<input type="text" class="form-control" id="routedesc" name="routedesc">
+				<input type="text" class="form-control" id="routedesc" name="routedesc" required>
 			</div>
 			<div class="form-group row">
 				<div class="col-sm-6">
-					<button type="submit" class="btn bflight-btn">Upload</button>
+					<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">
+					<span id="btn-processing" style="display: none;">
+						<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						Uploading...
+					</span>
+					<span id="btn-active">
+					Upload
+					</span>
+					</button>
 				</div>
 			</div>
 		</form>
 	</div>
 </div>
+	<script>
+	function submitClick() {
+		var isValid = true;
+		
+		document.querySelectorAll("input").forEach(function(elem) {
+			if (elem.checkValidity() == false) {
+				elem.classList.add("is-invalid");
+				isValid = false;
+			}
+			else {
+				elem.classList.remove('is-invalid');
+			};
+		});
+		
+		if (isValid == true) {
+			document.getElementById("submit-button").disabled = true;
+			document.getElementById("btn-active").style.display = "none";
+			document.getElementById("btn-processing").style.display = "inline";
+			document.getElementById("upload-form").submit();
+		}  
+		
+	}
+	</script>
 {% endblock %}

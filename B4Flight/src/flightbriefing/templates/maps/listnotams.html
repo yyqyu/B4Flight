@@ -2,7 +2,7 @@
 
 {% block header %}
 
-  <h1>{% block title %}Briefings for flight on {{default_date}} {% endblock %}</h1>
+  <h1 class="bflight-page-header">{% block title %}Briefings for flight on {{default_date}} {% endblock %}</h1>
   {% if g.user %}
 	<p>username here</p>
   {% endif %}
@@ -13,7 +13,7 @@
 	{% if flight_date %}
 		<p>Flight Date format was {{flight_date}} </p>
 	{% endif %}
-	<form method="post">
+	<form class="bflight-panel" method="post">
 		<div class="row">
 		<div class="form-group col">
 			<label for="briefing">Select a Briefing</label>

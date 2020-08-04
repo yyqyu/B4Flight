@@ -116,7 +116,7 @@ def test_GPX():
         for pt in fpl.FlightPlanPoints:
             print(pt.Longitude, pt.Latitude, pt.Elevation)
 
-    geo=flightplans.generate_geojson(fpls)
+    geo=flightplans.generate_flight_geojson(fpls)
     print(geo)
     
 #test_GPX()

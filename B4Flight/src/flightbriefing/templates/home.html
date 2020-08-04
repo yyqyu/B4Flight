@@ -3,7 +3,7 @@
 
 {% block header %}
 
-  <h1 class="text-center bg-light">{% block title %}B4Flight Dashboard - {{session['user_fname']}} {% endblock %}</h1>
+  <h1 class="bflight-page-header">{% block title %}B4Flight Dashboard - {{session['user_fname']}} {% endblock %}</h1>
 
 {% endblock %}
 
@@ -11,7 +11,7 @@
 <div class="container">
 	<div class="row">
 		<div class="col-md-5">
-			<div class="bflight-home-panel">
+			<div class="bflight-panel">
 				<h3>GET YOUR BRIEFING STARTED</h3>
 				<ul class="list-group">
 				<li class="list-group-item bflight-narrow-list">
@@ -30,7 +30,7 @@
 			</div>
 		</div>
 		<div class="col-md-7">
-			<div class="bflight-home-panel">
+			<div class="bflight-panel">
 				<ul class="list-group">
 					<li class="list-group-item bflight-narrow-list">
 						<b>Current CAA Briefing:</b> Reference {{briefing.Briefing_Ref}} as at {{briefing.Briefing_Date}} {{briefing.Briefing_Time}}
@@ -66,7 +66,7 @@
 	</div>
 	<div class="row">
 		<div class="col-md-12">
-			<div class="bflight-home-panel">
+			<div class="bflight-panel">
 
 				<h3>YOUR RECENT BRIEFINGS</h3>
 				<table class="table table-striped table-bordered table-sm">

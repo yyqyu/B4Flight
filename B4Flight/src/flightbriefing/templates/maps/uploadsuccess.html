@@ -5,18 +5,18 @@
 	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
 	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
 
-  <h1>{% block title %}Your Flight{% endblock %}</h1>
+  <h1 class="bflight-page-header">{% block title %}Your Flight was Uploaded{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
   {% if session['userid'] %}
 
 	<div class="container">
-		<div class="row">
+		<div class="row bflight-panel">
 	
 			<div id='map' class='col-sm-4' style='height: 200px;'></div>
 	
-			<div class="col-sm-8 bg-light">
+			<div class="col-sm-8">
 				<p>You have successfully uploaded and stored your flight route:
 				<ul>
 				<li>{{fplan.Flight_Name}}</li>

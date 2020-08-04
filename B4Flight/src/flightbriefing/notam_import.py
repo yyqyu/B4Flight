@@ -1,11 +1,18 @@
-'''
-Created on 11 Jun 2020
+"""Handles NOTAM Import-related Functionality
 
-@author: aretallack
-'''
+This module contains functions to download CAA PDF Briefing, 
+convert to text using web API Zamzar
+Parse the text file
+Create NOTAM and Briefing object and import to database
+
+Expected to be run from the command line:
+ - import-notams
+ - import-notam-text-file <text_file_name>
+ 
+"""
+
 import requests
 from requests.auth import HTTPBasicAuth
-import logging
 from datetime import datetime
 import time
 import os
@@ -13,27 +20,30 @@ import shutil
 import sys
 
 
-from sqlalchemy import create_engine, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import and_
 
 import click
 from flask import current_app
 from flask.cli import with_appcontext
 
-from . import helpers
 from .notams import parse_notam_text_file
 from .db import Briefing, Notam
 from .data_handling import sqa_session
 
 
 def read_settings_ZA():
+    """Reads the settings needed to process Notams, from the config file
+
+    Returns
+    -------
+    dictionary 
+        Settings in a dictionary
+    """
     import configparser
     settings = {}
     
     cfg = configparser.ConfigParser()
     cfg.read(os.path.join(current_app.root_path, 'flightbriefing.ini'))
-#    settings['working_folder'] = cfg.get('application','working_folder')
-#    settings['archive_folder'] = cfg.get('notam_import_ZA', 'archive_folder')
     settings['file_name_base'] = cfg.get('notam_import_ZA', 'file_name_base')
     settings['api_key'] = cfg.get('notam_import_ZA', 'key')
     settings['caa_notam_url'] = cfg.get('notam_import_ZA', 'caa_notam_url')
@@ -48,12 +58,22 @@ def read_settings_ZA():
 
 
 def download_notam_file_ZA(caa_notam_url, file_name):
+    """Downloads PDF Briefing file from the CAA website
+    
+    Parameters
+    ----------
+    caa_notam_url : str
+        full url to the PDF briefing file
+    file_name : str
+        filename that teh pdf file is saved to on local server
+    
+    """
 
-    endpoint = caa_notam_url
-    #Download the NOTAM Summary file from teh CAA website
-    res = requests.get(endpoint, stream=True)
+    
+    # Download the NOTAM Summary file from the CAA website
+    res = requests.get(caa_notam_url, stream=True)
 
-    #Save it to "file_name"
+    # Save it to "file_name"
     try:
         with open(file_name, 'wb') as f:
             for chunk in res.iter_content(chunk_size=1024):
@@ -61,73 +81,145 @@ def download_notam_file_ZA(caa_notam_url, file_name):
                     f.write(chunk)
                     f.flush()
     
-        logging.info(f"Downloaded NOTAM pdf, saved to {file_name}")
+        # Note the success.  Print is used to print to the terminal the command is run from
+        current_app.logger.info(f"Downloaded NOTAM pdf, saved to {file_name}")
         print(f"Downloaded NOTAM pdf, saved to {file_name}")
     
+    # If there is an error log it and exit
     except IOError:
-        logging.error(f"Downloading NOTAM pdf from {endpoint}: {res.status_code} - {res.reason}")
-        print(f"Error downloading NOTAM pdf from {endpoint}")
+        current_app.logger.error(f"Downloading NOTAM pdf from {caa_notam_url}: {res.status_code} - {res.reason}")
+        print(f"Downloading NOTAM pdf from {caa_notam_url}: {res.status_code} - {res.reason}")
         sys.exit()
 
 
-
-def check_api(api_key, check_url):
+def check_zamzar_api(api_key, check_url):
+    """Checks connection can be made to the zamzar API 
+    
+    Parameters
+    ----------
+    api_key : str
+        API Key
+    check_url : str
+        API endpoint URL
+    
+    Returns
+    -------
+    JSON 
+        Server response
+    """
     
     endpoint = check_url
     
     res = requests.get(endpoint, auth=HTTPBasicAuth(api_key, ''))
-    logging.info(res.json())
+    current_app.logger.info(res.json())
     print(res.json())
 
 
-def upload_conv_file(api_key, upload_url, source_file):
+def upload_zamzar_conv_file(api_key, upload_url, source_file, target_format='txt'):
+    """Uploads the file to convert to zamzar.  
+    Zamzar will start to convert the file from one format to another, and return the ID of the conversion job.
+    We then need to check back to see the status of the conversion and once done download the converted file.
+    The ID is needed for this
+    
+    Parameters
+    ----------
+    api_key : str
+        API Key
+    upload_url : str
+        API endpoint URL to upload file to
+    source_file : str
+        filename of the file to be uploaded
+    target_format : str, default='txt'
+        The format the file is to be converted to
+    
+    Returns
+    -------
+    str 
+        ID of the file conversion Job
+    """
 
     endpoint = upload_url
-    target_format = "txt"
     
-    #Upload the PDF file for conversion to txt
+    # Upload the PDF file for conversion to txt
     file_content = {'source_file': open(source_file, 'rb')}
     data_content = {'target_format': target_format}
     res = requests.post(endpoint, data=data_content, files=file_content, auth=HTTPBasicAuth(api_key, ''))
     
-    #Expect result to be 201
+    # Expect result to be 201
     if res.status_code != 201:
-        logging.error(f'Failed to upload {source_file}: {res.status_code} - {res.reason}')
+        current_app.logger.error(f'Failed to upload {source_file}: {res.status_code} - {res.reason}')
         return -1
-
-    logging.info(f'Upload Succeeded: {res.json()}')
-    logging.info(f'Credits Remaining: {res.headers["Zamzar-Credits-Remaining"]}')
-    return res.json()['id']
     
+    # Log the result
+    current_app.logger.info(f'Upload Succeeded: {res.json()}')
+    current_app.logger.info(f'Credits Remaining: {res.headers["Zamzar-Credits-Remaining"]}')
 
-def check_conv_status(api_key, status_url, job_id):
+    # Return the Job ID
+    return res.json()['id']
 
-    #Add the Job ID into the URL
+
+def check_zamzar_conv_status(api_key, status_url, job_id):
+    """Checks the status of the conversion job
+    
+    Parameters
+    ----------
+    api_key : str
+        API Key
+    status_url : str
+        API endpoint URL to check status
+    job_id : str
+        ID of the conversion Job
+    
+    Returns
+    -------
+    str 
+        ID of file to download; 0 if job not ready
+    """
+
+    # Add the Job ID into the URL
     endpoint = status_url.format(job_id)
     
-    #Check the job status
+    # Check the job status
     res = requests.get(endpoint, auth=HTTPBasicAuth(api_key, ''))
     
-    logging.info(f"Checking job status - status is {res.json()['status']}")
+    current_app.logger.info(f"Checking job status - status is {res.json()['status']}")
     
-    #If status is not successful, could still be in progress.  Log it, return "0" as indicator need to retry
+    # If status is not successful, could still be in progress.  Log it, return "0" as indicator need to retry
     if res.json()['status'] != 'successful':
-        logging.info(res.json())
+        current_app.logger.info(res.json())
         return 0
     else:
-        #job succeeded - return the fil_id so we can retrieve it
+        # Job succeeded - return the file_id so we can retrieve it
         return res.json()['target_files'][0]['id'] 
 
 
-def download_conv_file(api_key, download_url, local_filename, file_id):
+def download_zamzar_conv_file(api_key, download_url, local_filename, file_id):
+    """Downloads the converted file from zamzar
+    
+    Parameters
+    ----------
+    api_key : str
+        API Key
+    download_url : str
+        API endpoint URL to download file from
+    local_filename : str
+        where to store the file locally
+    file_id : str
+        ID of the file to download
+    
+    Returns
+    -------
+    str 
+        ID of file to download; 0 if job not ready
+    """
 
-    #Add the File ID into the URL
+    # Add the File ID into the URL
     endpoint = download_url.format(file_id)
     
-    #Send request to server
+    # Send request to server
     res = requests.get(endpoint, stream=True, auth=HTTPBasicAuth(api_key, ''))
     
-    #Download the converted file
+    # Download the converted file
     try:
         with open(local_filename, 'wb') as f:
             for chunk in res.iter_content(chunk_size=1024):
@@ -135,168 +227,191 @@ def download_conv_file(api_key, download_url, local_filename, file_id):
                     f.write(chunk)
                     f.flush()
     
-        logging.info(f"Downloaded converted txt to {local_filename}")
+        current_app.logger.info(f"Downloaded converted txt to {local_filename}")
         print(f"Downloaded converted txt to {local_filename}")
     
     except IOError:
-        logging.info(f"Downloaded converted txt to {local_filename} - {res.status_code} - {res.reason}")
-        print(f"Downloaded converted txt to {local_filename}")
+        current_app.logger.info(f"Error downloading converted txt to {local_filename} - {res.status_code} - {res.reason}")
+        print(f"Error downloading converted txt to {local_filename} - {res.status_code} - {res.reason}")
 
 
 
-def import_notam_ZA(sqa_engine=None, overwrite_existing=False):
+def import_notam_ZA(overwrite_existing_file=False):
+    """Manages the import of a NOTAM - this would typically be called
+    from the command line using "flask import-notams"
 
-    #Read settings from INI file
+    The function does the following:
+    - Downloads PDF from CAA website
+    - Converts to text
+    - Parses the NOTAMs, creating Notam objects
+    - Saves Notams and Briefing to the DB
+    
+    Parameters
+    ----------
+    overwrite_existing_file : bool, default = False
+        If the PDF File already exists, do we overwrite it?
+    
+    Returns
+    -------
+    Briefing 
+        A Briefing object containing the briefing and downloaded Notams
+    """
+
+    # Read settings from INI file
     settings = read_settings_ZA()
-    #date suffix
+    # Set the date suffix for file names
     file_date = datetime.strftime(datetime.utcnow(),'%Y-%m-%d')
     
     
-    #build the filenames for the PDF download file, and the converted text file
+    # Build the filenames for the PDF download file and the converted text file
     pdf_file_name = os.path.join(current_app.config['WORKING_FOLDER'], f'ZA_{settings["file_name_base"]}_{file_date}.pdf')
     txt_file_name = os.path.join(current_app.config['WORKING_FOLDER'], f'ZA_{settings["file_name_base"]}_{file_date}.txt')
 
     
-    #Setup the logging
-    log_file = os.path.join(current_app.config['NOTAM_ARCHIVE_FOLDER'], 'pdf_convert.log')
-    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(levelname)s - %(funcName)s - %(asctime)s - %(message)s')
-    
-
-    #First, does the import file already exist?  It may have already been imported
+    # First, does the text import file already exist?  It may have already been imported
     if os.path.isfile(txt_file_name) == True:
-        #If user has specified we must overwrite, then delete and re-import.  May be needed if errors occur, or if updated NOTAM released
-        if overwrite_existing == True:
-            logging.warning(f'Text File already exists, deleting - {txt_file_name}')
+        # If user has specified we must overwrite, then delete and re-import.  May be needed if errors occur
+        if overwrite_existing_file == True:
+            current_app.logger.warning(f'Text File already exists, deleting - {txt_file_name}')
             print(f'Text File already exists, deleting - {txt_file_name}')
+            
+            # Delete existing text file
             os.remove(txt_file_name)
+
+            # Delete the existing PDF file
             if os.path.isfile(pdf_file_name) == True:
-                logging.warning(f'PDF File already exists, deleting - {pdf_file_name}')
+                current_app.logger.warning(f'PDF File already exists, deleting - {pdf_file_name}')
                 print(f'PDF File already exists, deleting - {pdf_file_name}')
                 os.remove(pdf_file_name)
 
-        #Otherwise log and error and terminate
+        # Otherwise log and error and terminate
         else:
-            logging.error(f'Text File already exists, import aborted - {txt_file_name}')
+            current_app.logger.error(f'Text File already exists, import aborted - {txt_file_name}')
             print(f'Text File already exists, import aborted - {txt_file_name}')
             sys.exit()
 
-    #Download the Notam File from the CAA website
+    # Download the Notam File from the CAA website
     download_notam_file_ZA(settings['caa_notam_url'], pdf_file_name)
     
-    #Upload the PDF file for conversion
-    jobid = upload_conv_file(settings['api_key'], settings['upload_url'], pdf_file_name)
+    # Upload the PDF file for conversion
+    jobid = upload_zamzar_conv_file(settings['api_key'], settings['upload_url'], pdf_file_name)
     
     fileid = 0
     retry_count = 0
-    #Check the status of the conversion job, allowing for retries at intervals
+
+    # Check the status of the conversion job, allowing for up to 5 retries at intervals
     while fileid == 0 and retry_count < 5:
-        fileid = check_conv_status(settings['api_key'], settings['status_url'], jobid)
-        #FileID of 0 means job not yet successful
+        fileid = check_zamzar_conv_status(settings['api_key'], settings['status_url'], jobid)
+
+        # FileID of 0 means job not yet successful
         if fileid == 0: 
             retry_count += 1
             print(f"file not ready - retrying.  Retry count {retry_count}")
-            logging.info(f"file not ready - retrying.  Retry count {retry_count}")
+            current_app.logger.info(f"file not ready - retrying.  Retry count {retry_count}")
             time.sleep(5) #Give it 5 secs to process the file
 
-    #If after retries, still no FileID then there must be a problem
+    # If after 5 retries, still no FileID then there must be a problem
     if fileid == 0:
-        logging.error(f"Conversions Job did not complete in {retry_count} attempts")
+        current_app.logger.error(f"Conversions Job did not complete in {retry_count} attempts")
         print(f"Conversions Job did not complete in {retry_count} attempts.  Terminating")
         sys.exit()
 
-    #Otherwise download the converted file    
+    # Otherwise download the converted file    
     else:
-        download_conv_file(settings['api_key'], settings['download_url'], txt_file_name, fileid)
+        download_zamzar_conv_file(settings['api_key'], settings['download_url'], txt_file_name, fileid)
 
     
-    #------------------------
-    #Now we parse the NOTAMS, and write to DB
-    #------------------------
-#    if sqa_engine is None:
-#        #Get database connection string
-#        db_connect = helpers.read_db_connect()
-#        #create SQLAlchemy engine
-#        sqa_engine = create_engine(db_connect, pool_recycle=settings['pool_recycle'])
-
-    #initialise sqlalchemy db
-#    notams.init_db(sqa_engine)
-    
-    #parse the notam text file, returning a Briefing Object
+    #Files are converted - Parse the notam text file, returning a Briefing Object
     brf = parse_notam_text_file(txt_file_name, 'ZA')
+
+    if brf is None: return None
     
-    #Create a SQL Alchemy session 
+    # Create a SQL Alchemy session 
     sess = sqa_session()
     
+    # Check the briefing doesn't already exist
     rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
+
+    # If it exists, log an error and exit.
     if rs.count() > 0:
-        logging.error(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
+        current_app.logger.error(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
         print(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
 
-        #delete the files
+        # Delete the files
         os.remove(pdf_file_name)
         os.remove(txt_file_name)
 
-        sess.close()
-        sys.exit()
+        return None
     
     
-    #Write the briefing and attached NOTAMS to teh DB
+    # Write the briefing and attached NOTAMS to the DB
     sess.add(brf)
     sess.commit()
     
-    logging.info(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
+    # Log the success
+    current_app.logger.info(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
     print(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
     
-    #Copy the files to the archive
+    # Copy the files to the archive
     shutil.copy(pdf_file_name, current_app.config['NOTAM_ARCHIVE_FOLDER'])
     shutil.copy(txt_file_name, current_app.config['NOTAM_ARCHIVE_FOLDER'])
-    #delete the originals
+
+    # Delete the originals
     os.remove(pdf_file_name)
     os.remove(txt_file_name)
     
     return brf
 
-#if __name__ == "__main__":
-#    create_notam_db()
-#    import_notam_ZA(overwrite_existing=True)
 
 @click.command('import-notams')
 @with_appcontext
 def import_notams_command():
-    """Download current NOTAM briefing from CAA website, convert, and import into the database""" 
-    click.echo("Ready to import NOTAMS")
-    brf = import_notam_ZA(overwrite_existing=True)
+    """Command Line to Import NOTAMS from CAA website, convert, and import into the database
+    usage: flask import-notams
+    """ 
+    click.echo("--- Command Line ready to import NOTAMS ---")
+    brf = import_notam_ZA(overwrite_existing_file=True)
     click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
+    click.echo("--- Command-Line Completed ---")
+
 
 @click.command('import-notam-text-file')
 @click.argument('filename')
 @with_appcontext
 def import_notam_text_command(filename):
-    """Import a NOTAM briefing from a specific text file - used to catch-up on past/failed notams"""
-    click.echo(f'Ready to import NOTAM text file: {filename}...')
+    """Import a NOTAM briefing from a specific text file - used to catch-up on past/failed notams
+    usage: flask import-notam-text-file <filename>
     
-    #parse the notam text file, returning a Briefing Object
+    Parameters
+    ----------
+    filename : str
+        filename and path to the Notam Text file
+    """
+    click.echo(f'--- Command Line ready to import NOTAM text file: {filename} ---')
+    
+    # Parse the notam text file, returning a Briefing Object
     brf = parse_notam_text_file(filename, 'ZA')
+    if brf is None: return None
 
     sess = sqa_session()
-
     
+    # Check the Briefing doesn't already exist
     rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
     if rs.count() > 0:
         click.echo(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
-
-        sess.close()
-        sys.exit()
+        return -1
     
-    
-    #Write the briefing and attached NOTAMS to teh DB
+    # Write the briefing and attached NOTAMS to teh DB
     sess.add(brf)
     sess.commit()
     
     click.echo(f'Database Import Completed - written {len(brf.Notams)} NOTAMS')
-    
-    
+    click.echo("--- Command-Line Completed ---")
+
 
 def init_app(app):
+    """
+    Register the Command-Line commands with the flightbriefing app
+    """
     app.cli.add_command(import_notams_command)
     app.cli.add_command(import_notam_text_command)

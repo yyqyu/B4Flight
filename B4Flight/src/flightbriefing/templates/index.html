@@ -2,16 +2,18 @@
 
 {% extends 'base.html' %}
 
+{% block title %}Welcome To B4Flight {% endblock %}
+
 {% block header %}
 
-  <h1 class="text-center">{% block title %}Welcome To B4Flight {% endblock %}</h1>
+  <h1 class="bflight-page-header">Welcome to B4Flight</h1>
 
 {% endblock %}
 
 {% block content %}
 <div class="container">
-	<div class="row bg-light" style="height:20pc;">
-		<div class="col-sm-12 text-center my-auto">
+	<div class="row bflight-panel" style="height:20pc;">
+		<div class="col-sm-8 text-center mx-auto">
 			<h2>Better Briefings</h2>
 			<p>An interactive view of NOTAMS in South Africa</p>
 		</div>

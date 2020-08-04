@@ -22,42 +22,42 @@
 
 {% block content %}
 <div class="container-flow">
+		<div id='map' style='position:absolute; width: 100vw; height:90vh;'></div>
 	{% if flight %}
-		<h2>FLIGHT BRIEFING</h2>
-		<p>Briefing for flight <b>{{flight.Flight_Name}}</b> using NOTAM Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+		<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-5">
+		<b>FLIGHT BRIEFING</b> as at {{briefing.Briefing_Date}} <br>
+		<b>Flight:</b> {{flight.Flight_Name}} {% if default_flight_date %}<b>on</b> {{default_flight_date}}{% endif %}
+		</div>
 	{% else %}
 		{% if prev_briefing %}
-			<h2>NEW NOTAMS</h2>
-			<p>New NOTAMS since {{prev_briefing.Briefing_Date}} - current Briefing Reference is <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>NEW NOTAMS</b> since {{prev_briefing.Briefing_Date}}</div>
 		{% elif home_aerodrome %}
-			<h2>HOME NOTAMS for {{home_aerodrome}}</h2>
-			<p>Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>NOTAMS for {{home_aerodrome}}</b> as at {{briefing.Briefing_Date}}</div>
 		
 		{% else %}
-			<h2>CURRENT NOTAMS</h2>
-			<p>NOTAM Overview for Briefing Reference <b>{{briefing.Briefing_Ref}}</b> as at <b>{{briefing.Briefing_Date}}</b></p>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>CURRENT NOTAMS</b> as at {{briefing.Briefing_Date}}</div>
 		{% endif %}
 	{% endif %}
 	<div class="row">
-		<div class="col-3">
+		<div class="col-2">
 			<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
-				<li class="list-group-item py-1" style="background-color: #e6f2ff;">
+				<li class="list-group-item py-1 bflight-map-filter" >
 			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
 				</li>
 			{% endfor %}
 			</ul>
 			<div class="bflight-table-head text-center"><b>NOTAM RADIUS</b></div>
-			<div class="small border py-1">
+			<div class="small border py-1 bflight-map-filter">
 				<div class="slidecontainer px-1">
 				Filter NOTAM Radius &lt; <span id="radius-display">xx</span>nm: <br>
-					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter" style="width:70%;">
+					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter" style="width:60%;">
 					<button class="btn btn-sm bflight-btn m-2" onclick="filterRadius()">Apply</button>
 				</div>
 			</div>
 			<div class="bflight-table-head text-center"><b>FLIGHT DATE</b></div>
-			<div class="small border py-2">
+			<div class="small border py-2 bflight-map-filter">
 				<form id="date-filter" class="form-inline pl-2" method="post">
 					<div class="form-row">
 						<div class="col-auto">
@@ -71,7 +71,6 @@
 			</div>
 		</div>
 	
-		<div id='map' style='width: 75%; height:75vh;'></div>
 	</div>
 </div>
 <script>
@@ -240,7 +239,11 @@ map.on('load', function() {
 		"source": "flights",
 		"paint": {
 			"line-color": ["get","line-color"],
-			"line-width": 6
+			"line-width": 5
+		},
+		"layout": {
+			"line-cap": "round",
+			"line-join": "round"
 		}
 	});
 

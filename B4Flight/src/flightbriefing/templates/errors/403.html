@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}403 - Forbidden{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+<div class="container bg-light">
+		<h1 class="h3 text-center">Are you sure you should be here?</h1>
+		<p>It seems like you're trying to access something you shouldn't have access to...</p>
+
+		<p>If this is an error on our part - please let us know.  Otherwise, can we log you in? <br>
+		<a class="btn bflight-slim-btn mx-2 px-1" href={{url_for("auth.login")}}>Log Me In</a>
+</div>
+{% endblock %}

@@ -6,14 +6,14 @@ B4Flight Account Preferences
 
 {% block header %}
 
-  <h1 class="text-center bg-light">Set Your Preferences</h1>
+  <h1 class="bflight-page-header">Set Your Preferences</h1>
 
 {% endblock %}
 
 {% block content %}
 <div class="container">
 	<form id="settings" method="POST" novalidate>
-		<div class="bflight-home-panel"> 
+		<div class="bflight-panel"> 
 			<h2 class="h3">Your Details</h2>
 			<div class="form-group row">
 				<label for="username" class="col-md-2 col-form-label">Username</label>
@@ -55,10 +55,9 @@ B4Flight Account Preferences
 					<input type="number" class="form-control" name="route_buffer" value="{{route_buffer}}" placeholder="5" min="1" max="20">
 				</div>
 				<label for="route_buffer" class="col-form-label col-md-auto">nm either side of route</label>
-				</div>
 			</div>
 		</div>
-		<div class="form-group row">
+		<div class="form-group row ml-1">
 			<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">Save</button>
 		</div>
 	</form>
