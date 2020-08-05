@@ -55,20 +55,23 @@ def is_logged_in():
     boolean
         indicates if user is logged in
     """
-
+    uname = None
+    
     # Does a username exist in the Session?
     if session.get("username") is not None:
         uname=session.get("username")
+    
     # If not, check if one exists in the "Remember Me" Cookie
     else:
         # Cookie is encoded
         baked = request.cookies.get("_flightbriefing")
-        try:
-            uname = jwt.decode(baked, current_app.config['SECRET_KEY'], 'HS256')['username']
-            
-        except:
-            current_app.logger.error(f'Invalid _flightbriefing COOKIE was processed: {baked}')
-            uname = None
+        if baked:
+            try:
+                uname = jwt.decode(baked, current_app.config['SECRET_KEY'], 'HS256')['username']
+                
+            except:
+                current_app.logger.error(f'Invalid _flightbriefing COOKIE was processed: {baked}')
+                uname = None
             
     # Try to validate the user is a username was found.  If successful, return TRUE
     if uname:
