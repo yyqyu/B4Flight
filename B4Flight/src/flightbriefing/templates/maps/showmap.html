@@ -48,26 +48,31 @@
 				</li>
 			{% endfor %}
 			</ul>
-			<div class="bflight-table-head text-center"><b>NOTAM RADIUS</b></div>
+			<div class="bflight-table-head text-center"><b>FILTER NOTAM RADIUS</b></div>
 			<div class="small border py-1 bflight-map-filter">
 				<div class="slidecontainer px-1">
 				Filter NOTAM Radius &lt; <span id="radius-display">xx</span>nm: <br>
 					<input type="range" min="1" max="999" value="50" class="slider" id="radius-filter" style="width:60%;">
-					<button class="btn btn-sm bflight-btn m-2" onclick="filterRadius()">Apply</button>
+					<button class="btn btn-sm bflight-btn ml-2 my-2" onclick="filterRadius()">Apply</button>
 				</div>
 			</div>
-			<div class="bflight-table-head text-center"><b>FLIGHT DATE</b></div>
+			<div class="bflight-table-head text-center"><b>FILTER FLIGHT DATE</b></div>
 			<div class="small border py-2 bflight-map-filter">
-				<form id="date-filter" class="form-inline pl-2" method="post">
+<!-- 				<form id="date-filter" class="form-inline pl-2" method="post">
 					<div class="form-row">
 						<div class="col-auto">
-							<input type="date" class="form-control-sm" name="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
+							<input type="date" class="form-control-sm" name="flight-date" id="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
 						</div>
 						<div class="col-auto">
 							<input type="submit" class="btn btn-sm bflight-btn mx-1" value="Filter">
 						</div>
 					</div>
 				</form>
+-->
+				<div class="ml-1">
+					<input type="date" class="form-control-sm" name="flight-date" id="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
+					<button class="btn btn-sm bflight-btn ml-2 my-2" onclick="filterDate()">Apply</button>
+				</div>
 			</div>
 		</div>
 	
@@ -119,11 +124,13 @@ map.on('load', function() {
 	
 	map.addControl(new mapboxgl.FullscreenControl());
 	
+	//Always have a "hand pointer" cursor so user knows to click
+	map.getCanvas().style.cursor = 'pointer';
 	
 	//Loop through the usedLayers, and create a layer for each (eg. layer for obstacle_polygon, obstacle_circle, rpas_polygon, etc.)
-	for (var i = 0; i < usedLayers.length; i++) {
-		var layerId = usedLayers[i];
-		var layerType = usedLayers[i].split("_")[1]; //split the type - circle or polygon - to ensure the correct layer properties are set
+	for (let i = 0; i < usedLayers.length; i++) {
+		let layerId = usedLayers[i];
+		let layerType = usedLayers[i].split("_")[1]; //split the type - circle or polygon - to ensure the correct layer properties are set
 		
 		if (layerType=='polygon') {
 
@@ -160,27 +167,36 @@ map.on('load', function() {
 		}
 
 
-
+//This did not work well when layers were stacked - mouse would return to normal
 		// Change the cursor to a pointer when the mouse is over the layer.
-		map.on('mouseenter', layerId, function() {
-			map.getCanvas().style.cursor = 'pointer';
-		});
+//		map.on('mouseenter', layerId, function() {
+//			map.getCanvas().style.cursor = 'pointer';
+//		});
 	
-		// Change it back to a pointer when it leaves.
-		map.on('mouseleave', layerId, function() {
+//		// Change it back to a pointer when it leaves.
+//		map.on('mouseleave', layerId, function() {
+//			map.getCanvas().style.cursor = '';
+//		});
+
+		map.on('ondragestart', layerId, function() {
 			map.getCanvas().style.cursor = '';
+		});
+
+		map.on('ondragend', layerId, function() {
+			map.getCanvas().style.cursor = 'pointer';
 		});
 			
 		//Create a pop-up when the item is clicked on
 		map.on('click', layerId, function(e) {
+
 			
-			var popHtml = '';
+			let popHtml = '';
 			
 			//Sometimes we get duplicates - prevent this by tracking what's already added
-			var alreadyListed = [];
+			let alreadyListed = [];
 			
-			var feats = map.queryRenderedFeatures(e.point);
-			for (var i = 0; i < feats.length; i++) {
+			const feats = map.queryRenderedFeatures(e.point);
+			for (let i = 0; i < feats.length; i++) {
 				if (usedLayers.indexOf(feats[i].layer.id) >=0) {
 					
 					//If this notam not already added to popup then add it
@@ -258,9 +274,9 @@ map.on('load', function() {
 
 
 //Loop through the groups that have been used, and attach click events
-for (var i = 0; i < usedGroups.length; i++) {
+for (let i = 0; i < usedGroups.length; i++) {
 
-	var grpElement=document.getElementById(usedGroups[i]);
+	let grpElement=document.getElementById(usedGroups[i]);
 
 	grpElement.checked=true;
 	
@@ -268,9 +284,9 @@ for (var i = 0; i < usedGroups.length; i++) {
 	//	e.preventDefault();
 	//	e.stopPropogation();
 
-		var clicked = this.checked
-		var polygonLayer = this.id + '_polygon';
-		var circleLayer = this.id + '_circle';
+		const clicked = this.checked
+		const polygonLayer = this.id + '_polygon';
+		const circleLayer = this.id + '_circle';
 		
 		// toggle layer visibility by changing the layout object's visibility property
 		if (clicked === false) {
@@ -334,9 +350,9 @@ function hideFeature(notamNumber) {
 	ntm.style.display = 'none';
 
 	//Close the popup if no more visible elements, 
-	var c = document.getElementById('popup-container').children;
-	var visiblePops = 0;
-	for (var i = 0; i < c.length; i++) {
+	const c = document.getElementById('popup-container').children;
+	let visiblePops = 0;
+	for (let i = 0; i < c.length; i++) {
 		if (c[i].style.display != 'none') {
 			visiblePops += 1;
 		}
@@ -376,6 +392,50 @@ function filterRadius() {
 
 filterRadius();
 
+//Hide features based on Date of Flight, by setting their layer properties to a non-existent layer.
+function filterDate() {
+
+	//Check if a date has been entered - if so convert it to yyyy-mm-dd format to allow filtering
+	let input_date = document.getElementById('flight-date').valueAsDate;
+	let filter_date = '';
+	
+	if (input_date == null) {
+		filter_date = '';
+	}
+	else {
+	let day = String(input_date.getDate()).padStart(2, '0');
+	let mth = String(input_date.getMonth() + 1).padStart(2, '0');
+	let yr = input_date.getFullYear();
+	filter_date = `${yr}-${mth}-${day}`;
+	console.log(`filter by ${filter_date}`);
+	};
+
+	//Loop through all features in the GEOJson dataset
+	notamGeoData.forEach(function(a) {
+		//If this feature has already been filtered, unfilter it - filtered features contain -date.
+		if (a.properties.layer_group.indexOf('-date') > 0) {
+			a.properties.layer_group = a.properties.layer_group.replace('-date','');
+		}
+
+		//If a date has been entered, Filter this feature based on its date, by adding suffix of -date to its layer name.
+		if (filter_date !== '') {
+			// Need to cater for To Dates of "PERM" - make them far in the future so they are included 
+			let to_date = a.properties.to_date;
+			if (to_date.toUpperCase() == 'PERM') {to_date = '2100-12-31'};
+			//Dates need to be sliced to 10 characters to remove any time elements
+			to_date = to_date.slice(0,10);
+			if (a.properties.from_date.slice(0,10) > filter_date || to_date < filter_date ) {
+				a.properties.layer_group = a.properties.layer_group + '-date';
+			};
+		}
+	});
+
+	//refresh the maps datasource
+	map.getSource('notams').setData({
+		"type": "FeatureCollection",
+		"features": notamGeoData
+		});
+}
 
 </script>
 
