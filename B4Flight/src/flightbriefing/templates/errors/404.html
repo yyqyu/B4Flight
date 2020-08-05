@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}404 - Page Not Found{% endblock %}
+
+{% block header %}
+
+<h1 class="bflight-page-header">We Couldn't Find That...</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container bflight-panel">
+		<p>It seems like you're trying to go somewhere, but we couldn't find the place you're trying to go to.</p>
+
+		<p>In other words - the page couldn't be found.  We're very sorry - and would love it if you contacted us to let us know what you were trying to do.</p>
+		
+		<p>In the meantime,  can we take you home? <br>
+		<a class="btn bflight-slim-btn my-3 px-1" href={{url_for("home.index")}}>Home Please</a>
+		</p>
+</div>
+{% endblock %}

@@ -3,15 +3,16 @@
 {% block title %}Internal Server Error{% endblock %}
 
 {% block header %}
+<h1 class="bflight-page-header">We're terribly sorry...</h1>
 {% endblock %}
 
 {% block content %}
-<div class="container bg-light">
-		<h1 class="h3 text-center">We're terribly sorry...</h1>
+<div class="container bflight-panel">
 		<p>...and embarrassed.  It seems that we've encountered an internal error.  </p>
 
-		<p>This is really not how we like to do things.  An urgent e-mail has been sent so that we can follow up on this.  </p>
-		<p> Can we give it another go?
-		<a class="btn bflight-slim-btn mx-2 px-1" href={{url_for("home.index")}}>Home Page</a>
+		<p>This is really not how we like to do things.  An urgent e-mail has been dispatched so that we can follow up on this.  </p>
+		<p> Can we give it another go? <br>
+		<a class="btn bflight-slim-btn my-3 px-1" href={{url_for("home.index")}}>Home Page</a>
+		</p>
 </div>
 {% endblock %}

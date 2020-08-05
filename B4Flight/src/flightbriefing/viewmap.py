@@ -200,6 +200,11 @@ def flightmap(flight_id):
 
     # Retrieve the Flight
     flight = sqa_sess.query(FlightPlan).get(flight_id)
+    
+    #Check the flight exists
+    if flight is None:
+        abort(404)
+        
     # Check that the Flight belongs to the currently logged-in user, and user is not an admin
     if flight.UserID != int(session['userid']) and session['user_admin'] == False:
         abort(403)
