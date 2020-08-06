@@ -413,8 +413,8 @@ class Notam(Base):
     To_Date_Permanent = Column(Boolean) #Is the To Date Permanent?
     Notam_Text = Column(Text) #Text of the Notam - E) section of Notam
     Duration = Column(String(256)) #Duration of Notam - D) section of Notam
-    Level_Lower = Column(String(10)) #Lower Level for Notam - combines F) section and Q) section
-    Level_Upper = Column(String(10)) #Upper Level for Notam - combines G) section, Q) section E) Secion (text)
+    Level_Lower = Column(String(15)) #Lower Level for Notam - combines F) section and Q) section
+    Level_Upper = Column(String(15)) #Upper Level for Notam - combines G) section, Q) section E) Secion (text)
     E_Coord_Lat = Column(String(7)) #Co-ordinates extracted from the E) section (text)
     E_Coord_Lon = Column(String(8)) #Co-ordinates extracted from the E) section (text)
     Coord_Lat = Column(String(8)) #Final co-ordinates to use for the Notam Mapping

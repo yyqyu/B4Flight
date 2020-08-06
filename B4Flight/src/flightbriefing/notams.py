@@ -90,7 +90,8 @@ def tidy_notam(notam):
     if notam.Level_Upper is not None:
         if notam.Level_Upper.find('AMSL')>=0:
             notam.Level_Upper = notam.Level_Upper[:notam.Level_Upper.find('FT')+2]
-        else:
+        #If Notam is AGL, leave it as is, otherwise add FL:
+        elif notam.Level_Upper.find('AGL')<0:
             notam.Level_Upper = 'FL' + notam.Level_Upper
     else:
         notam.Level_Upper = 'FL' + notam.Q_Level_Upper
