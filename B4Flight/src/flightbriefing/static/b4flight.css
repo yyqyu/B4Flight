@@ -126,6 +126,29 @@ li.bflight-map-filter {
 	border-color: rgb(255,255,255);
 }
 
+.bflight-hide-notam-temp {
+	border-radius: 3px;
+	padding: 0.2rem 0.7rem 0.2rem 0.7rem;
+	font-size: smaller;
+	background-color: rgb(64,128,128);
+	color: rgb(230,255,255);
+}
+
+.bflight-hide-notam-perm  {
+	border-radius: 3px;
+	padding: 0.2rem 0.3rem 0.2rem 0.3rem;
+	margin-left: 0.5rem;
+	font-size: smaller;
+	background-color: rgb(192,64,64);
+	color: rgb(230,255,255);
+}
+
+.bflight-hide-notam-perm:hover, .bflight-hide-notam-temp:hover {
+	color: rgb(255,255,255);
+	text-decoration: none;
+}
+
+
 .bflight-btn {
 	background-color: rgb(0, 128, 128);
 	color: rgb(230,255,255);

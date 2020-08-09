@@ -71,13 +71,14 @@ class User(Base):
     Status_Pending = Column(Boolean(), default=True)
     Status_Active = Column(Boolean(), default=False)
     Access_Admin = Column(Boolean(), default=False)
-    Create_Date = Column(DateTime(), default=datetime.utcnow())
+    Create_Date = Column(DateTime(), default=datetime.utcnow)
     Activation_Mail_Date = Column(DateTime())
     Last_Login_Date = Column(DateTime())
     
     # Link to the FlightPlans Class, and UserSettings Class 
     FlightPlans = relationship("FlightPlan", back_populates="User")
     Settings = relationship("UserSetting", back_populates="User")
+    HiddenNotams = relationship("UserHiddenNotam", back_populates="User")
     
     
     @hybrid_property
@@ -223,6 +224,22 @@ class UserSetting(Base):
                 sqa_sess.commit()
         
         return setg
+
+
+class UserHiddenNotam(Base):
+    """
+    A Class to represent a Notam Number that a user has permanently hidden
+    
+    Uses the SQLAlchemy ORM to interact with database
+    
+    """ 
+    __tablename__ = 'UserHiddenNotams'
+    
+    UserID = Column(Integer(), ForeignKey("Users.UserID"), primary_key= True)
+    Notam_Number = Column(String(20), primary_key= True) #CAA-assigned Notam number - e.g. A1543/20
+    Date_Hidden = Column(DateTime(), default=datetime.utcnow)
+    
+    User = relationship("User")
 
 
 class NavPointCategory(Base):

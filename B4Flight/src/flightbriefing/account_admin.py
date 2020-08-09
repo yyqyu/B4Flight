@@ -11,9 +11,11 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app, make_response
 )
 
+from datetime import datetime
+
 from sqlalchemy import and_
 
-from .db import User, UserSetting, NavPoint
+from .db import User, UserSetting, NavPoint, UserHiddenNotam
 from .auth import requires_login
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
@@ -102,3 +104,51 @@ def settings():
     
     return render_template('account/settings.html', user=user, 
                            home_aerodrome=home_aerodrome.SettingValue, home_radius=home_radius.SettingValue, route_buffer=route_buffer.SettingValue)
+
+@bp.route('/hidenotam', methods=('POST',))
+def hidenotam():
+    """Implements AJAX call to create a specific UserHiddenNotam
+    This is used to permanently hide the NOTAM from future briefings
+    
+    Expects: json data to be POSTed containing element "notam_number"
+    Returns: json data with element "result" - true or false
+    
+    """
+
+    if request.method == 'POST':
+        current_app.logger.info('hidenotam called')
+        req_data = request.get_json()
+
+        if req_data:
+            
+            ntm_num = req_data.get('notam_number')
+            
+            if not ntm_num:
+                current_app.logger.warning(f'notam_number Key not found. URL [{request.url}] ... JSON Data[{request.get_json()}]')
+                
+            usr_id = session['userid']
+            current_app.logger.info(f'Hiding NOTAM: {ntm_num} for User: {usr_id}')
+            
+            sqa_sess = sqa_session()
+            
+            # Check the Notam hasn't already been hidden
+            exst = sqa_sess.query(UserHiddenNotam).filter(and_(UserHiddenNotam.UserID == usr_id, UserHiddenNotam.Notam_Number == ntm_num)).count()
+
+            # If it hasn't been hidden, then hide it
+            if exst == 0:
+                # Create object
+                hidden = UserHiddenNotam(UserID = usr_id, Notam_Number = ntm_num)
+                # Save to database
+                sqa_sess.add(hidden)
+                sqa_sess.commit()
+                current_app.logger.info(f'date: {hidden.Date_Hidden}')
+                current_app.logger.info(f'UTC date: {datetime.utcnow()}')
+
+            # If it has been hidden log a warning as we shouldn't be able to re-hide, and don't hide again
+            else:
+                current_app.logger.warning(f'Trying to hide a notam that is already hidden: User={usr_id} Notam={ntm_num}')
+
+            return {'result' : True}
+            
+        
+    return {'result' : False}

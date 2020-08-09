@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 
 from . import helpers, flightplans
 from .auth import requires_login
-from .db import FlightPlan, Notam, Briefing, UserSetting, NavPoint
+from .db import FlightPlan, Notam, Briefing, UserSetting, NavPoint, UserHiddenNotam
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 from .notams import get_new_deleted_notams, generate_notam_geojson
 
@@ -162,16 +162,18 @@ def viewmap():
     # Filter applicable NOtams for the Briefing - filtering by flight date if required
     if flight_date:
         notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id, Notam.From_Date <= flight_date, Notam.To_Date >= flight_date)).order_by(Notam.A_Location).all()
+
     else:
         notam_list = sqa_sess.query(Notam).filter(and_(Notam.BriefingID == latest_brief_id)).order_by(Notam.A_Location).all()
     
     # Create the GEOJSON Features, Groups and Layers needed for the map
-    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
+    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
 
     # Display the map
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
                            default_flight_date = flight_date)
+
 
 
 
@@ -223,7 +225,7 @@ def flightmap(flight_id):
         notam_list = flightplans.filter_route_notams(flight_id, buffer_nm)
     
     # Generate the GEOJSON features for the Notams
-    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
+    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
 
     # Generate the GEOJSON for the flight plan
     flight_geojson = flightplans.generate_flight_geojson(flight_id) 
@@ -254,7 +256,7 @@ def newnotams():
     prev_briefing, new_notams, del_notams = get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), return_count_only=False)
     
     # Create the GEOJSON Features
-    notam_features, used_groups, used_layers = generate_notam_geojson(new_notams)
+    notam_features, used_groups, used_layers = generate_notam_geojson(new_notams, hide_user_notams = True)
 
 
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
@@ -297,7 +299,7 @@ def homenotams():
         notam_list = flightplans.filter_point_notams(home_navpt.Longitude, home_navpt.Latitude, home_radius)
     
     # Generate the GEOJSON for the notams
-    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list)
+    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
 
     # Get bounds and center point for the maps
     flight_bounds = helpers.get_shape_bounds(radius)

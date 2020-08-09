@@ -250,13 +250,13 @@ def register():
             activation_token = new_user.create_activation_token()
             # Create an HTML and a text e-mail body including the authentication token
             msg_html = render_template('auth/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
-            msg_txt = render_template('auth/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
+            msg_txt = render_template('auth/activate_email.txt', token=activation_token, user_fname=new_user.Firstname)
             # Create the email addresses in python's Address format
             user_fullname = new_user.Firstname + ' ' + new_user.Lastname
             mail_to = Address(display_name = user_fullname.rstrip(), addr_spec = new_user.Email)
             mail_from = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_ADMIN_ADDRESS'])
-            # Send the activation e-mail
-            was_mail_sent = helpers.send_mail(mail_from, mail_to,'Confirm your registration wiht B4Flight', msg_txt, msg_html)
+            # Send the activation e-mail - BCC in the administrator
+            was_mail_sent = helpers.send_mail(mail_from, mail_to,'Confirm your registration with B4Flight', msg_txt, msg_html, recipients_bcc=mail_from)
             
             # Only save the user if the registration e-mail is successfully sent
             if was_mail_sent == True:

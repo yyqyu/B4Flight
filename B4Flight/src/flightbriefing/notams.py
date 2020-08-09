@@ -9,13 +9,13 @@ This module contains functions to
 
 import re
 from datetime import datetime, timedelta
-from flask import current_app
+from flask import current_app, session
 from geojson import Polygon, Point, Feature
 
 from sqlalchemy import func, and_
 
 from . import helpers    
-from .db import Briefing, Notam
+from .db import Briefing, Notam, UserHiddenNotam
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 
@@ -344,6 +344,37 @@ def parse_notam_text_file(filename, country_code):
     return this_briefing #return the Briefing Object (which contains all the notams)
 
 
+def get_hidden_notams(briefing_id):
+    """ Function to return a list of permanently hidden NOTAMS for a specific Briefing.
+    The User is able to choose to permanently hide specific notams - this returns these
+    Search is against a specific Briefing to limit the list of hidden NOTAMS returns, by only
+    returning those relevant to this query/briefing
+
+    Parameters
+    ----------
+    briefing_id : int
+        The briefing to match the hidden NOTAMS from.
+
+    Returns
+    -------
+    list
+        List of Notam Numbers
+    """
+
+    # Connect
+    sqa_sess = sqa_session()
+
+    # Query the database, filtering by briefing and user
+    hidden_list = sqa_sess.query(Notam, UserHiddenNotam.Notam_Number).filter(
+        and_(Notam.BriefingID == briefing_id, UserHiddenNotam.UserID == session['userid'])
+        ).join(UserHiddenNotam, Notam.Notam_Number == UserHiddenNotam.Notam_Number).all()
+
+    # Turn the results into a list of Notam Numbers
+    hidden = [x.Notam_Number for x in hidden_list]
+    
+    return hidden
+
+
 def get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), briefing_id=None, return_count_only=True):
     """ Function to return the New and Deleted NOTAMS since a specific date, or since a specific Briefing.  
     Returns either a list of notams or a count of Notams
@@ -403,7 +434,7 @@ def get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=
     return prev_briefing, new_notams, deleted_notams
 
 
-def generate_notam_geojson(notam_list):
+def generate_notam_geojson(notam_list, hide_user_notams=False):
     """ Function to create a list of GEOJSON features based on the list of Notams passed  
     The NOTAMS grouped into GEOJSON Features using the QCode_2_3_Lookup.Grouping 
     Each Feature will form a layer on the map - this allows for easy filtering of layers.
@@ -412,12 +443,16 @@ def generate_notam_geojson(notam_list):
     
     Eg. Groups could be: ['Hazards','Aerodromes'...]
     Layers could be: ['Hazards_polygon','Hazards_circle', 'Aerodromes_polygon','Aerodromes_circle' ...]
-
+    
+    If hide_user_notams == True: mark specifically hidden NOTAMS by setting flags, and modifying the layer-name to prevent it being shown
+    
     Parameters
     ----------
     notam_list : list
         list of Notam objects to create the GEOJSON Features from
-
+    hide_user_notams : bool
+        If the User has chosen to permanently hide NOTAMS, should we hide them?
+        
     Returns
     -------
     tuple
@@ -431,9 +466,27 @@ def generate_notam_geojson(notam_list):
     used_layers = []  #contains layer groupings in form: used_group+_+geometry (poly/circle) - used to separate layers on the map
     notam_features = []
 
+    # If we need to hide user notams:
+    if hide_user_notams == True:
+        # Get the briefingID from the first NOTAM in the list
+        briefingid = notam_list[0].BriefingID
+        # Use this briefing ID to get a list of hidden NOTAMS
+        hidden_notams = get_hidden_notams(briefingid)
+    # Otherwise an empty list
+    else:
+        hidden_notams = []
+
     # Create a GEOJSON Feature for each Notam - Feature contains specific Notam attributes
     for ntm in notam_list:
-
+        
+        # If this NOTAM is permanently hidden, set flag and create suffix 
+        if ntm.Notam_Number in hidden_notams:
+            hidden = True
+            hide_suffix = '-permhide'
+        else:
+            hidden = False
+            hide_suffix = ''
+        
         # Date Notam applies from
         ntm_from = datetime.strftime(ntm.From_Date,"%Y-%m-%d %H:%M") 
         # Date Notam applies to - take into account Perm and Est dates
@@ -470,9 +523,14 @@ def generate_notam_geojson(notam_list):
             ntm_duration = ''
         
         # Get the Colour for this QCode Group, and extract the RGB channels from the Hex colour code
-        col_r = int(ntm.QCode_2_3_Lookup.Group_Colour[1:3],16)
-        col_g = int(ntm.QCode_2_3_Lookup.Group_Colour[3:5],16)
-        col_b = int(ntm.QCode_2_3_Lookup.Group_Colour[5:7],16)
+        if current_app.config['MAP_USE_CATEGORY_COLOURS'] == '0':
+            colr = current_app.config['MAP_DEFAULT_CATEGORY_COLOUR']
+        else:
+            colr = ntm.QCode_2_3_Lookup.Group_Colour
+            
+        col_r = int(colr[1:3],16)
+        col_g = int(colr[3:5],16)
+        col_b = int(colr[5:7],16)
         
         # Create the Fill Colour attribute - opacity of 0.4
         fill_col=f'rgba({col_r},{col_g},{col_b},0.4)'
@@ -482,13 +540,14 @@ def generate_notam_geojson(notam_list):
         # Append this Feature to the collection, setting the various Notam attributes as properties
         notam_features.append(Feature(geometry=geojson_geom, properties={'fill':fill_col, 'line':line_col, 
                                                                  'group': ntm.QCode_2_3_Lookup.Grouping,
-                                                                 'layer_group': ntm.QCode_2_3_Lookup.Grouping + type_suffix, 
+                                                                 'layer_group': ntm.QCode_2_3_Lookup.Grouping + type_suffix + hide_suffix, 
                                                                  'notam_number': ntm.Notam_Number,
                                                                  'notam_location': ntm.A_Location,
                                                                  'from_date': ntm_from,
                                                                  'to_date' : ntm_to,
                                                                  'duration' : ntm_duration,
                                                                  'radius': ntm.Radius,
+                                                                 'permanently_hidden' : hidden,
                                                                  'notam_text': ntm.Notam_Text}))
 
         # Add this group+geometry combination to the list, so the map knows to split out a layer for it.

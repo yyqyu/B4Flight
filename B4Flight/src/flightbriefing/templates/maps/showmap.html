@@ -211,12 +211,14 @@ map.on('load', function() {
 						if (feats[i].properties.duration != '') {
 							popHtml += '<div class="row">' + feats[i].properties.duration + '</div>';
 						}
-						popHtml += '<div class="row"><div class="col"> </div><div class="col text-right"><a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a></div></div></div>';
+						popHtml += '<div class="row"><div class="col text-right">' +
+						'<a href=# class="bflight-hide-notam-temp" data-notam="'+ feats[i].properties.notam_number +'" onclick="hideNotam(dataset.notam)">Hide Now</a>' +
+						'<a href=# class="bflight-hide-notam-perm" data-notam="'+ feats[i].properties.notam_number +'" onclick="permHideNotam(dataset.notam)">Hide Always</a></div></div></div>';
 					}
 
 
 //					popHtml += feats[i].properties.text_htm;
-//					popHtml += '<a id="' + feats[i].properties.notam_number + '" href=# onclick="hideFeature(id)">Hide This</a>';
+//					popHtml += '<a id="' + feats[i].properties.notam_number + '" href=# onclick="hideNotam(id)">Hide This</a>';
 				};
 			};
 			if (popHtml.length > 0) {
@@ -329,13 +331,18 @@ radiusSlider.onchange = function() {
 };
 
 //Hide a feature by setting its layer property to a non-existent layer.
-function hideFeature(notamNumber) {
+function hideNotam(notamNumber, permanently) {
+
+	let  suffix = '-hide';
+	if (permanently == true) {
+		suffix = '-permhide';
+	};
 	
 	//Loop through all features in the GEOJson dataset, looking for the one with matching notam_number
 	notamGeoData.forEach(function(a) {
 		if (a.properties.notam_number == notamNumber) {
 			//Append "-hide" to the layer name
-			a.properties.layer_group = a.properties.layer_group + '-hide';
+			a.properties.layer_group = a.properties.layer_group + suffix;
 		};
 	});
 	
@@ -361,6 +368,29 @@ function hideFeature(notamNumber) {
 	if (visiblePops == 0) {
 		popup.remove();
 	}
+}
+
+
+function permHideNotam(notamNumber){
+	
+	fetch('{{url_for("account_admin.hidenotam")}}', 
+		{
+		method: 'POST',
+		headers: {'Content-Type': 'application/json'},
+		body: JSON.stringify({notam_number: notamNumber})
+		})
+	.then(function(response){
+		console.log(response.status);
+		response.json().then(function(data){
+			if (data.result == true){
+				hideNotam(notamNumber, true);
+			}
+			else {
+				alert('Could not permanently hide the Notam')
+			};
+		});
+
+	})
 }
 
 
@@ -436,6 +466,7 @@ function filterDate() {
 		"features": notamGeoData
 		});
 }
+
 
 </script>
 

@@ -15,7 +15,7 @@ from flightbriefing import notams
 from flightbriefing import flightplans
 
 from flightbriefing import db
-from flightbriefing.db import User, FlightPlan, FlightPlanPoint, Notam, Briefing
+from flightbriefing.db import User, FlightPlan, FlightPlanPoint, Notam, Briefing, UserHiddenNotam
 
 from polycircles import polycircles
 from datetime import datetime, timedelta
@@ -239,4 +239,23 @@ def extract_ATNS_items(ns, branch, category_name, data_list):
 
 #extract_ATNS_data('C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.kml', 'C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.csv')
 
-test_import_notams()
+#test_import_notams()
+
+def test_join():
+    Session = sessionmaker(bind=eng)
+    session = Session()
+    latest_brief_id = 32
+    flight_date = datetime.utcnow().date()
+    notam_list = session.query(Notam, UserHiddenNotam.Notam_Number.label('HiddenNotam')).filter(
+        and_(Notam.BriefingID == latest_brief_id, Notam.From_Date <= flight_date, Notam.To_Date >= flight_date)
+        ).join(UserHiddenNotam, Notam.Notam_Number == UserHiddenNotam.Notam_Number).order_by(Notam.A_Location).all()
+
+    for x in notam_list:
+        print(f'NOTAM {x.HiddenNotam}')
+
+    lst = [x.HiddenNotam for x in notam_list ]
+    print(lst)
+    
+    print('D0358/20' in lst)
+    
+test_join()

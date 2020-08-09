@@ -344,7 +344,7 @@ def generate_circle_shapely(centerLat, centerLon, radius_nm, format_is_dms=True,
     return spolygon
 
 
-def send_mail(sender, recipients_to, subject, body_text, body_html):
+def send_mail(sender, recipients_to, subject, body_text, body_html, recipients_cc=None, recipients_bcc=None):
     """Sends an e-mail based on the e-mail details passed in the parameters, 
     including both a text and an HTML version of the message.
     Any errors are logged as ERRORS - Errors in this app usually send e-mails to the administrator which may also fail 
@@ -365,6 +365,13 @@ def send_mail(sender, recipients_to, subject, body_text, body_html):
 
     body_html : str
         email message body in HTML
+
+    recipients_cc : email.headerregistry.Address, default=None
+        CC Recipient's e-mail address as an email.headerregistry.Address object
+
+    recipients_bcc : email.headerregistry.Address, default=None
+        BCC Recipient's e-mail address as an email.headerregistry.Address object
+
     Returns
     -------
     bool
@@ -376,7 +383,11 @@ def send_mail(sender, recipients_to, subject, body_text, body_html):
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = sender 
-    msg['To'] = recipients_to 
+    msg['To'] = recipients_to
+    if recipients_cc: 
+        msg['Cc'] = recipients_cc
+    if recipients_bcc: 
+        msg['Bcc'] = recipients_bcc
     
     # Set the text body, and then add the html as well
     msg.set_content(body_text)
@@ -406,8 +417,8 @@ def send_mail(sender, recipients_to, subject, body_text, body_html):
                 server.login(current_app.config['EMAIL_HOST_USER'], current_app.config['EMAIL_HOST_PASSWORD'])
                 server.send_message(msg)
         except Exception as exception:
-            current_app.logging.error(f'Error occurred sending SSL e-mail: {exception}')
-            current_app.logging.warning(f'Address was {recipients_to} ')
+            current_app.logger.error(f'Error occurred sending SSL e-mail: {exception}')
+            current_app.logger.warning(f'Address was {recipients_to} ')
             return False
 
     # Email sent successfully
