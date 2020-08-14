@@ -3,7 +3,6 @@
 This module contains views to 
 Display Notams on a Map (all notams / new notams / notams on flight path / notams for home aerodrome )
 Display list of Notam details (all notams / new & deleted notams )
-Upload a Flight Plan/Route
 
 Functionality is implemented using FLASK
 
@@ -16,7 +15,6 @@ from sqlalchemy import func, and_
 from flask import (
     Blueprint, redirect, render_template, request, session, url_for, current_app, flash, abort
 )
-from werkzeug.utils import secure_filename
 
 from datetime import datetime, timedelta
 
@@ -311,77 +309,3 @@ def homenotams():
                            flight_bounds=flight_bounds, flight_centre=flight_centre)
 
 
-@bp.route('/uploadroute', methods=('GET', 'POST'))
-@requires_login
-def uploadroute():
-    """Displays HTML page that allows a user to upload a flightplan
-    Various validations are performed on the files
-    """
-    
-    # If user has submitted the form
-    if request.method == "POST":
-        
-        # Client-side validations were performed - these are a backup
-        # was a filename provided
-        if 'filename' not in request.files:
-            flash('No file was selected')
-            return redirect(request.url)
-        
-        up_file = request.files['filename']
-        if up_file.filename == '':
-            flash('No file was selected')
-            return redirect(request.url)
-        
-        # Check file is a GPX or EP1
-        file_ext = up_file.filename.rsplit('.', 1)[1].lower()
-        if not file_ext in ['gpx','ep1']:
-            flash('We currentl only support files with EP1 and GPX extensions.')
-            return redirect(request.url)
-            
-        # Generate a unique filename to store the flightplan with on the server
-        filename = f"{session['userid']}__{datetime.strftime(datetime.utcnow(), '%Y%m%d%H%M%S%f')}__{secure_filename(up_file.filename)}"
-        
-        # Check the upload folder exists - if not, create it
-        if not os.path.exists(current_app.config['UPLOAD_ARCHIVE_FOLDER']):
-            os.makedirs(current_app.config['UPLOAD_ARCHIVE_FOLDER'])
-
-        # Create file path and save the file
-        full_path = os.path.join(current_app.config['UPLOAD_ARCHIVE_FOLDER'], filename)
-        up_file.save(full_path)
-        
-        # Add a route description
-        if request.form['routedesc']:
-            desc = request.form['routedesc']
-        else:
-            desc = "Imported Route"
-            
-        # File is saved, now create FlightPlan object.  
-        if file_ext == 'gpx':
-            fplan, err_msg = flightplans.read_gpx_file(full_path, session['userid'], desc) #Read the GPX file
-        elif file_ext == 'ep1':
-            fplan, err_msg = flightplans.read_easyplan_file(full_path, session['userid'], desc) #Read the EP1 file
-        
-        # If an error message was returned - i.e. file wasn't validated successfully - flash it and return to the Upload page
-        if err_msg:
-            flash(err_msg)
-
-        # Otherwise, create the flightplan and display a "success" page
-        else:
-            sqa_sess = sqa_session()
-            sqa_sess.add(fplan)
-            sqa_sess.commit()
-            new_id = fplan.FlightplanID
-
-            # Generate GEOJSON so we can show a small version of the flightplan to user
-            flight_geojson = flightplans.generate_flight_geojson(new_id) 
-            
-            # Get flight bounds and centre point to focus the map.
-            flight_bounds = helpers.get_flight_bounds(fplan)
-            flight_centre = [(flight_bounds[0][0] + flight_bounds[1][0])/2, (flight_bounds[0][1] + flight_bounds[1][1])/2]
-            
-            # Return an upload-succes page
-            return render_template('maps/uploadsuccess.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], filename=filename,
-                                   flight_geojson=flight_geojson, flight_bounds=flight_bounds, flight_centre=flight_centre,
-                                   fplan=fplan)
-    
-    return render_template('maps/uploadroute.html')

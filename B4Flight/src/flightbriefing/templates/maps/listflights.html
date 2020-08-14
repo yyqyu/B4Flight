@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1 class="bflight-page-header">{% block title %}My Past Flights{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+	<div class="container">
+		<div class="bflight-panel">
+			<table class="table table-striped table-bordered table-sm">
+			<thead class="bflight-table-head">
+				<tr>
+				<th >Uploaded</th>
+				<th>Flight Name</th>
+				<th>Description</th>
+				<th style="width:6rem;"></th>
+				</tr>
+			</thead>
+			<tbody>
+			{% if flights %}
+				{% for fpl in flights %}
+				<tr>
+				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Import_Date_Text}}</a></td>
+				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Flight_Name}}</a></td>
+				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Flight_Desc}}</a></td>
+				<td class="text-right">
+					<a href="{{url_for('flightadmin.editflight', flight_id=fpl.FlightplanID)}}" class="btn bflight-btn bflight-slim-btn mx-2" role="button">Edit</a>
+				</td>
+				</tr>
+				{% endfor %}
+			{% else %}
+				<tr>
+				<td colspan="4">No Flights Uploaded Yet</td>
+				</tr>
+			{% endif %}
+			</tbody>
+			</table>
+			<div class="text-right">
+				<a href="{{url_for('flightadmin.uploadroute')}}" style="width: 7rem;" class="btn bflight-btn mr-2" role="button">Import New</a>
+				<a href="{{url_for('flightadmin.uploadroute')}}" style="width: 7rem;" class="btn bflight-btn" role="button">Enter New</a>
+			</div>
+		</div>
+	</div>
+{% endblock %}

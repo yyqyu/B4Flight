@@ -23,13 +23,24 @@
 				</li>
 			    {% if session['username'] %}
 				<li class="nav-item bflight-navitem">
-					<a href="{{url_for('viewmap.viewmap')}}">MAP</a>
+					<div class="dropdown show">
+						<a class="dropdown-toggle" id="briefDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">BRIEFINGS</a>
+						<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="briefDropdownMenu">
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.listflights')}}">Past Flight</a>
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.uploadroute')}}">Enter Flight</a>
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.uploadroute')}}">Import Flight</a>
+						</div>
+					</div>
 				</li>
 				<li class="nav-item bflight-navitem">
-					<a href="{{url_for('viewmap.detailnotams')}}">NOTAMS</a>
-				</li>
-				<li class="nav-item bflight-navitem">
-					<a href="{{url_for('viewmap.changednotamdetail')}}">CHANGES</a>
+					<div class="dropdown show">
+						<a class="dropdown-toggle" id="mapDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">MAPS</a>
+						<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="mapDropdownMenu">
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.viewmap')}}">All Notams</a>
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.newnotams')}}">New Notams</a>
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.homenotams')}}">Home Notams</a>
+						</div>
+					</div>
 				</li>
 				{% endif %}
 				</ul>

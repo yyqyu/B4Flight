@@ -479,14 +479,6 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
     # Create a GEOJSON Feature for each Notam - Feature contains specific Notam attributes
     for ntm in notam_list:
         
-        # If this NOTAM is permanently hidden, set flag and create suffix 
-        if ntm.Notam_Number in hidden_notams:
-            hidden = True
-            hide_suffix = '-permhide'
-        else:
-            hidden = False
-            hide_suffix = ''
-        
         # Date Notam applies from
         ntm_from = datetime.strftime(ntm.From_Date,"%Y-%m-%d %H:%M") 
         # Date Notam applies to - take into account Perm and Est dates
@@ -522,25 +514,37 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
         else:
             ntm_duration = ''
         
-        # Get the Colour for this QCode Group, and extract the RGB channels from the Hex colour code
-        if current_app.config['MAP_USE_CATEGORY_COLOURS'] == '0':
-            colr = current_app.config['MAP_DEFAULT_CATEGORY_COLOUR']
+        # If this NOTAM is permanently hidden, group it with other Hidden Notams
+        if ntm.Notam_Number in hidden_notams:
+            hidden = True
+            this_group = 'User Hidden'
+            colr = current_app.config['MAP_HIDDEN_NOTAM_COLOUR']
+            opacity = 0.3
+        # Otherwise use the norma Q-Code Grouping
         else:
-            colr = ntm.QCode_2_3_Lookup.Group_Colour
-            
+            hidden = False
+            this_group = ntm.QCode_2_3_Lookup.Grouping
+
+            # Get the Colour for this QCode Group, and extract the RGB channels from the Hex colour code
+            if current_app.config['MAP_USE_CATEGORY_COLOURS'] == '0':
+                colr = current_app.config['MAP_DEFAULT_CATEGORY_COLOUR']
+            else:
+                colr = ntm.QCode_2_3_Lookup.Group_Colour
+            opacity = 0.4
+        
         col_r = int(colr[1:3],16)
         col_g = int(colr[3:5],16)
         col_b = int(colr[5:7],16)
         
-        # Create the Fill Colour attribute - opacity of 0.4
-        fill_col=f'rgba({col_r},{col_g},{col_b},0.4)'
+        # Create the Fill Colour attribute - opacity as set above
+        fill_col=f'rgba({col_r},{col_g},{col_b},{opacity})'
         # Create the Line Colour attribute - opacity of 1
         line_col=f'rgba({col_r},{col_g},{col_b},1)'
-        
+
         # Append this Feature to the collection, setting the various Notam attributes as properties
         notam_features.append(Feature(geometry=geojson_geom, properties={'fill':fill_col, 'line':line_col, 
-                                                                 'group': ntm.QCode_2_3_Lookup.Grouping,
-                                                                 'layer_group': ntm.QCode_2_3_Lookup.Grouping + type_suffix + hide_suffix, 
+                                                                 'group': this_group,
+                                                                 'layer_group': this_group + type_suffix, 
                                                                  'notam_number': ntm.Notam_Number,
                                                                  'notam_location': ntm.A_Location,
                                                                  'from_date': ntm_from,
@@ -551,16 +555,16 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
                                                                  'notam_text': ntm.Notam_Text}))
 
         # Add this group+geometry combination to the list, so the map knows to split out a layer for it.
-        if (ntm.QCode_2_3_Lookup.Grouping + type_suffix) not in used_layers:
-            used_layers.append(ntm.QCode_2_3_Lookup.Grouping + type_suffix)
+        if (this_group + type_suffix) not in used_layers:
+            used_layers.append(this_group + type_suffix)
 
         # Add the Notam Grouping to the collection of used groups
-        if ntm.QCode_2_3_Lookup.Grouping not in used_groups:
-            used_groups.append(ntm.QCode_2_3_Lookup.Grouping)
+        if this_group not in used_groups:
+            used_groups.append(this_group)
         
-        # Sort groups alphabetically for better display on the map
-        used_groups.sort()
-        used_layers.sort()
+    # Sort groups alphabetically for better display on the map
+    used_groups.sort()
+    used_layers.sort()
         
     return notam_features, used_groups, used_layers
 

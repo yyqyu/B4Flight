@@ -83,7 +83,7 @@ def is_logged_in():
     return False
 
 
-def log_user_in(username, password=None):
+def log_user_in(username, password=None, login_from_session=True):
     """Function to log a user in
     
     Validates the username exists, validates password if supplied, 
@@ -96,7 +96,9 @@ def log_user_in(username, password=None):
         Username to validate
     password : str, optional
         If a password is supplied, user is logging in from Login form.  
-        If no password, user is being logged in from a session variable or stored cookie 
+        If no password, user is being logged in from a session variable or stored cookie
+    login_from_session : bool, optional
+        Is the user being logged in from a session variable?  Governs whether session is cleared or not
     
     Returns
     -------
@@ -130,7 +132,10 @@ def log_user_in(username, password=None):
     
     # If no errors, user has logged in successfully.  Set the Session variables
     if error_msg is None:
-        session.clear()
+        #If this is a login from a session variable, don't clear the session - just check user and store date 
+        if login_from_session == False:
+            session.clear()
+        
         session['userid'] = usr.UserID
         session['username'] = usr.Username
         session['user_fname'] = usr.Firstname

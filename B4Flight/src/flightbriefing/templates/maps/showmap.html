@@ -43,10 +43,15 @@
 			<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
-				<li class="list-group-item py-1 bflight-map-filter" >
+				<li class="list-group-item py-1 {% if group == 'User Hidden'%}bflight-map-filter-hidden{% else %}bflight-map-filter{% endif %}" >
 			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
 				</li>
 			{% endfor %}
+			{% if 'User Hidden' not in used_groups %}
+				<li class="list-group-item py-1 bflight-map-filter-hidden">
+			    <input id="User Hidden" type="checkbox" class="form-check-input" disabled>User Hidden
+				</li>
+			{% endif %}
 			</ul>
 			<div class="bflight-table-head text-center"><b>FILTER NOTAM RADIUS</b></div>
 			<div class="small border py-1 bflight-map-filter">
@@ -58,17 +63,6 @@
 			</div>
 			<div class="bflight-table-head text-center"><b>FILTER FLIGHT DATE</b></div>
 			<div class="small border py-2 bflight-map-filter">
-<!-- 				<form id="date-filter" class="form-inline pl-2" method="post">
-					<div class="form-row">
-						<div class="col-auto">
-							<input type="date" class="form-control-sm" name="flight-date" id="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
-						</div>
-						<div class="col-auto">
-							<input type="submit" class="btn btn-sm bflight-btn mx-1" value="Filter">
-						</div>
-					</div>
-				</form>
--->
 				<div class="ml-1">
 					<input type="date" class="form-control-sm" name="flight-date" id="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
 					<button class="btn btn-sm bflight-btn ml-2 my-2" onclick="filterDate()">Apply</button>
@@ -93,6 +87,15 @@ flightGeoData={{flight_geojson|safe}};
 var usedLayers={{used_layers|safe}};
 
 var usedGroups={{used_groups|safe}};
+
+var hiddenLayerName = 'User Hidden';
+
+//Do we have a Hidden Layer in the Used Groups?  If not we need one 
+if (usedGroups.includes(hiddenLayerName) == false) {usedGroups.push(hiddenLayerName)}
+//Do we have Polygon and a Circle layer for "User Hidden" notams?  We need one of each to "receive" any notams hidden interactively
+if (usedLayers.includes(hiddenLayerName + '_polygon') == false) {usedLayers.push(hiddenLayerName + '_polygon')}
+if (usedLayers.includes(hiddenLayerName + '_circle') == false) {usedLayers.push(hiddenLayerName + '_circle')}
+
 
 //assign the mapbox token
 mapboxgl.accessToken = '{{mapbox_token}}';
@@ -132,6 +135,13 @@ map.on('load', function() {
 		let layerId = usedLayers[i];
 		let layerType = usedLayers[i].split("_")[1]; //split the type - circle or polygon - to ensure the correct layer properties are set
 		
+		//Start with this layer being visible
+		let layerVis = "visible";
+		//If it's a User Hidden layer then start with it being hidden
+		if (layerId.split("_")[0] == hiddenLayerName) {
+			layerVis = "none";
+		}
+		
 		if (layerType=='polygon') {
 
 			map.addLayer({
@@ -143,7 +153,7 @@ map.on('load', function() {
 					"fill-outline-color": ["get","line"]
 				},
 				layout : {
-					"visibility": "visible"
+					"visibility": layerVis //"visible"
 				},
 				'filter': ['==', ["get", "layer_group"], layerId]
 			});
@@ -159,7 +169,7 @@ map.on('load', function() {
 					"circle-color": ["get","fill"]
 				},
 				layout : {
-					"visibility": "visible"
+					"visibility": layerVis //"visible"
 				},
 				'filter': ['==', ["get", "layer_group"], layerId]
 			});
@@ -178,14 +188,6 @@ map.on('load', function() {
 //			map.getCanvas().style.cursor = '';
 //		});
 
-		map.on('ondragestart', layerId, function() {
-			map.getCanvas().style.cursor = '';
-		});
-
-		map.on('ondragend', layerId, function() {
-			map.getCanvas().style.cursor = 'pointer';
-		});
-			
 		//Create a pop-up when the item is clicked on
 		map.on('click', layerId, function(e) {
 
@@ -211,9 +213,21 @@ map.on('load', function() {
 						if (feats[i].properties.duration != '') {
 							popHtml += '<div class="row">' + feats[i].properties.duration + '</div>';
 						}
-						popHtml += '<div class="row"><div class="col text-right">' +
-						'<a href=# class="bflight-hide-notam-temp" data-notam="'+ feats[i].properties.notam_number +'" onclick="hideNotam(dataset.notam)">Hide Now</a>' +
-						'<a href=# class="bflight-hide-notam-perm" data-notam="'+ feats[i].properties.notam_number +'" onclick="permHideNotam(dataset.notam)">Hide Always</a></div></div></div>';
+
+						//If this Notam is permanently hidden, don't show the "hide" buttons
+						if (feats[i].properties.permanently_hidden == true) {
+							
+							popHtml += '<div class="row"><div class="col text-right">' +
+							'<span class="bflight-notam-hidden-indicator">Permanently Hidden</span></div></div></div>';
+						}
+						//Otherwise show them
+						else
+						{
+							popHtml += '<div class="row"><div class="col text-right">' +
+							'<a href=# class="bflight-hide-notam-temp" data-notam="'+ feats[i].properties.notam_number +'" onclick="hideNotam(dataset.notam)">Hide Now</a>' +
+							'<a href=# class="bflight-hide-notam-perm" data-notam="'+ feats[i].properties.notam_number +'" onclick="permHideNotam(dataset.notam)">Hide Always</a></div></div></div>';
+
+						}
 					}
 
 
@@ -222,7 +236,6 @@ map.on('load', function() {
 				};
 			};
 			if (popHtml.length > 0) {
-//				popHtml = '<table class="table table-borderless table-sm">' + popHtml + '</table>';
 				popHtml = '<div class="container" id="popup-container" style="max-height:300px; overflow:auto;">' + popHtml + '</div>';
 			}
 			
@@ -234,10 +247,6 @@ map.on('load', function() {
 			
 			//e.stopPropogation();
 
-//			new mapboxgl.Popup()
-//				.setLngLat(e.lngLat)
-//				.setHTML(e.features[0].properties.text_htm + hide_htm)
-//				.addTo(map);
 		});
 	}
 
@@ -280,7 +289,13 @@ for (let i = 0; i < usedGroups.length; i++) {
 
 	let grpElement=document.getElementById(usedGroups[i]);
 
-	grpElement.checked=true;
+	if (usedGroups[i] != hiddenLayerName) {
+		grpElement.checked=true;
+	}
+	else
+	{
+		grpElement.checked=false;
+	}
 	
 	grpElement.onclick = function(e) {
 	//	e.preventDefault();
@@ -298,6 +313,7 @@ for (let i = 0; i < usedGroups.length; i++) {
 			if (usedLayers.indexOf(circleLayer) > -1) {
 				map.setLayoutProperty(circleLayer, 'visibility', 'none');
 			}
+			this.style.font
 		} else {
 			if (usedLayers.indexOf(polygonLayer) > -1) {
 				map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
@@ -314,7 +330,7 @@ var radiusSlider = document.getElementById("radius-filter");
 var radiusFilterDisplay = document.getElementById("radius-display");
 
 //default at 500
-{% if redius_default %}
+{% if radius_default %}
 radiusSlider.value = {{radius_default}};
 {% else %}
 radiusSlider.value = 125;
@@ -333,16 +349,22 @@ radiusSlider.onchange = function() {
 //Hide a feature by setting its layer property to a non-existent layer.
 function hideNotam(notamNumber, permanently) {
 
-	let  suffix = '-hide';
-	if (permanently == true) {
-		suffix = '-permhide';
-	};
-	
 	//Loop through all features in the GEOJson dataset, looking for the one with matching notam_number
 	notamGeoData.forEach(function(a) {
 		if (a.properties.notam_number == notamNumber) {
+			//If we are hiding permanently, then move the feature onto a "User Hidden" layer
+			if (permanently == true) {
+				let pos = a.properties.layer_group.search('_');  //find the '_' - eg layer is called 'Aerodromes_polygon'
+				a.properties.layer_group = hiddenLayerName + a.properties.layer_group.slice(pos); //change layer name - eg. 'User Hidden_polygon'
+				a.properties.permanently_hidden = true;
+				a.properties.fill = 'rgba(192,64,64,0.3)';
+				a.properties.line = 'rgba(192,64,64,1)';
+			}
+			//If not hiding permanently, then just suffix the layer with "-hide"
+			else {
 			//Append "-hide" to the layer name
-			a.properties.layer_group = a.properties.layer_group + suffix;
+				a.properties.layer_group = a.properties.layer_group + '-hide';
+			}
 		};
 	});
 	
@@ -384,9 +406,10 @@ function permHideNotam(notamNumber){
 		response.json().then(function(data){
 			if (data.result == true){
 				hideNotam(notamNumber, true);
+				document.getElementById(hiddenLayerName).disabled = false;
 			}
 			else {
-				alert('Could not permanently hide the Notam')
+				alert('Could not permanently hide the Notam');
 			};
 		});
 

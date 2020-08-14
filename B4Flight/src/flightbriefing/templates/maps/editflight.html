@@ -1,0 +1,157 @@
+<!--This allows a user to edit a flight -->
+{% extends 'base.html' %}
+{% block title %}
+Edit A Flight
+{% endblock %}
+
+{% block header %}
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
+
+  <h1 class="bflight-page-header">Edit Flight</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="bflight-panel">
+
+		<div class="row">
+			<div id='map' class='col-sm-4' style='height: 200px;'></div>
+			<div class="col-sm-8">
+		
+				<form id="flight" method="POST" novalidate>
+					<input type="hidden" id="flight_deleted" name="flight_deleted" value="0">
+					<div class="form-group row">
+						<label for="flightname" class="col-sm-2 col-form-label">Flight Name</label>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" name="flightname" value="{{flight.Flight_Name}}" required maxlength="50">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="flightdesc" class="col-sm-2 col-form-label">Description</label>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" name="flightdesc" value="{{flight.Flight_Desc}}" required maxlength="100">
+						</div>
+					</div>
+					<div class="row justify-content-end">
+						<div class="col-sm-auto">
+							<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">Update</button>
+							<button id="delete-button" type="button" class="btn bflight-btn ml-3" onclick="deleteClick()">Delete</button>
+						</div>
+					</div>
+					<div class="row mt-2 justify-content-end">
+						<div class="col-sm-auto">
+							<button id="confirm-delete-button" type="button" style="display:none;" class="btn btn-danger ml-3" onclick="confirmDeleteClick()">Confirm Delete</button>
+						</div>
+					</div>
+				
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="mt-3 py-2">
+		<h2 class="h3">Flight Points</h2>
+
+		<table class="table table-striped table-bordered table-sm">
+		<thead class="bflight-table-head">
+			<tr>
+			<th>Location</th>
+			<th>Latitude</th>
+			<th>Longitude</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for fpp in flight.FlightPlanPoints %}
+			<tr>
+				<td>{{fpp.Name}}</td>
+				<td>{{fpp.Latitude}}</td>
+				<td>{{fpp.Longitude}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+			
+	</div>
+</div>
+	
+	<script>
+
+	//geojson data for notams
+	flightGeoData={{flight_geojson|safe}};
+	
+	//assign the mapbox token
+	mapboxgl.accessToken = '{{mapbox_token}}';
+	
+	//create the map
+	var map = new mapboxgl.Map({
+	    container: 'map',
+	    style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
+	    center: {{flight_centre}}, // starting position [lng, lat]
+	    zoom: 3, // starting zoom
+	    preserveDrawingBuffer: true
+	});
+	
+	map.on('load', function() {
+	
+		//Add the flight datasource
+		map.addSource("flights", {
+			"type": "geojson",
+			"data": {
+				"type": "FeatureCollection",
+				"features": flightGeoData
+			}
+		});
+	
+		map.addLayer({
+			"id": "flight",
+			"type": "line",
+			"source": "flights",
+			"paint": {
+				"line-color": ["get","line-color"],
+				"line-width": 6
+			}
+		});
+	
+		map.fitBounds({{flight_bounds}});
+	});
+
+
+
+
+	function submitClick() {
+		var isValid = true;
+		
+		//Clear existing invalid fields
+		document.querySelectorAll(".is-invalid").forEach(function(elem) {
+  			elem.classList.remove('is-invalid');
+		});
+
+		document.querySelectorAll("input").forEach(function(elem) {
+		  if (elem.checkValidity() == false) {
+			isValid = false;
+			elem.classList.add("is-invalid");
+		};
+		});
+		
+		
+		if (isValid == true) {
+			document.getElementById("flight").submit();
+		}  
+		
+	}
+
+	function deleteClick() {
+		document.querySelector('#delete-button').disabled=true;
+		document.querySelector('#submit-button').disabled=true;
+		document.querySelector('#confirm-delete-button').style.display = 'inline';
+	}
+
+	function confirmDeleteClick() {
+		document.querySelector('#confirm-delete-button').disabled=true;
+		document.querySelector('#flight_deleted').value="1";
+		document.getElementById("flight").submit();
+	}
+
+	</script>
+{% endblock %}

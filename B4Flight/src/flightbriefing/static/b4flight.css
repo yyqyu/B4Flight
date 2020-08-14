@@ -80,7 +80,6 @@ body {
 	color: rgb(0, 77, 77);
 }
 
-
 .bflight-nav-user {
 	background-color: rgb(230,255,255);
 	color: rgb(0, 77, 77);
@@ -89,6 +88,16 @@ body {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
 	border-radius: 5px;
+}
+
+.bflight-menu-dropdown {
+	background-color: rgb(0, 128, 128);
+	color: rgb(230,255,255);
+}
+
+.bflight-menu-item:hover {
+	background-color: rgb(0, 77, 77);
+	color: rgb(255,255,255);
 }
 
 .bflight-page-header {
@@ -103,6 +112,14 @@ body {
 	color: rgb(230,255,255);
 }
 
+.bflight-table-link {
+	color: rgb(0, 77, 77)
+}
+
+.bflight-table-link:hover {
+	color: rgb(0, 110, 110)
+}
+
 .bflight-panel {
 	background-color: rgb(240, 245, 245);
 	margin-bottom: 0.75rem;
@@ -111,12 +128,18 @@ body {
 }
 
 .bflight-map-filter {
-	background-color: #e6f2ff;
+	background-color: #e6f2ffea;
 	padding-left: 0.25rem;
 }
 
 li.bflight-map-filter {
 	padding-left:2rem;
+}
+
+li.bflight-map-filter-hidden {
+	padding-left:2rem;
+	color: #e6f2ff;
+	background-color: rgb(192,64,64);
 }
 
 .bflight-narrow-list {
@@ -125,6 +148,7 @@ li.bflight-map-filter {
 	background-color: rgb(240, 245, 245);
 	border-color: rgb(255,255,255);
 }
+
 
 .bflight-hide-notam-temp {
 	border-radius: 3px;
@@ -148,6 +172,16 @@ li.bflight-map-filter {
 	text-decoration: none;
 }
 
+.bflight-notam-hidden-indicator  {
+	border-radius: 3px;
+	border-color: rgb(192,64,64);
+	border-style: solid;
+	border-width: 1px;
+	color : rgb(192,64,64);
+	padding: 0.2rem 0.3rem 0.2rem 0.3rem;
+	margin-left: 0.5rem;
+	font-size: smaller;
+}
 
 .bflight-btn {
 	background-color: rgb(0, 128, 128);

@@ -48,6 +48,7 @@ def create_app(test_config=None):
     mapbox_token = cfg.get('maps','mapbox_token')
     map_use_category_colours = cfg.get('maps','use_category_colours')
     map_default_category_colour = cfg.get('maps','default_category_colour')
+    map_hidden_notam_colour = cfg.get('maps','hidden_notam_colour')
     working_folder = os.path.join(app.instance_path, cfg.get('application','working_folder'))
     upload_archive_folder = os.path.join(app.instance_path, cfg.get('application','upload_archive_folder'))
     notam_archive_folder = os.path.join(app.instance_path, cfg.get('notam_import_ZA','archive_folder'))
@@ -74,6 +75,7 @@ def create_app(test_config=None):
         MAPBOX_TOKEN=mapbox_token,  #mapbox API token - from https://account.mapbox.com/access-tokens/create
         MAP_USE_CATEGORY_COLOURS=map_use_category_colours, #do we use the colours specified in QCode for NOTAM display
         MAP_DEFAULT_CATEGORY_COLOUR=map_default_category_colour, #if we don't use QCode colours, what colour should we use?
+        MAP_HIDDEN_NOTAM_COLOUR=map_hidden_notam_colour, # The colour to use on map for hidden notams
         WORKING_FOLDER=working_folder, #temp folder
         UPLOAD_ARCHIVE_FOLDER=upload_archive_folder, #Saved copies of uploaded route files - for debugging
         NOTAM_ARCHIVE_FOLDER=notam_archive_folder, #saved copied of NOTAM files - for debugging / historical 
@@ -146,6 +148,9 @@ def create_app(test_config=None):
 
     from . import account_admin
     app.register_blueprint(account_admin.bp)
+
+    from . import flightadmin
+    app.register_blueprint(flightadmin.bp)
 
     #This is the SQLAlchemy session used across the application - allows for scoped sessions
     from .data_handling import sqa_session

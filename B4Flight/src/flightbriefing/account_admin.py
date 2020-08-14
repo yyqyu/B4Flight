@@ -116,7 +116,6 @@ def hidenotam():
     """
 
     if request.method == 'POST':
-        current_app.logger.info('hidenotam called')
         req_data = request.get_json()
 
         if req_data:
@@ -141,8 +140,6 @@ def hidenotam():
                 # Save to database
                 sqa_sess.add(hidden)
                 sqa_sess.commit()
-                current_app.logger.info(f'date: {hidden.Date_Hidden}')
-                current_app.logger.info(f'UTC date: {datetime.utcnow()}')
 
             # If it has been hidden log a warning as we shouldn't be able to re-hide, and don't hide again
             else:

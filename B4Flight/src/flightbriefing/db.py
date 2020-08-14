@@ -294,6 +294,7 @@ class FlightPlan(Base):
     Flight_Date = Column(Date())
     Flight_Name = Column(String(255))
     Flight_Desc = Column(String(255))
+    Is_Deleted = Column(Boolean, default=False)
     
     # Link with the User (parent) and FlightPlanPoints (children)
     User = relationship("User")
