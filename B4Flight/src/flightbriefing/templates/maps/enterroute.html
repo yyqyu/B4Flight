@@ -114,7 +114,7 @@
 		}
 		
 		//Call validateroute API on the server, passing the route as a JSON object.
-		fetch('http://127.0.0.1:5000/validateroute', {
+		fetch('{{url_for("flightadmin.validateroute")}}', {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
 			body: JSON.stringify({route: rawRoute})
