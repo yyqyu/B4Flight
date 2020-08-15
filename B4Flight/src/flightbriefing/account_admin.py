@@ -101,9 +101,9 @@ def settings():
         sqa_sess.commit()
         flash('Your details were successfully updated.','success')
     
-    
     return render_template('account/settings.html', user=user, 
                            home_aerodrome=home_aerodrome.SettingValue, home_radius=home_radius.SettingValue, route_buffer=route_buffer.SettingValue)
+
 
 @bp.route('/hidenotam', methods=('POST',))
 def hidenotam():

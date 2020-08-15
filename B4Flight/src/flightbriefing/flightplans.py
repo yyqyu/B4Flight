@@ -231,14 +231,18 @@ def read_easyplan_file(filename, user_id, flight_description):
     return route, error_msg
 
 
-def generate_flight_geojson(flightplan_id):
+def generate_flight_geojson(flightplan_id=None, flightplan_object=None):
     """Create a GEOJSON feature object from a FlightPlan, to be used
     by MapBox
+    Only need pass the ID *OR* the Flightplan Object
     
     Parameters
     ----------
-    flightplan_id : int
+    flightplan_id : int, default = none
         The FlightPlan's ID
+    
+    flightplan_object : object
+        The FlightPlan 
     
     Returns
     -------
@@ -246,11 +250,17 @@ def generate_flight_geojson(flightplan_id):
         GEOJSON Features (even though only 1 flightplan, a list needs to be returned with 1 element for it to be mapped correctly)
     """
     
-    sqa_sess = sqa_session()
+    # If a Flightplan Object has not been passed, get the object using FlightPlan ID
+    if flightplan_object is None:
+        sqa_sess = sqa_session()
+        
+        # Retrieve the fligtplan for the specified ID
+        flightplan = sqa_sess.query(FlightPlan).filter(FlightPlan.FlightplanID == flightplan_id).first()
     
-    # Retrieve the fligtplan for the specified ID
-    flightplan = sqa_sess.query(FlightPlan).filter(FlightPlan.FlightplanID == flightplan_id).first()
-    
+    # Otherwise use the passed FlightPlan object
+    else:
+        flightplan = flightplan_object
+        
     route_feature = []
     point_list = []
     # Loop through each route point, adding tuples of coordinates

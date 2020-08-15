@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+  {% block title %}
+	Enter Route
+  {% endblock %}
+
+{% block header %}
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+	<h1 class="bflight-page-header">Enter a New Flight</h1>
+	<div class="container">
+		<div class="bflight-panel">
+		
+			<form id="flight" method="POST" novalidate>
+				<div class="form-group row">
+					<label for="flightname" class="col-sm-2 col-form-label">Flight Name</label>
+					<div class="col-sm-10">
+						<input type="text" class="form-control" name="flightname"  required maxlength="50">
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="flightdesc" class="col-sm-2 col-form-label">Description</label>
+					<div class="col-sm-10">
+						<input type="text" class="form-control" name="flightdesc" required maxlength="100">
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="flightdesc" class="col-sm-2 col-form-label">Route</label>
+					<div class="col-sm-10">
+						<textarea class="form-control" id="route" name="route" rows=2 onchange="processRoute()" onkeyup="routeKeyUp(event)"required maxlength="250" placeholder="Enter route using named waypoints separated by spaces - eg. FAGM GAV FAPN UTRUK FAGC"></textarea>
+						<div id="route-result"></div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-8 offset-sm-2">
+						<div id='map' style='height: 200px;'></div>
+					</div>
+					<div class="col-sm-auto">
+						<button id="submit-button" type="button" class="btn bflight-btn" onclick="submitClick()">Save & Brief</button>
+					</div>
+				</div>
+			</form>
+		</div>
+
+	</div>
+
+	<script>
+	
+	//Event Handler for Submit button - performs validations before submitting
+	function submitClick() {
+		//Assume that the form is validated
+		let isValid = true;
+		
+		//Clear existing invalid fields
+		document.querySelectorAll(".is-invalid").forEach(function(elem) {
+  			elem.classList.remove('is-invalid');
+		});
+
+		//Perform validations for each INPUT element using HTML validity checks
+		document.querySelectorAll("input").forEach(function(elem) {
+		  if (elem.checkValidity() == false) {
+			//Field did not validate - so flag that form is not valid and format the input field
+			isValid = false;
+			elem.classList.add("is-invalid");
+		};
+		});
+		
+		//Perform validations for each TEXTAREA element HTML validity checks
+		document.querySelectorAll("textarea").forEach(function(elem) {
+		  if (elem.checkValidity() == false) {
+			//Field did not validate - so flag that form is not valid and format the input field
+			isValid = false;
+			elem.classList.add("is-invalid");
+		};
+		});
+		
+		//If the form validated, then submit it
+		if (isValid == true) {
+			document.getElementById("flight").submit();
+		}  
+		
+	}
+
+	//Event-handler for Key-Up event on the route TEXTAREA input
+	// If the user presses SPACE or ENTER, then update the route on the map
+	function routeKeyUp(e) {
+		if (event.key == ' ' | event.key == 'Enter' ) {
+			processRoute();
+		}
+	}
+	
+	//Process Route submits an AJAX call to the server, validating the route entered in the route TEXTAREA element
+	//The server returns a JSON response containing:
+	// - is_route_valid : boolean
+	// - if route is NOT valid, then a list of waypoints with a flag per waypoint indicating if valid or not
+	// - if route IS valid, then a GEOJSON object for the route, for display on the map
+	
+	function processRoute() {
+		
+		//Get the route and trim it
+		let rawRoute = document.querySelector('#route').value.trim()
+		
+		//Check if the route appears invalid - has no data, and at least 1 SPACE (which implies more than 1 waypoint)
+		if(!(rawRoute.length>5 & rawRoute.search(' ')>0)) {
+			//Route is not valid, so hide it from the map and return - i.e. do not send to server for processing
+			if (map.getLayer('flight')) {
+				map.setLayoutProperty('flight', 'visibility', 'none');
+			}
+			return;
+		}
+		
+		//Call validateroute API on the server, passing the route as a JSON object.
+		fetch('http://127.0.0.1:5000/validateroute', {
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({route: rawRoute})
+		})
+		.then(function(response) {
+			//Once the server has processed and returned a response, check it is valid 
+			
+			//Server error - respond
+			if (response.status != 200) {
+				document.querySelector('#route-result').innerHTML = `<p>Server could not be reached to validate your route - response was ${response.status} - ${response.statusText}`;
+				return;
+			};
+
+			//Now process the JSON that the server has returned
+			response.json().then(function(data){
+				//If the route was validated by server
+				if (data.is_route_valid == true){
+					//Clear the DIV used to show errors
+					document.querySelector('#route-result').innerHTML = '';
+					//Update the map
+					showMap(data.GEOJSON);
+				}
+				//Route is not valid
+				else {
+					//If the map has a visible flight, hide it
+					if (map.getLayer('flight')) {
+						map.setLayoutProperty('flight', 'visibility', 'none');
+					}
+					//Show the route in the route-result DIV, highlighting the waypoints that did not validate 
+					let result = '<span style="color:red; font-weight:bold;">Please check your waypoints: </span>'
+					data.route_points.forEach(function(pnt){
+						if (pnt.is_valid == true) {
+							result += pnt.point_name + ' ';
+						}
+						else {
+							result += '<span style="color: red; font-weight:bold;">' + pnt.point_name + '&nbsp;</span>';
+						}
+					})
+					document.querySelector('#route-result').innerHTML = result;
+				};
+			});
+		});
+	}
+
+
+	//assign the mapbox token
+	mapboxgl.accessToken = '{{mapbox_token}}';
+	
+	//create the map
+	var map = new mapboxgl.Map({
+	    container: 'map',
+	    style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
+	    center: [26,-28], // starting position [lng, lat]
+	    zoom: 3, // starting zoom
+	    preserveDrawingBuffer: true
+	});
+	
+	//Function to update the map with GEOJSON data for the flight
+	function showMap(flightGeoData) {
+	
+		//If the map has a flight datasource, update it using setData
+		if (map.getSource('flights')) {
+			map.getSource('flights').setData({
+				"type": "FeatureCollection",
+				"features": flightGeoData
+				});
+			
+		}
+		//Otherwise create the map datasource
+		else {
+			map.addSource("flights", {
+				"type": "geojson",
+				"data": {
+					"type": "FeatureCollection",
+					"features": flightGeoData
+				}
+			});
+			
+		}
+		
+		//If the map has a layer linked to the flight datasource, make sure it's visible
+		if (map.getLayer('flight')) {
+			map.setLayoutProperty('flight', 'visibility', 'visible');
+		} 
+		//Otherwise create the layer
+		else
+		{
+			map.addLayer({
+				"id": "flight",
+				"type": "line",
+				"source": "flights",
+				"paint": {
+					"line-color": ["get","line-color"],
+					"line-width": 6
+				}
+			});
+		}
+
+		//Loop through the GEOJSON datasource, to determine the bounds
+		let min_x = 360;
+		let min_y = 360;
+		let max_x = -360;
+		let max_y = -360
+		
+		flightGeoData[0].geometry.coordinates.forEach(function(pnt){
+			if (pnt[0] < min_x) {min_x = pnt[0]};
+			if (pnt[0] > max_x) {max_x = pnt[0]};
+			if (pnt[1] < min_y) {min_y = pnt[1]};
+			if (pnt[1] > max_y) {max_y = pnt[1]};
+		});
+
+		//Then set the map to fit the route into the window
+		map.fitBounds([[min_x - 0.25, min_y - 0.25], [max_x + 0.25, max_y + 0.25]]);
+	}
+
+
+	</script>
+
+
+{% endblock %}
