@@ -272,6 +272,15 @@ def generate_flight_geojson(flightplan_id=None, flightplan_object=None):
     
     #Set the line colour using the User's setting - if no setting, don't create one (use the app default)
     line_colour = UserSetting.get_setting(session['userid'], 'flight_route_colour', create_if_missing=False).SettingValue
+
+    col_r = int(line_colour[1:3],16)
+    col_g = int(line_colour[3:5],16)
+    col_b = int(line_colour[5:7],16)
+
+    opacity = current_app.config['MAP_FLIGHT_ROUTE_OPACITY']
+    
+    # Create the Line Colour attribute - opacity from settings
+    line_colour=f'rgba({col_r},{col_g},{col_b},{opacity})'
     
     # Create the GEOJson feature
     this_route = Feature(geometry=geojson_geom, properties={'line-color': line_colour, 
