@@ -86,6 +86,7 @@ def contact():
         # Validations Passed - Process the form
         else:
             userid = session.get('userid')
+            # Create the message and send the mail.  We don't need the msg object
             result, msg = ContactMessage.send_message(firstname, email, message, user_id = userid)
             return redirect(url_for('home.contactsuccess', result=result, firstname=firstname, contact_email=current_app.config['EMAIL_CONTACTUS_ADDRESS']))
     
