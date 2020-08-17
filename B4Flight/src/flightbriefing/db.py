@@ -17,6 +17,8 @@ import os
 
 from datetime import datetime, timedelta
 
+from email.headerregistry import Address
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date, Time, DateTime, Float, Text, ForeignKey, UniqueConstraint, and_
 from sqlalchemy.orm import relationship
@@ -31,7 +33,7 @@ import csv
 from werkzeug.security import generate_password_hash
 
 import click
-from flask import current_app
+from flask import current_app, render_template
 from flask.cli import with_appcontext
 
 from .data_handling import sqa_session
@@ -487,6 +489,69 @@ class Notam(Base):
         return poly_coords.strip()
 
 
+class ContactMessage(Base):
+    """
+    A Class to respresent a message received from a User
+    
+    Uses the SQLAlchemy ORM to interact with database
+    
+    """ 
+    __tablename__ = 'ContactMessages'
+    ID = Column(Integer(), primary_key=True)
+    UserID = Column(Integer(), ForeignKey("Users.UserID"))
+    Firstname = Column(String(75))
+    Email = Column(String(75), nullable=False)
+    Message = Column(String(500), nullable=False)
+    Status_Pending = Column(Boolean(), default=True)
+    Status_Closed = Column(Boolean(), default=False)
+    Create_Date = Column(DateTime(), default=datetime.utcnow)
+    
+    User = relationship("User")
+
+    @staticmethod
+    def send_message(firstname, email_address, message, user_id=None):
+        """
+        Sends a Message to the administrator, and stores the message in the table.
+
+        Parameters
+        ----------
+        firstname : str
+            The first name of the person sending the message
+        email_address : str
+            The email address of the person sending the message
+        message : str
+            The message that was sent
+        user_id : int, optional
+            The userID of the user who sent the message - if this is a registered user
+            
+        Returns
+        -------
+        bool
+            Was the email successfully sent?
+        ContactMessage
+            An instance of the ContactMessage class, containing the message
+        """
+        
+        # Retrieve the setting
+        sqa_sess = sqa_session()
+        
+        msg = ContactMessage(Firstname = firstname, Email = email_address, Message = message)
+        if user_id:
+            msg.UserID = user_id
+        
+        sqa_sess.add(msg)
+        sqa_sess.commit()
+        
+        msg_txt = render_template('emails/contactus_email.txt', firstname=firstname, message=message)
+        msg_html = render_template('emails/contactus_email.html', firstname=firstname, message=message)
+        
+        mail_to = Address(display_name = firstname, addr_spec = email_address)
+        mail_from = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_ADMIN_ADDRESS'])
+        mail_bcc = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_CONTACTUS_ADDRESS']) 
+        was_mail_sent = helpers.send_mail(mail_from, mail_to,'Thank you for contacting us.', msg_txt, msg_html, recipients_bcc=mail_bcc)
+        
+        return was_mail_sent, msg
+        
     
 def init_db(sqa_engine):
     """Initialise the SQLAlchemy database - for use when DB module is used

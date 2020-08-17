@@ -7,13 +7,13 @@ Functionality is implemented using FLASK
 """
 
 from flask import (
-    Blueprint, render_template, request, session, url_for, current_app, flash
+    Blueprint, render_template, redirect, request, session, url_for, current_app, flash
 )
 from sqlalchemy import func, and_
 
 from datetime import datetime, timedelta
 
-from .db import Briefing, Notam, FlightPlan, FlightPlanPoint, User, UserSetting, NavPoint
+from .db import Briefing, Notam, FlightPlan, FlightPlanPoint, User, UserSetting, NavPoint, ContactMessage
 from .notams import get_new_deleted_notams
 from .auth import is_logged_in
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
@@ -58,3 +58,46 @@ def index():
                            last_wk_brief_date=lw_briefing_date, new_notams=new_notams, deleted_notams=deleted_notams,
                            home_notams=home_notams, home_radius=home_radius, home_aerodrome=home_aerodrome)
     
+
+@bp.route('/contact', methods=('GET', 'POST'))
+def contact():
+    """Implements Contact Us Page
+    
+    """
+    # First get name and e-mail address if user is logged in - if not logged in they return None
+    firstname=session.get("user_fname")
+    email=session.get("user_email")
+
+    # If we're processing a form
+    if request.method == 'POST':
+        
+        # Get the message details
+        firstname = request.form['firstname']
+        email = request.form['email']
+        message = request.form['message']
+        
+        # Validate input - this is a backup to client-side validations
+        if not firstname:
+            flash('Please enter your name - so we can call you by name', 'error')
+        elif not email:
+            flash('Please enter your email address', 'error')
+        elif not message:
+            flash('Please enter a message', 'error')
+        # Validations Passed - Process the form
+        else:
+            userid = session.get('userid')
+            result, msg = ContactMessage.send_message(firstname, email, message, user_id = userid)
+            return redirect(url_for('home.contactsuccess', result=result, firstname=firstname, contact_email=current_app.config['EMAIL_CONTACTUS_ADDRESS']))
+    
+    return render_template("contact.html", firstname=firstname, email=email, contact_email=current_app.config['EMAIL_CONTACTUS_ADDRESS'])
+
+@bp.route('/contactsuccess', methods=('GET', 'POST'))
+def contactsuccess():
+    """Shows the html page that confirmed User has successfully contacted us."""
+    
+    if request.method == 'GET':
+        result = request.args.get('result')
+        firstname = request.args.get('firstname')
+        contact_email = request.args.get('contact_email')
+             
+    return render_template('contact_success.html', result=result, firstname=firstname, contact_email=contact_email)

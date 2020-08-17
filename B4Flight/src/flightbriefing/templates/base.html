@@ -43,12 +43,21 @@
 					</div>
 				</li>
 				{% endif %}
+				<li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('home.contact') }}">CONTACT</a></li>
 				</ul>
 			</div>
 			  <ul class="navbar-nav ml-md-auto">
 			    {% if session['username'] %}
-			      <li class="nav-item px-2 mx-2 bflight-navitem bflight-nav-user"><a href="{{url_for('account_admin.settings')}}"> {{ session['username'] }}</a></li>
-			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+				<li class="nav-item px-2 mx-2 bflight-navitem">
+					<div class="dropdown show">
+						<a class="dropdown-toggle bflight-nav-user" id="userDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">{{ session['username'] }}</a>
+						<div class="dropdown-menu dropdown-menu-right bflight-menu-dropdown" aria-labelledby="userDropdownMenu">
+							<a class="dropdown-item bflight-menu-item" href="{{url_for('account_admin.settings')}}">Settings</a>
+							<a class="dropdown-item bflight-menu-item" href="{{ url_for('auth.logout') }}">Log Out</a>
+						</div>
+					</div>
+				</li>
+				
 			    {% else %}
 			      <li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('auth.register') }}">Register</a></li>
 			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.login') }}">Log In</a></li>

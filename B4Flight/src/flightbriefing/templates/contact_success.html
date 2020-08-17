@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}B4Flight - Contact Us{% endblock %}
+
+{% block header %}
+
+   {% if result=='True' %}
+   <h1 class="text-center">Thanks for Your Message!</h1>
+   {% else %}
+   <h1 class="text-center">We hit a problem...</h1>
+   {% endif %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row bg-light" style="height:20pc;">
+		<div class="col-sm-12 text-center my-auto">
+		   {% if result=='True' %}
+			<h2>Thank You, {{firstname}}!</h2>
+			<p>Thanks for contacting us.  We've sent you a mail confirming your message, and will get back to you ASAP.</p>
+			<p>If you need to get in touch before then, please drop us a mail at <strong>{{contact_email}}</strong></p>
+			{% else %}
+			<h2>We're very sorry, {{firstname}}!</h2>
+			<p>For some reason we encountered a glitch with your message.  We are very embarrassed and have logged an error with the administrators, 
+			but we can't guarantee that your message will be delivered.</p>
+			<p>Please would you drop us a mail at <strong>{{contact_email}}</strong> with your query?</p>
+			{% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}

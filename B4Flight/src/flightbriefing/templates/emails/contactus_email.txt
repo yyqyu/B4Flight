@@ -1,0 +1,11 @@
+Hello {{firstname}}
+
+
+Thanks for making contact with us!  Your message has been forwarded straight to me - I'll get back to you as soon as I can.  For your records, here's what you sent to us:
+
+----------
+{{message|safe}}
+----------
+	
+Cheers
+Andrew
