@@ -7,14 +7,21 @@ body {
 	color: rgb(0, 77, 77);
 }
 
-div.home-page-text {
+div.home-page {
 	font-size: 1.1rem;
 	font-weight: lighter;
 	line-height: 2rem;
 }
 
-h2.home-page-text {
+h2.home-page {
 	font-weight: bolder;
+	font-size: x-large;
+}
+
+img.home-page {
+    border-width: 2px;
+    border-style: solid;
+    border-color: rgba(0,128,128,0.2);
 }
 
 .bflight-form-login {
@@ -81,12 +88,12 @@ h2.home-page-text {
 	color: rgb(230,255,255);
 }
 
-.bflight-navitem.bflight-nav-user a:hover {
+a.bflight-nav-user:hover {
 	color: rgb(0, 77, 77);
 	background-color: rgb(255,255,255);
 	text-decoration: none;
 }
-.bflight-navitem.bflight-nav-user a {
+a.bflight-nav-user {
 	color: rgb(0, 77, 77);
 }
 
@@ -97,6 +104,8 @@ h2.home-page-text {
 	margin-top: 0.5rem;
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
+	padding-top: 0.1rem;
+	padding-bottom: 0.1rem;
 	border-radius: 5px;
 }
 
