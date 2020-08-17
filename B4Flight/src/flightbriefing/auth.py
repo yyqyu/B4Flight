@@ -140,6 +140,7 @@ def log_user_in(username, password=None, login_from_session=True):
         session['username'] = usr.Username
         session['user_fname'] = usr.Firstname
         session['user_admin'] = usr.Access_Admin
+        session['user_email'] = usr.Email
 
         # Update with last login date
         usr.Last_Login_Date = datetime.utcnow()
@@ -254,8 +255,8 @@ def register():
             # Create an activation token for the user
             activation_token = new_user.create_activation_token()
             # Create an HTML and a text e-mail body including the authentication token
-            msg_html = render_template('auth/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
-            msg_txt = render_template('auth/activate_email.txt', token=activation_token, user_fname=new_user.Firstname)
+            msg_html = render_template('emails/activate_email.html', token=activation_token, user_fname=new_user.Firstname)
+            msg_txt = render_template('emails/activate_email.txt', token=activation_token, user_fname=new_user.Firstname)
             # Create the email addresses in python's Address format
             user_fullname = new_user.Firstname + ' ' + new_user.Lastname
             mail_to = Address(display_name = user_fullname.rstrip(), addr_spec = new_user.Email)

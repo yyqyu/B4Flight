@@ -64,6 +64,7 @@ def create_app(test_config=None):
     email_host_password = cfg.get('email','email_host_password')
     email_admin_name = cfg.get('email','email_admin_name')
     email_admin_address = cfg.get('email','email_admin_address')
+    email_contactus_address = cfg.get('email', 'email_contactus_address')
     email_port = cfg.get('email','email_port')
     email_use_ssl = cfg.get('email','email_use_ssl') == '1'
     email_use_tls = cfg.get('email','email_use_tls') == '1'
@@ -92,7 +93,8 @@ def create_app(test_config=None):
         EMAIL_HOST_USER = email_host_user, #Email host username
         EMAIL_HOST_PASSWORD = email_host_password, #Email host password
         EMAIL_ADMIN_NAME = email_admin_name, #The "friendly name" for the administrator
-        EMAIL_ADMIN_ADDRESS = email_admin_address, #Email address for the administrator
+        EMAIL_ADMIN_ADDRESS = email_admin_address, #Email address for the administrator - mails are sent from here
+        EMAIL_CONTACTUS_ADDRESS = email_contactus_address, #Email address to use for Contact Us
         EMAIL_PORT = email_port, #Email server port to use - needs to match the USE_SSL or USE_TLS
         EMAIL_USE_SSL = email_use_ssl, #Email - Use Secure Sockets Layer for email sending 
         EMAIL_USE_TLS = email_use_tls, #Email - Use Transport Layer Security for email sending
