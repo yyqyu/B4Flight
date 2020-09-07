@@ -40,8 +40,10 @@
 						<span class="float-right"><a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.detailnotams')}}">Text</a> <a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.viewmap')}}">Map</a></span>
 					</li>
 					<li class="list-group-item  bflight-narrow-list">
-						<b>Changes since {{last_wk_brief_date}}:</b> {{new_notams}} New and {{deleted_notams}} Expired. 
+						<b>Changes since {{last_wk_brief_date}}:</b> {{new_notams}} New and {{deleted_notams}} Expired.
+						{% if new_notams>0 or deleted_notams>0 %} 
 						<span class="float-right"><a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.changednotamdetail')}}">Text</a> <a class="btn bflight-slim-btn mx-1" href="{{url_for('viewmap.newnotams')}}">Map</a></span>
+						{% endif %}
 					</li>
 					<li class="list-group-item  bflight-narrow-list">
 						<b>Home NOTAMS:</b> 
