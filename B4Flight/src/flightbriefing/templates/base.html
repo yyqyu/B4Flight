@@ -14,56 +14,59 @@
 	</head>
 	<body>
 		<section class="content">
-		<header class="navbar navbar navbar-expand-sm flex-column flex-md-row bflight-head">
-			<a class="navbar-brand bflight-brand" href="/">B4Flight</a>
-			<div class="navbar-nav-scroll bflight-navbar">
-				<ul class="navbar-nav flex-row">
-				<li class="nav-item bflight-navitem">
-					<a href="/">HOME</a>
-				</li>
-			    {% if session['username'] %}
-				<li class="nav-item bflight-navitem">
-					<div class="dropdown show">
-						<a class="dropdown-toggle" id="briefDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">BRIEFINGS</a>
-						<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="briefDropdownMenu">
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.listflights')}}">Saved Flight</a>
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.enterroute')}}">Enter New Flight</a>
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.uploadroute')}}">Import New Flight</a>
+		{% if not no_header %}  <!-- This is used for full-page info display -->
+			<header class="navbar navbar navbar-expand-sm flex-column flex-md-row bflight-head">
+				<img class="mr-2" src="{{url_for('static', filename='img/logo-dark-bg.svg')}}" style="width: 40px;height:38px"alt="B4Flight Logo">
+				<a class="navbar-brand bflight-brand" href="/"><span class="font-weight-bold">B4</span><span class="font-weight-light">Flight</span></a>
+				<div class="navbar-nav-scroll bflight-navbar">
+					<ul class="navbar-nav flex-row">
+					<li class="nav-item bflight-navitem">
+						<a href="/">HOME</a>
+					</li>
+				    {% if session['username'] %}
+					<li class="nav-item bflight-navitem">
+						<div class="dropdown show">
+							<a class="dropdown-toggle" id="briefDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">BRIEFINGS</a>
+							<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="briefDropdownMenu">
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.listflights')}}">Saved Flight</a>
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.enterroute')}}">Enter New Flight</a>
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('flightadmin.uploadroute')}}">Import New Flight</a>
+							</div>
 						</div>
-					</div>
-				</li>
-				<li class="nav-item bflight-navitem">
-					<div class="dropdown show">
-						<a class="dropdown-toggle" id="mapDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">MAPS</a>
-						<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="mapDropdownMenu">
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.viewmap')}}">All Notams</a>
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.newnotams')}}">New Notams</a>
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.homenotams')}}">Home Notams</a>
+					</li>
+					<li class="nav-item bflight-navitem">
+						<div class="dropdown show">
+							<a class="dropdown-toggle" id="mapDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">MAPS</a>
+							<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="mapDropdownMenu">
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.viewmap')}}">All Notams</a>
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.newnotams')}}">New Notams</a>
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('viewmap.homenotams')}}">Home Notams</a>
+							</div>
 						</div>
-					</div>
-				</li>
-				{% endif %}
-				<li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('home.contact') }}">CONTACT</a></li>
-				</ul>
-			</div>
-			  <ul class="navbar-nav ml-md-auto">
-			    {% if session['username'] %}
-				<li class="nav-item px-2 mx-2 bflight-navitem">
-					<div class="dropdown show">
-						<a class="dropdown-toggle bflight-nav-user" id="userDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">{{ session['username'] }}</a>
-						<div class="dropdown-menu dropdown-menu-right bflight-menu-dropdown" aria-labelledby="userDropdownMenu">
-							<a class="dropdown-item bflight-menu-item" href="{{url_for('account_admin.settings')}}">Settings</a>
-							<a class="dropdown-item bflight-menu-item" href="{{ url_for('auth.logout') }}">Log Out</a>
+					</li>
+					{% endif %}
+					<li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('home.contact') }}">CONTACT</a></li>
+					</ul>
+				</div>
+				  <ul class="navbar-nav ml-md-auto">
+				    {% if session['username'] %}
+					<li class="nav-item px-2 mx-2 bflight-navitem">
+						<div class="dropdown show">
+							<a class="dropdown-toggle bflight-nav-user" id="userDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">{{ session['username'] }}</a>
+							<div class="dropdown-menu dropdown-menu-right bflight-menu-dropdown" aria-labelledby="userDropdownMenu">
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('account_admin.settings')}}">Settings</a>
+								<a class="dropdown-item bflight-menu-item" href="{{ url_for('auth.logout') }}">Log Out</a>
+							</div>
 						</div>
-					</div>
-				</li>
-				
-			    {% else %}
-			      <li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('auth.register') }}">Register</a></li>
-			      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.login') }}">Log In</a></li>
-			    {% endif %}
-			  </ul>
-		  </header>
+					</li>
+					
+				    {% else %}
+				      <li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('auth.register') }}">Register</a></li>
+				      <li class="nav-item mr-1 bflight-navitem"><a href="{{ url_for('auth.login') }}">Log In</a></li>
+				    {% endif %}
+				  </ul>
+			</header>
+		{% endif %}
 			<div class="row ">
 			</div>
 		    {% block header %}{% endblock %}
