@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+  {% block title %}
+      Flight Briefing
+  {% endblock %}
+
+{% block header %}
+	<header class="bflight-head">
+		<div class="row px-2">
+			<img src="{{url_for('static', filename='img/logo-dark-bg.svg')}}" style="width: 40px; height:38px" alt="B4Flight Logo">
+			<div class="col-sm-3 bflight-brand navbar-text">
+			<span class="font-weight-bold">B4</span><span class="font-weight-light">Flight</span></div>
+			<div class="col-sm-3 font-weight-bold navbar-text">NOTAM Flight Briefing</div>
+		</div>
+	</header>
+{% endblock %}
+
+{% block content %}
+<div class="container ml-2">
+	<H1> Flight Briefing </H1>
+	<div class="my-3 ml-3 pl-2 py-2 border bg-light">
+		<div class="row mb-2"><div class="col-12 small">
+		<span class="font-weight-bold">FILTERS</span>
+		</div></div>
+		<div class="row mb-1"><div class="col-12 small">
+		<span class="ml-2 font-weight-bold">Flight Date: &nbsp; &nbsp;</span>
+		{% if flight_date %}
+		{{flight_date}}
+		{% else %}
+		no date set - showing all NOTAMS
+		{% endif %}
+		</div></div>
+		<div class="row"><div class="col-12 small">
+		<span class="mx-2"><input id="check-perm-hidden" type="checkbox" onclick="permHiddenToggle()"></span>
+		<span class="font-weight-bold">Show Permanently Hidden Notams:&nbsp; &nbsp;</span> {{perm_hidden_notams|length }} 
+		</div></div> 
+		<div class="row"><div class="col-12 small">
+		<span class="mx-2"><input id="check-hidden" type="checkbox" onclick="hiddenToggle()"></span> 
+		<span class="font-weight-bold">Show Temporarily Hidden Notams:&nbsp; &nbsp;</span> {{hidden_notams|length }}
+		</div></div>
+	</div>
+		
+	{% if dest_notams|length > 0 %}
+	<H1 class="mt-3">Departure Notams</H1>
+	{% else %}
+	<H1>Departure & Destination Notams</H1>
+	{% endif %}
+	
+	{% for ntm in depart_notams %}
+		{% include 'maps/notam_briefing_include.html' %}
+	{% endfor %}
+
+	<H1 class="mt-3">En-Route Notams</H1>
+	{% for ntm in enroute_notams %}
+		{% include 'maps/notam_briefing_include.html' %}
+	{% endfor %}
+
+	{% if dest_notams|length > 0 %}
+		<H1 class="mt-3">Destination Notams</H1>
+		{% for ntm in dest_notams %}
+			{% include 'maps/notam_briefing_include.html' %}
+		{% endfor %}
+	{% endif %}
+	
+	<div class="text-right small bg-secondary text-white pr-3 mt-4">
+	Generated on <span class="font-weight-bolder">{{ generate_date }}</span> using NOTAM briefing <span class="font-weight-bolder">{{ briefing.Briefing_Ref}}</span>
+	 dated <span class="font-weight-bolder">{{ briefing.Briefing_Date}}</span>
+	</div>
+</div>
+
+<script>
+
+function hiddenToggle() {
+	const chk = document.querySelector('#check-hidden').checked
+	
+	if (chk == true) {
+		document.querySelectorAll('.hidden-notam').forEach(function(i) {
+			i.classList.remove('d-none');
+		});
+	}
+	else {
+		document.querySelectorAll('.hidden-notam').forEach(function(i) {
+			i.classList.add('d-none');
+		});
+	}
+}
+
+function permHiddenToggle() {
+	const chk = document.querySelector('#check-perm-hidden').checked
+	
+	if (chk == true) {
+		document.querySelectorAll('.perm-hidden-notam').forEach(function(i) {
+			i.classList.remove('d-none');
+		});
+	}
+	else {
+		document.querySelectorAll('.perm-hidden-notam').forEach(function(i) {
+			i.classList.add('d-none');
+		});
+	}
+}
+
+</script>
+
+{% endblock %}

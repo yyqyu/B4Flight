@@ -22,7 +22,7 @@ from . import helpers, flightplans
 from .auth import requires_login
 from .db import FlightPlan, Notam, Briefing, UserSetting, NavPoint, UserHiddenNotam
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
-from .notams import get_new_deleted_notams, generate_notam_geojson
+from .notams import get_new_deleted_notams, generate_notam_geojson, get_hidden_notams
 
 bp = Blueprint('viewmap', __name__)
 
@@ -191,10 +191,21 @@ def flightmap(flight_id):
     # Start without filtering by flight date
     flight_date = None
     
-    # User has filtered by Flight Date
-    if request.method == "POST":
-        flight_date = request.form['flight-date']
+    #What is the purpose of this page?  Is it to print a briefing (True) or to show the map (false)
+    purpose_print_brief = False;
     
+    # User has clicked on teh "Print" FLight Briefing button
+    if request.method == "POST":
+        
+        # The purpose of this is to print a Flight Briefing
+        purpose_print_brief = True;
+        #flight_date = request.form['flight-date']
+        hidden_notams = request.form['hidden-notams']
+        flight_date = request.form['briefing-flight-date']
+        print(flight_date)
+        if flight_date is not None:
+            if flight_date == "": flight_date = None
+        
     #Establish session to connect to DB 
     sqa_sess = sqa_session()
 
@@ -216,26 +227,85 @@ def flightmap(flight_id):
     # What buffer does this user want to use?
     buffer_nm = UserSetting.get_setting(session['userid'], 'route_buffer').SettingValue
 
-    # Filter by flight date if one is given
-    if flight_date:
-        notam_list = flightplans.filter_route_notams(flight_id, buffer_nm, date_of_flight=flight_date)
+    
+    # If this is a text Flight Briefing, then prepare the briefing
+    if purpose_print_brief == True:
+        
+        # Create an array of NOTAMS that were hidden on the map - the user will be able to choose to include these in the briefing
+        if hidden_notams:
+            hidden_notams = hidden_notams.strip().split(" ")
+        else:
+            hidden_notams = []
+            
+        # Get permanently hidden notams
+        perm_hidden_notams = get_hidden_notams(latest_brief_id)
+
+        # For audit purposes the date the briefing was run
+        generate_date = datetime.strftime(datetime.utcnow(), "%Y-%m-%d %H:%M")
+        
+        # Get the departure point and destination point for the flight plan
+        depart = flight.FlightPlanPoints[0]
+        dest = flight.FlightPlanPoints[-1]
+        
+        # Get NOTAMS within 5nm of dep and dest.
+        # If the departure and destination are the same, only get for departure point
+        if depart.Latitude == dest.Latitude and depart.Longitude == dest.Longitude:
+            depart_notams = flightplans.filter_point_notams(depart.Longitude, depart.Latitude, 5, True, flight_date)
+            dest_notams = []
+        # Otherwise get for departure and destination
+        else:
+            depart_notams = flightplans.filter_point_notams(depart.Longitude, depart.Latitude, 5, True, flight_date)
+            dest_notams = flightplans.filter_point_notams(dest.Longitude, dest.Latitude, 5, True, flight_date)
+        
+        # Filter by flight date if one is given
+        if flight_date:
+            enroute_notams = flightplans.filter_route_notams(flight_id, buffer_nm, date_of_flight=flight_date)
+        else:
+            enroute_notams = flightplans.filter_route_notams(flight_id, buffer_nm)
+
+        # Remove Notams applicable to the departure point from the dest list
+        for ntm in depart_notams:
+            if ntm in dest_notams: dest_notams.remove(ntm)
+        
+        
+        # Remove Notams applicable to the departure point from the en-route list
+        for ntm in depart_notams:
+            if ntm in enroute_notams: enroute_notams.remove(ntm)
+
+        # Remove Notams applicable to the dest point from the en-route list
+        for ntm in dest_notams:
+            if ntm in enroute_notams: enroute_notams.remove(ntm)
+        
+        # We now have Departure, Destination and En-Route notams
+
+        return render_template("maps/flightbriefing.html", hidden_notams=hidden_notams, perm_hidden_notams=perm_hidden_notams,
+                               no_header=True, flight_date = flight_date,
+                               generate_date =  f"{generate_date} UTC", briefing=briefing, 
+                               depart_notams=depart_notams, dest_notams=dest_notams, enroute_notams=enroute_notams)
+    
+
+    # We are generating the MAP briefing
     else:
-        notam_list = flightplans.filter_route_notams(flight_id, buffer_nm)
-    
-    # Generate the GEOJSON features for the Notams
-    notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
+        # Filter by flight date if one is given
+        if flight_date:
+            notam_list = flightplans.filter_route_notams(flight_id, buffer_nm, date_of_flight=flight_date)
+        else:
+            notam_list = flightplans.filter_route_notams(flight_id, buffer_nm)
 
-    # Generate the GEOJSON for the flight plan
-    flight_geojson = flightplans.generate_flight_geojson(flight_id) 
+        # Generate the GEOJSON features for the Notams
+        notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
     
-    # Get flight bounds and centre-point, so map can be centered on the flight
-    flight_bounds = helpers.get_flight_bounds(flight)
-    flight_centre = [(flight_bounds[0][0] + flight_bounds[1][0])/2, (flight_bounds[0][1] + flight_bounds[1][1])/2]
-
-    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
-                           notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
-                           flight=flight, default_flight_date = flight_date,
-                           flight_geojson=flight_geojson, flight_bounds=flight_bounds, flight_centre=flight_centre)
+        # Generate the GEOJSON for the flight plan
+        flight_geojson = flightplans.generate_flight_geojson(flight_id) 
+        
+        # Get flight bounds and centre-point, so map can be centered on the flight
+        flight_bounds = helpers.get_flight_bounds(flight)
+        flight_centre = [(flight_bounds[0][0] + flight_bounds[1][0])/2, (flight_bounds[0][1] + flight_bounds[1][1])/2]
+    
+        return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+                               notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
+                               flight=flight, default_flight_date = flight_date,
+                               flight_geojson=flight_geojson, flight_bounds=flight_bounds, flight_centre=flight_centre)
 
 
 @bp.route('/newnotams', methods=('GET', 'POST'))
@@ -252,6 +322,10 @@ def newnotams():
 
     # Compare Latest briefing to one from 7 days ago
     prev_briefing, new_notams, del_notams = get_new_deleted_notams(since_date=datetime.utcnow().date() - timedelta(days=7), return_count_only=False)
+    
+    if len(new_notams) == 0:
+        flash("No new NOTAMS were released in the past week.")
+        return redirect(url_for("home.index"))
     
     # Create the GEOJSON Features
     notam_features, used_groups, used_layers = generate_notam_geojson(new_notams, hide_user_notams = True)

@@ -1,0 +1,46 @@
+		<div id="{{ntm.Notam_Number}}"  
+		{% if ntm.Notam_Number in perm_hidden_notams %}
+		class="bflight-briefing-notam perm-hidden-notam d-none"
+		{% elif ntm.Notam_Number in hidden_notams %} 
+		class="bflight-briefing-notam hidden-notam d-none"
+		{% else %}
+		class="bflight-briefing-notam"
+		{% endif %}>
+			<div class="row bflight-briefing-notam-head mt-2">
+				<div class="col-sm-3">{{ntm.A_Location}}</div>
+				<div class="col-sm-3">{{ntm.Notam_Number}}</div>
+				{% if ntm.Notam_Number in perm_hidden_notams %}
+				<div class="col-sm-auto ml-auto"><span class="badge badge-dark align-bottom">Permanently Hidden</span></div>
+				{% elif ntm.Notam_Number in hidden_notams %}
+				<div class="col-sm-auto ml-auto"><span class="badge badge-dark align-bottom">Temporarily Hidden</span></div>
+				{% endif %}
+			</div>
+
+			<div class="row">
+				<div class="col-sm-3">
+					<span class="font-weight-bold">
+					{{ntm.From_Date.strftime('%Y-%m-%d %H:%M')}} </span>
+					<br>
+					TO
+					<br>
+					<span class="font-weight-bold">   
+						{% if ntm.To_Date_Permanent == True %}
+							PERM
+						{% else %}
+							{{ntm.To_Date.strftime('%Y-%m-%d %H:%M')}}
+							{% if ntm.To_Date_Estimate == True %} EST {% endif %}
+						{% endif %}
+					</span>
+				</div>
+				<div class="col-sm-9">{{ntm.Notam_Text}}</div>
+			</div>
+			<div class="row"><div class="col-sm-12">
+				<span class="font-weight-bold">Level:&nbsp; &nbsp;</span>{{ntm.Level_Lower}} - {{ntm.Level_Upper}}
+			</div></div>
+			{% if ntm.Duration %}
+			<div class="row"><div class="col-sm-12">
+				<span class="font-weight-bold">Duration:&nbsp; &nbsp;</span>{{ntm.Duration}}
+			</div></div>
+			{% endif %} 
+
+		</div>
