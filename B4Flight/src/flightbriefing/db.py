@@ -51,13 +51,19 @@ class User(Base):
     Properties
     ----------
     Password
-        is implemented to hash the password in the setter, and return hashed password in the getter
+        returns hashed password
     
     Methods
     -------
+    set_password(self, password)
+        hashes and then sets the user password
+        
     create_activation_token(self, expires_hrs=240)
         creates the Registration Activation token used to activate a user
         
+    create_recovery_token(self, expires_hrs=24)
+        creates a Password Recovery token
+
     activate_user(activation_token)
         Validates the activation token, and makes the user active
         
@@ -86,11 +92,14 @@ class User(Base):
     @hybrid_property
     def Password(self):
         return self._password
-    
-    @Password.setter
-    def Password(self, Password):
-        self._password = generate_password_hash(Password)
 
+# This method did not always seem to work - therefore using the set_password method
+#    @Password.setter
+#    def Password(self, password):
+#        self._password = generate_password_hash(password)
+        
+    def set_password(self, passwd):
+        self._password = generate_password_hash(passwd)
     
     def create_activation_token(self, expires_hrs=240):
         """
@@ -113,6 +122,25 @@ class User(Base):
         tkn = jwt.encode({'activate_user' : self.UserID, 'expires': expry}, current_app.config['SECRET_KEY'], 'HS256').decode('utf-8')
         return tkn
 
+    def create_recovery_token(self, expires_hrs=24):
+        """
+        Creates a Password Recovery Token, encoded using JWT (JSON Web Token)
+        
+        Parameters
+        ----------
+        expires_hrs : int, default=24
+            expiry time for link in hours
+            
+        Returns
+        -------
+        str
+            The encoded token
+        """
+        
+        expry = datetime.utcnow() + timedelta(hours=expires_hrs)
+        expry = datetime.strftime(expry,"%Y-%m-%d %H:%M:%S")
+        tkn = jwt.encode({'recover_user' : self.UserID, 'expires': expry}, current_app.config['SECRET_KEY'], 'HS256').decode('utf-8')
+        return tkn
 
     @staticmethod
     def activate_user(activation_token):
@@ -158,7 +186,56 @@ class User(Base):
         usr.Status_Active = True
         sqa_sess.commit()
         return usr
+
         
+    @staticmethod
+    def validate_recovery_token(recovery_token):
+        """
+        Validates whether the passed password recovery token is valid
+        and if it is, return the userid.
+        
+        Parameters
+        ----------
+        recovery_token : str
+            encoded password recovery token
+            
+        Returns
+        -------
+        One of:
+            User
+                an instance of User class
+            None
+                if token is not valid
+            -1
+                if token has expired
+        """
+
+        # Attempt to decode the token. If decode fails, the token is not valid so return None
+        try:
+            usr_id = jwt.decode(recovery_token, current_app.config['SECRET_KEY'], 'HS256')['recover_user']
+            # Get the expiry date
+            expiry = jwt.decode(recovery_token, current_app.config['SECRET_KEY'], 'HS256')['expires']
+            # Convert expiry to a datetime and compare it to the current UTC time 
+            expired = datetime.strptime(expiry,"%Y-%m-%d %H:%M:%S") < datetime.utcnow()
+        except:
+            current_app.logger.error(f'Error processing password recovery token')
+            return None
+
+        if expired == True:
+            return -1
+        
+        # Retrieve the user
+        sqa_sess = sqa_session()
+        usr = sqa_sess.query(User).get(usr_id)
+        
+        # If user does not exist
+        if usr is None:
+            current_app.logger.error(f'Error retrieving user with ID: {usr_id}')
+            return None
+        
+        # User is valid - so return the user
+        return usr
+
 
 class UserSetting(Base):
     """
