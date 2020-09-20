@@ -49,13 +49,13 @@
 			<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
 			<ul id="group-filter" class="list-group small">
 			{% for group in used_groups %}
-				<li class="list-group-item py-1 {% if group == 'User Hidden'%}bflight-map-filter-hidden{% else %}bflight-map-filter{% endif %}" >
+				<li class="list-group-item py-1 {% if group == 'My Hidden NOTAMS'%}bflight-map-filter-hidden{% else %}bflight-map-filter{% endif %}" >
 			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
 				</li>
 			{% endfor %}
-			{% if 'User Hidden' not in used_groups %}
+			{% if 'My Hidden NOTAMS' not in used_groups %}
 				<li class="list-group-item py-1 bflight-map-filter-hidden">
-			    <input id="User Hidden" type="checkbox" class="form-check-input" disabled>User Hidden
+			    <input id="My Hidden NOTAMS" type="checkbox" class="form-check-input" disabled>My Hidden NOTAMS
 				</li>
 			{% endif %}
 			</ul>
@@ -94,14 +94,17 @@ var usedLayers={{used_layers|safe}};
 
 var usedGroups={{used_groups|safe}};
 
-var hiddenLayerName = 'User Hidden';
+var hiddenLayerName = 'My Hidden NOTAMS';
 
 //Do we have a Hidden Layer in the Used Groups?  If not we need one 
 if (usedGroups.includes(hiddenLayerName) == false) {usedGroups.push(hiddenLayerName)}
-//Do we have Polygon and a Circle layer for "User Hidden" notams?  We need one of each to "receive" any notams hidden interactively
+//Do we have Polygon and a Circle layer for "My Hidden NOTAMS" notams?  We need one of each to "receive" any notams hidden interactively
 if (usedLayers.includes(hiddenLayerName + '_polygon') == false) {usedLayers.push(hiddenLayerName + '_polygon')}
 if (usedLayers.includes(hiddenLayerName + '_circle') == false) {usedLayers.push(hiddenLayerName + '_circle')}
 
+{% if map_bounds %}
+const mapBounds = [[{{map_bounds[0][0]|safe}},{{map_bounds[0][1]|safe}}],[{{map_bounds[1][0]|safe}},{{map_bounds[1][1]|safe}}]]; 
+{% endif %}
 
 //assign the mapbox token
 mapboxgl.accessToken = '{{mapbox_token}}';
@@ -111,9 +114,13 @@ var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/aretallack/ckbqp754n5i6y1ipufhj4x4jv', //'mapbox://styles/mapbox/streets-v11', // stylesheet location - can create own styles and use them here
     center: [28.5, -26], // starting position [lng, lat]
-    zoom: 3, // starting zoom
+    zoom: 4, // starting zoom
+{% if map_bounds %}
+	maxBounds: mapBounds, 
+{% endif %}
     preserveDrawingBuffer: true
 });
+
 
 // Create a popup, but don't add it to the map yet.
 var popup = new mapboxgl.Popup({
@@ -143,7 +150,7 @@ map.on('load', function() {
 		
 		//Start with this layer being visible
 		let layerVis = "visible";
-		//If it's a User Hidden layer then start with it being hidden
+		//If it's a My Hidden NOTAMS layer then start with it being hidden
 		if (layerId.split("_")[0] == hiddenLayerName) {
 			layerVis = "none";
 		}
@@ -358,10 +365,10 @@ function hideNotam(notamNumber, permanently) {
 	//Loop through all features in the GEOJson dataset, looking for the one with matching notam_number
 	notamGeoData.forEach(function(a) {
 		if (a.properties.notam_number == notamNumber) {
-			//If we are hiding permanently, then move the feature onto a "User Hidden" layer
+			//If we are hiding permanently, then move the feature onto a "My Hidden NOTAMS" layer
 			if (permanently == true) {
 				let pos = a.properties.layer_group.search('_');  //find the '_' - eg layer is called 'Aerodromes_polygon'
-				a.properties.layer_group = hiddenLayerName + a.properties.layer_group.slice(pos); //change layer name - eg. 'User Hidden_polygon'
+				a.properties.layer_group = hiddenLayerName + a.properties.layer_group.slice(pos); //change layer name - eg. 'My Hidden NOTAMS_polygon'
 				a.properties.permanently_hidden = true;
 				a.properties.fill = 'rgba(192,64,64,0.3)';
 				a.properties.line = 'rgba(192,64,64,1)';

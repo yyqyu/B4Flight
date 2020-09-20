@@ -166,11 +166,19 @@ def viewmap():
     
     # Create the GEOJSON Features, Groups and Layers needed for the map
     notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
+    
+    if current_app.config['MAP_BOUNDS_MIN_COORDS'][0] == '0' and current_app.config['MAP_BOUNDS_MIN_COORDS'][1] == '0' and \
+    current_app.config['MAP_BOUNDS_MAX_COORDS'][0] == '0' and current_app.config['MAP_BOUNDS_MAX_COORDS'][1] == '0':
+        map_bounds = None
+    else:
+        map_bounds = (current_app.config['MAP_BOUNDS_MIN_COORDS'], current_app.config['MAP_BOUNDS_MAX_COORDS'])
 
+    print(map_bounds)
+    
     # Display the map
     return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
-                           default_flight_date = flight_date)
+                           default_flight_date = flight_date, map_bounds=map_bounds)
 
 
 

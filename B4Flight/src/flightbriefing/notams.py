@@ -517,7 +517,7 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
         # If this NOTAM is permanently hidden, group it with other Hidden Notams
         if ntm.Notam_Number in hidden_notams:
             hidden = True
-            this_group = 'User Hidden'
+            this_group = 'My Hidden NOTAMS'
             colr = current_app.config['MAP_HIDDEN_NOTAM_COLOUR']
             opacity = 0.3
         # Otherwise use the norma Q-Code Grouping
