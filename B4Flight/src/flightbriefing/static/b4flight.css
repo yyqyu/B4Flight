@@ -107,6 +107,18 @@ a.bflight-nav-user {
 	border-radius: 5px;
 }
 
+.bflight-nav-beta {
+	background-color: rgb(245, 245, 0);
+	color: rgb(0, 67, 77);
+	font-weight: bold;
+	font-size: smaller;
+	margin-top: 0.5rem;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	padding-top: 0.1rem;
+	padding-bottom: 0.1rem;
+	border-radius: 10px;
+}
 .bflight-menu-dropdown {
 	background-color: rgb(0, 96, 128);
 	color: rgb(230,255,255);
