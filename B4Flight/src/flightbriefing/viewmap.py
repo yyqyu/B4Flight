@@ -167,18 +167,13 @@ def viewmap():
     # Create the GEOJSON Features, Groups and Layers needed for the map
     notam_features, used_groups, used_layers = generate_notam_geojson(notam_list, hide_user_notams = True)
     
-    if current_app.config['MAP_BOUNDS_MIN_COORDS'][0] == '0' and current_app.config['MAP_BOUNDS_MIN_COORDS'][1] == '0' and \
-    current_app.config['MAP_BOUNDS_MAX_COORDS'][0] == '0' and current_app.config['MAP_BOUNDS_MAX_COORDS'][1] == '0':
-        map_bounds = None
-    else:
-        map_bounds = (current_app.config['MAP_BOUNDS_MIN_COORDS'], current_app.config['MAP_BOUNDS_MAX_COORDS'])
-
-    print(map_bounds)
+    radius_default = UserSetting.get_setting(session['userid'], 'map_radius_filter').SettingValue
     
     # Display the map
-    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], radius_default=radius_default, 
+                           map_bounds=helpers.get_max_map_bounds(), briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
-                           default_flight_date = flight_date, map_bounds=map_bounds)
+                           default_flight_date = flight_date)
 
 
 
@@ -309,8 +304,11 @@ def flightmap(flight_id):
         # Get flight bounds and centre-point, so map can be centered on the flight
         flight_bounds = helpers.get_flight_bounds(flight)
         flight_centre = [(flight_bounds[0][0] + flight_bounds[1][0])/2, (flight_bounds[0][1] + flight_bounds[1][1])/2]
-    
-        return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+
+        radius_default = UserSetting.get_setting(session['userid'], 'map_radius_filter').SettingValue
+            
+        return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], radius_default=radius_default,
+                               map_bounds=helpers.get_max_map_bounds(), briefing=briefing, 
                                notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
                                flight=flight, default_flight_date = flight_date,
                                flight_geojson=flight_geojson, flight_bounds=flight_bounds, flight_centre=flight_centre)
@@ -338,8 +336,10 @@ def newnotams():
     # Create the GEOJSON Features
     notam_features, used_groups, used_layers = generate_notam_geojson(new_notams, hide_user_notams = True)
 
+    radius_default = UserSetting.get_setting(session['userid'], 'map_radius_filter').SettingValue
 
-    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], radius_default=radius_default, 
+                           map_bounds=helpers.get_max_map_bounds(), briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers, prev_briefing=prev_briefing)
 
 
@@ -385,7 +385,10 @@ def homenotams():
     flight_bounds = helpers.get_shape_bounds(radius)
     flight_centre = [home_navpt.Longitude, home_navpt.Latitude]
 
-    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], briefing=briefing, 
+    radius_default = UserSetting.get_setting(session['userid'], 'map_radius_filter').SettingValue
+
+    return render_template('maps/showmap.html', mapbox_token=current_app.config['MAPBOX_TOKEN'], radius_default=radius_default, 
+                           map_bounds=helpers.get_max_map_bounds(), briefing=briefing, 
                            notam_geojson=notam_features, used_groups=used_groups, used_layers=used_layers,
                            default_flight_date = flight_date, home_aerodrome=home_aerodrome,
                            flight_bounds=flight_bounds, flight_centre=flight_centre)

@@ -44,6 +44,7 @@ def settings():
     home_aerodrome = UserSetting.get_setting(session['userid'], 'home_aerodrome') # Home Aerodrome 
     home_radius = UserSetting.get_setting(session['userid'], 'home_radius') # Radius around Home AD to show notams for, in nm
     route_buffer = UserSetting.get_setting(session['userid'], 'route_buffer') # Buffer along route to show notams for, in nm
+    map_radius_filter = UserSetting.get_setting(session['userid'], 'map_radius_filter') # Initial Radius filter on maps
 
     # If user is saving changes
     if request.method == "POST":
@@ -72,7 +73,7 @@ def settings():
         if errors == True:
             return render_template('account/settings.html', user=user, 
                            home_aerodrome=request.form['home_aerodrome'], home_radius=request.form['home_radius'],
-                           route_buffer=request.form['route_buffer'])
+                           route_buffer=request.form['route_buffer'], map_radius_filter=request.form['map_radius_filter'])
         
         # Otherwise no errors, so update the user's details
         user.Firstname = request.form['firstname']
@@ -97,12 +98,22 @@ def settings():
         else:
             route_buffer.SettingValue = request.form['route_buffer']
 
+        # Numeric type is specified on the HTML form - this is a backup check,
+        # and to avoid frustration to user, we simply apply the default setting if not numeric
+        if not request.form['map_radius_filter'].isnumeric():
+            flash(f"Your initial NOTAM Radius Filter didn't seem to be numeric - we defaulted it to {current_app.config['DEFAULT_MAP_RADIUS_FILTER']}nm.", 'error')
+            map_radius_filter.SettingValue = current_app.config['DEFAULT_MAP_RADIUS_FILTER']
+        # otherwise value is numeric so update setting
+        else:
+            map_radius_filter.SettingValue = request.form['map_radius_filter']
+
         # Commit changes and add a flask FLASH message to show success
         sqa_sess.commit()
         flash('Your details were successfully updated.','success')
     
     return render_template('account/settings.html', user=user, 
-                           home_aerodrome=home_aerodrome.SettingValue, home_radius=home_radius.SettingValue, route_buffer=route_buffer.SettingValue)
+                           home_aerodrome=home_aerodrome.SettingValue, home_radius=home_radius.SettingValue, 
+                           route_buffer=route_buffer.SettingValue, map_radius_filter=map_radius_filter.SettingValue)
 
 
 @bp.route('/hidenotam', methods=('POST',))

@@ -423,3 +423,28 @@ def send_mail(sender, recipients_to, subject, body_text, body_html, recipients_c
 
     # Email sent successfully
     return True
+
+def get_max_map_bounds():
+    """Get the default map bounds and return the co-ordinates in a format to be used by mapBox.maxBounds function
+    If the map-bounds are (0,0) and (0,0) then return None - indicating no bounds to be applied
+    
+    Parameters
+    ----------
+    None
+    
+    Returns
+    -------
+    list of lists
+        A list of of two tuples containing the South-West and North-East corners of the bounds
+    OR
+    None
+        If no bounds are to be applied
+        
+    """
+    if current_app.config['MAP_BOUNDS_MIN_COORDS'][0] == 0 and current_app.config['MAP_BOUNDS_MIN_COORDS'][1] == 0 and \
+    current_app.config['MAP_BOUNDS_MAX_COORDS'][0] == 0 and current_app.config['MAP_BOUNDS_MAX_COORDS'][1] == 0:
+        map_bounds = None
+    else:
+        map_bounds = (current_app.config['MAP_BOUNDS_MIN_COORDS'], current_app.config['MAP_BOUNDS_MAX_COORDS'])
+        
+    return map_bounds
