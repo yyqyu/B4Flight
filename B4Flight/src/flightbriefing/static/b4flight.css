@@ -130,7 +130,8 @@ a.bflight-nav-user {
 }
 
 .bflight-table-link {
-	color: rgb(0, 67, 77)
+	color: rgb(0, 67, 77);
+	text-decoration: underline;
 }
 
 .bflight-table-link:hover {

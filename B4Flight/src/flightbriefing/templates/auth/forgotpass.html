@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Recover Your B4Flight Password{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<form id="reset-form" class="bflight-form-login text-center" method="POST">
+		<h1 class="h3 text-center mb-5">Recover your Password</h1>
+		<label for="username" class="sr-only">Username</label> 
+		<input type="text" class="form-control mb-1"  id="username" name="username" placeholder="Username" required autofocus>
+		<div class="mt-5">
+			<a href="{{url_for('auth.login')}}" id="cancel-button" class="btn bflight-btn px-3 mx-3">Cancel</a>
+			<button id="submit-button" type="button" class="btn bflight-btn px-3 mx-3" onclick="submitClick()">
+				<span id="btn-processing" style="display: none;">
+					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+					Processing...
+				</span>
+				<span id="btn-active">
+				Recover
+				</span>
+			</button>
+
+		</div>
+	</form>
+</div>
+	
+	<script>
+	function submitClick() {
+		var isValid = true;
+		
+		//Clear existing invalid fields
+		document.querySelectorAll(".is-invalid").forEach(function(elem) {
+  			elem.classList.remove('is-invalid');
+		});
+
+		document.querySelectorAll(".invalid-feedback").forEach(function(elem) {
+  			elem.style.display='none';
+		});
+		
+		document.querySelectorAll("input").forEach(function(elem) {
+		  if (elem.checkValidity() == false) {
+			isValid = false;
+			elem.classList.add("is-invalid");
+		};
+		});
+		
+		if (isValid == true) {
+			document.getElementById("submit-button").disabled = true;
+			document.getElementById("cancel-button").disabled = true;
+			document.getElementById("btn-active").style.display = "none";
+			document.getElementById("btn-processing").style.display = "inline";
+			document.getElementById("reset-form").submit();
+		}
+		
+	}
+	</script>
+{% endblock %}

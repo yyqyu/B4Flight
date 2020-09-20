@@ -8,7 +8,7 @@
 {% block content %}
 <div class="container">
 	<form class="bflight-form-login text-center" method="POST">
-		<h1 class="h3 text-center">Please Sign In</h1>
+		<h1 class="h3 text-center mb-5">Please Sign In</h1>
 		<label for="username" class="sr-only">Username</label> 
 		<input type="text" class="form-control mb-1"  id="username" name="username" placeholder="Username" required autofocus>
 		<label for="email" class="sr-only">Password</label> 
@@ -19,6 +19,14 @@
 			</label>
 		</div>
 		<button type="submit" class="btn bflight-btn btn-block">Login</button>
+		<div class="mt-2">
+		<a href="{{url_for('auth.forgotpass')}}">Forgot your password?</a>
+		</div>
+		<div class="mt-2">
+		Don't have an account?
+		<a href="{{url_for('auth.register')}}">Register for B4Flight</a>
+		</div>
+
 	</form>
 </div>
 {% endblock %}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<body style="font-family: Calibri, Arial, Helvetica, sans-serif; color: rgb(0, 77, 77);">
+
+	<div style="background-color: rgb(0, 128, 128); color: rgb(230,255,255); padding:1px 1em 1px 25px;">
+		<h2>B4Flight <span style="font-size: medium; float:right; margin-top:0.75em">Recover your Password</span></h2>
+	</div>
+	<p>Hello {{user_fname}}</p>
+	<p>It seems that you forgot your password, and requested a password reset.</p> 
+	<p>In order to reset your password, please <a href="{{ url_for('auth.passreset', token=token, _external=True) }}">click here</a>.  
+	Alternatively, copy and paste the link below into your browser<p>
+	<p>{{ url_for('auth.passreset', token=token, _external=True) }}</p>
+	<p><strong>The link expires in 24 hrs</strong></p>
+	
+	<p>If you didn't request a password reset, then feel free to drop us a line - or simply ignore this mail.</p>
+	<p>Cheers <br>Andrew</p>
+
+</body>	
+</html>

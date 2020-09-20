@@ -1,0 +1,13 @@
+Hello {{user_fname}}
+
+It seems that you forgot your password, and requested a password reset.
+ 
+In order to reset your password, please copy and paste the link below into your browser:
+{{ url_for('auth.passreset', token=token, _external=True) }}
+
+**The link expires in 24 hrs**
+
+If you didn't request a password reset, then feel free to drop us a line - or simply ignore this mail.
+
+Cheers
+Andrew
