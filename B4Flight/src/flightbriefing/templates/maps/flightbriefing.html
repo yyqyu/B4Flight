@@ -10,7 +10,7 @@
 			<img src="{{url_for('static', filename='img/logo-dark-bg.svg')}}" style="width: 40px; height:38px" alt="B4Flight Logo">
 			<div class="col-sm-3 bflight-brand navbar-text">
 			<span class="font-weight-bold">B4</span><span class="font-weight-light">Flight</span></div>
-			<div class="col-sm-3 font-weight-bold navbar-text">NOTAM Flight Briefing</div>
+			<div class="col-sm-auto font-weight-bold navbar-text">NOTAM Flight Briefing - {{flight.Flight_Name}}</div>
 		</div>
 	</header>
 {% endblock %}
@@ -19,6 +19,13 @@
 <div class="container ml-2">
 	<H1> Flight Briefing </H1>
 	<div class="my-3 ml-3 pl-2 py-2 border bg-light">
+		<div class="row mb-2"><div class="col-12 small">
+		<span class="font-weight-bold mr-2">ROUTE: </span>
+		<span>{% for fpoint in flight.FlightPlanPoints %}
+		{{fpoint.Name}} &nbsp;
+		{% endfor %}
+		</span>
+		</div></div>
 		<div class="row mb-2"><div class="col-12 small">
 		<span class="font-weight-bold">FILTERS</span>
 		</div></div>

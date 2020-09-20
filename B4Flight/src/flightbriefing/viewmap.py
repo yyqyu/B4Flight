@@ -282,7 +282,7 @@ def flightmap(flight_id):
         # We now have Departure, Destination and En-Route notams
 
         return render_template("maps/flightbriefing.html", hidden_notams=hidden_notams, perm_hidden_notams=perm_hidden_notams,
-                               no_header=True, flight_date = flight_date,
+                               no_header=True, flight_date = flight_date, flight=flight,
                                generate_date =  f"{generate_date} UTC", briefing=briefing, 
                                depart_notams=depart_notams, dest_notams=dest_notams, enroute_notams=enroute_notams)
     
