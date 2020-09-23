@@ -123,12 +123,12 @@ def log_user_in(username, password=None, login_from_session=True):
             error_msg = 'Username or password is incorrect'
     
 
-    # If user is pending, they have not yet clicked the activation link mailed to them
-    if usr.Status_Pending == True:
-        error_msg = "Your account hasn't been activated yet.  Please check your email for the activation link."
-    # If user is not active, let them know.  This can be used to manage paid user subscriptions or abuse/spam 
-    elif usr.Status_Active == False:
-        error_msg = "Your account is no longer active.  Please contact us for help."
+        # If user is pending, they have not yet clicked the activation link mailed to them
+        elif usr.Status_Pending == True:
+            error_msg = "Your account hasn't been activated yet.  Please check your email for the activation link."
+        # If user is not active, let them know.  This can be used to manage paid user subscriptions or abuse/spam 
+        elif usr.Status_Active == False:
+            error_msg = "Your account is no longer active.  Please contact us for help."
     
     # If no errors, user has logged in successfully.  Set the Session variables
     if error_msg is None:
