@@ -11,6 +11,7 @@
 	<p>In order to activate your account, please <a href="{{ url_for('auth.activate', token=token, _external=True) }}">click here</a>.  
 	Alternatively, copy and paste the link below into your browser<p>
 	<p>{{ url_for('auth.activate', token=token, _external=True) }}</p>
+	<p>Once you've activated your account, check out our quick 4-step <a href="{{url_for('home.gettingstarted', _external=True)}}">Getting Started</a> guide</p>
 	<p>Please get in touch with any feedback and suggestions you have!</p>
 	<p>Cheers <br>Andrew</p>
 

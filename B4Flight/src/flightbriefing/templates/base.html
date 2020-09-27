@@ -45,6 +45,14 @@
 						</div>
 					</li>
 					{% endif %}
+					<li class="nav-item bflight-navitem">
+						<div class="dropdown show">
+							<a class="dropdown-toggle" id="helpDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">HELP</a>
+							<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="helpDropdownMenu">
+								<a class="dropdown-item bflight-menu-item" href="{{url_for('home.gettingstarted')}}">Getting Started</a>
+							</div>
+						</div>
+					</li>
 					<li class="nav-item nav-item mx-2 bflight-navitem"><a href="{{ url_for('home.contact') }}">CONTACT</a></li>
 					</ul>
 				</div>

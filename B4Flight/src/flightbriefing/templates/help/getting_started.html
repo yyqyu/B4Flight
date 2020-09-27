@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Getting Started with B4Flight {% endblock %}
+
+{% block header %}
+
+  <h1 class="bflight-page-header">Get Started with B4Flight in 4 Steps</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row bflight-panel mt-4">
+		<div class="col-sm-5">
+			<img class="img-fluid home-page shadow-sm" src="{{url_for('static', filename='img/getting-started-1.jpg')}}" alt="Click to Create Flight">
+		</div>
+		<div class="col-sm-6 offset-sm-1">
+			<h2 class="home-page">STEP 1: Start your briefing</h2>
+			<div class="home-page">
+				<p>From your dashboard, you can start your briefing in 3 different ways:
+				<ul>
+				<li><strong>Upload</strong> a flight plan you've created in other software</li>
+				<li><strong>Choose</strong> a route you've previously saved</li>
+				<li><strong>Create</strong> a new route by entering waypoints</li>
+				</ul>
+				</p>
+			<h3 class="home-page">TRY IT:</h3>
+			<ol>
+			<li>Click on <strong>Create</strong></li>
+			</ol>
+			</div>
+			
+		</div>
+	</div>
+
+
+	<div class="row bflight-panel mt-4">
+		<div class="col-sm-5">
+			<img class="img-fluid home-page shadow-sm" src="{{url_for('static', filename='img/getting-started-2.jpg')}}" alt="Enter Flight Route">
+		</div>
+		<div class="col-sm-6 offset-sm-1">
+			<h2 class="home-page">STEP 2: Enter a route</h2>
+			<div class="home-page">
+				<p>Enter details of your flight route, so that B4Flight can identify the NOTAMS relevant to your flight.  
+				B4Flight recognises waypoints set out in the CAA AIP - aerodromes, navaids, fixes. </p>
+			<h3 class="home-page">TRY IT:</h3>
+			<ol>
+			<li>Enter a name and description for your flight, then the waypoints. Each time you press the space-bar, B4Flight validates your route and updates the map.</li>
+			<li>Click on <strong>Save & Brief</strong> to save your flight, and view relevant NOTAMS</li>
+			</ol>
+			</div>
+			
+		</div>
+	</div>
+
+	<div class="row bflight-panel mt-4">
+		<div class="col-sm-5">
+			<img class="img-fluid home-page shadow-sm" src="{{url_for('static', filename='img/getting-started-3.jpg')}}" alt="Review Notam Map">
+		</div>
+		<div class="col-sm-6 offset-sm-1">
+			<h2 class="home-page">STEP 3: Review NOTAMS</h2>
+			<div class="home-page">
+				<p>Review the NOTAMS on the map interactively.</p> 
+			<h3 class="home-page">TRY IT:</h3>
+			<ol>
+			<li>Click on a NOTAM to see the details.  You can hide NOTAMs for this session, or permanently</li>
+			<li>Filter NOTAMS by category, by radius, or by planned flight date</li>
+			<li>Click on <strong>Print Briefing...</strong> to view a printable briefing document.
+			</ol>
+			</div>
+			
+		</div>
+	</div>
+
+	<div class="row bflight-panel mt-4">
+		<div class="col-sm-5">
+			<img class="img-fluid home-page shadow-sm" src="{{url_for('static', filename='img/getting-started-4.jpg')}}" alt="Print NOTAMS">
+		</div>
+		<div class="col-sm-6 offset-sm-1">
+			<h2 class="home-page">STEP 4: Print your briefing</h2>
+			<div class="home-page">
+				<p>Your briefing document separates NOTAMS relevant to departure, en-route, and destination.</p> 
+			<h3 class="home-page">TRY IT:</h3>
+			<ol>
+			<li>Choose whether to include NOTAMS you've hidden</li>
+			<li>Use your browser's print functionality to print your briefing</li>
+			</ol>
+			</div>
+			
+		</div>
+	</div>
+</div>
+{% endblock %}

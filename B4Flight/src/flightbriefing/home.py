@@ -102,3 +102,11 @@ def contactsuccess():
         contact_email = request.args.get('contact_email')
              
     return render_template('contact_success.html', result=result, firstname=firstname, contact_email=contact_email)
+
+@bp.route('/gettingstarted', methods=('GET', 'POST'))
+def gettingstarted():
+    """Shows the Getting Started page
+    
+    """
+
+    return render_template("help/getting_started.html")
