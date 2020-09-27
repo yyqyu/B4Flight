@@ -1,0 +1,59 @@
+<!--This is the Index Page for users who ARE logged in -->
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="bflight-page-header">{% block title %}B4Flight Admin - Users {% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="bflight-panel">
+
+				<h3>CURRENT USERS</h3>
+				<table class="table table-striped table-bordered table-sm">
+				<thead class="bflight-table-head">
+					<tr>
+					<th>ID</th>
+					<th>Username</th>
+					<th>Name</th>
+					<th>E-Mail
+					<th>Last Active</th>
+					<th>Status</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% if users %}
+					{% for usr in users %}
+					<tr>
+					<td>{{usr.UserID}}</td>
+					<td>{{usr.Username}}</td>
+					<td>{{usr.Firstname}} {{usr.Lastname}}</td>
+					<td>{{usr.Email}}</td>
+					<td>{{usr.Last_Login_Date}}</td>
+					<td>
+						{% if usr.Status_Active == True %}
+						Active
+						{% elif usr_Status_Pending == True %}
+						Pending
+						{% else %}
+						Inactive
+						{% endif %}
+					</td>
+					</tr>
+					{% endfor %}
+				{% else %}
+					<tr>
+					<td colspan="6">No Users Yet</td>
+					</tr>
+				{% endif %}
+				</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -44,6 +44,17 @@
 							</div>
 						</div>
 					</li>
+						{% if session['user_admin'] == True %}
+						<li class="nav-item bflight-navitem">
+							<div class="dropdown show">
+								<a class="dropdown-toggle" id="adminDropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">ADMIN</a>
+								<div class="dropdown-menu bflight-menu-dropdown" aria-labelledby="adminDropdownMenu">
+									<a class="dropdown-item bflight-menu-item" href="{{url_for('admin.import_notams_ZA')}}">Import Notams</a>
+									<a class="dropdown-item bflight-menu-item" href="{{url_for('admin.user_list')}}">User Maintenance</a>
+								</div>
+							</div>
+						</li>
+						{% endif %}
 					{% endif %}
 					<li class="nav-item bflight-navitem">
 						<div class="dropdown show">

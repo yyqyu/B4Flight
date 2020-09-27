@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="bflight-page-header">{% block title %}B4Flight Admin - Import NOTAMS {% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-7">
+			<div class="bflight-panel">
+				<ul class="list-group">
+					<li class="list-group-item bflight-narrow-list">
+						<b>Current B4Flight Briefing:</b> {{briefing.Briefing_Date}} {{briefing.Briefing_Time}} - Reference {{briefing.Briefing_Ref}}
+					</li>
+					<li class="list-group-item  bflight-narrow-list">
+						<b># Active NOTAMs:</b> {{notam_count}} 
+					</li>
+					<li class="list-group-item  bflight-narrow-list">
+						<b>Latest CAA Website Briefing:</b> 
+						{% if last_update %}
+							{{last_update}}
+						{% else %}
+							Could Not Determine
+						{% endif %} 
+						{% if is_briefing_current == True %}
+						<span class="badge badge-success">Current</span>
+						{% elif not last_update %}
+						<span class="badge badge-dark">Unknown</span>
+						{% else %}
+						<span class="badge badge-danger">Outdated</span>
+						{% endif %}
+					</li>
+				</ul>
+			</div>
+			
+		</div>
+		<div class="col-md-5">
+			<div class="bflight-panel">
+				<h3>LATEST CAA BRIEFING</h3>
+			</div>
+		</div>
+
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+		</div>
+	</div>
+</div>
+{% endblock %}

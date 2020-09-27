@@ -162,6 +162,9 @@ def create_app(test_config=None):
     from . import flightadmin
     app.register_blueprint(flightadmin.bp)
 
+    from . import admin
+    app.register_blueprint(admin.bp)
+
     #This is the SQLAlchemy session used across the application - allows for scoped sessions
     from .data_handling import sqa_session
 
