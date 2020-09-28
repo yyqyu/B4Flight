@@ -9,18 +9,15 @@ Functionality is implemented using FLASK
 from datetime import datetime
 
 from flask import (
-    Blueprint, flash, redirect, render_template, request, session, url_for, current_app, make_response, abort
+    Blueprint, flash, render_template, request, session, url_for, current_app, abort
 )
 
 from sqlalchemy import func, and_
 
-import requests
-import configparser
-import os
-
 from . import helpers
 from .auth import requires_login
-from .db import User, UserSetting, NavPoint, Briefing
+from .db import User, Briefing
+from .notam_import import import_notam_ZA, get_latest_CAA_briefing_date_ZA
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
 
@@ -36,63 +33,59 @@ def import_notams_ZA():
         abort(403)
     
     # Check what the latest NOTAM date is per the CAA website 
+    updated_date = get_latest_CAA_briefing_date_ZA()
     
-    # What URL do we need to check this on?
-    cfg = configparser.ConfigParser()
-    cfg.read(os.path.join(current_app.root_path, 'flightbriefing.ini'))
-    update_url = cfg.get('notam_import_ZA', 'caa_updated_url')
-    
-    # Check the URL, streaming it to limit impact
-    resp = requests.get(update_url, stream=True)
-    
-    updated_date_str= None
-    
-    # Did we succeed in retrieving the page?  200=success
-    if resp.status_code == 200:
-        check = True
-        
-        # How is page encoded?
-        enc = resp.encoding
-        
-        # Process page one line at a time
-        for line in resp.iter_lines():
-            # Does the line contain the text 'Last update'?
-            if 'LAST UPDATE' in line.decode(enc).upper():
-                start = line.decode(enc).upper().find('LAST UPDATE')
-                end = line.decode(enc).upper().find('</SPAN>', start)
-                found = line.decode(enc)[start:end]
-                
-                # Typical contents of variable "found":
-                # Last update&#58;&#160;&#160;25 <span lang="EN-US" style="font-family&#58;calibri, sans-serif;font-size&#58;11pt;">September 2020
-                # Extract the day of month - in this case the "25": &#160;25 <span
-                dom = found[:found.upper().rfind('<SPAN')]
-                dom = dom[dom.upper().rfind(';')+1:].strip()
-                # Extract the Month + Year:
-                month_year = found[found.rfind('>')+1:]
-                month, year = month_year.split(' ')
-                updated_date = datetime.strptime(f'{dom} {month} {year}', '%d %B %Y')
-                updated_date_str = datetime.strftime(updated_date, '%Y-%m-%d')
-                resp.close()
-                break
-        
-    else:
-        check = False
-
 
     # Intialise the SQLAlchemy session we'll use
     sqa_sess = sqa_session()
     
     # Get the latest briefing
     latest_brief_id = sqa_sess.query(func.max(Briefing.BriefingID)).first()[0]
+    first_brief_id = sqa_sess.query(func.min(Briefing.BriefingID)).first()[0]
     briefing = sqa_sess.query(Briefing).get(latest_brief_id)
 
+    # Get stats for display on page - earliest briefing and number of briefings
+    first_briefing = sqa_sess.query(Briefing).get(first_brief_id)
+    briefing_count = sqa_sess.query(Briefing).count()
+    
+
+    # If updated_date is not None, we retrieved the date from the website
     if updated_date:
+        # Is the B4Fligh briefing current?
         is_briefing_current = updated_date.date() <= briefing.Briefing_Date
+        # Format the CAA date nicely
+        updated_date_str = datetime.strftime(updated_date, '%Y-%m-%d')
+
+    # Otherwise we had a problem
     else:
         is_briefing_current = False
+        updated_date_str = None
+
+    # Has the user asked to update the NOTAM briefing?
+    if request.method == 'POST':
+        if request.form['update']:
+
+            # If the briefing is current, don't update it.
+            if is_briefing_current == True:
+                flash('The NOTAMS for ZA are already current - we have not updated them.', 'error')
+
+            # Otherwise update it
+            else:
+                # Import the NOTAMS
+                brf = import_notam_ZA(overwrite_existing_file=True)
+                # If the update failed:
+                if brf is None:
+                    flash('Failed to update B4Flight with the latest briefing - check the log file', 'error')
+
+                # If the update succeeded
+                else:
+                    flash(f'Updated B4Flight with briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}.', 'success')
+                    briefing = brf
+                    is_briefing_current = True
+        
 
     return render_template('admin/import_notams.html', briefing=briefing, notam_count=len(briefing.Notams), last_update=updated_date_str,
-                           is_briefing_current=is_briefing_current)
+                           is_briefing_current=is_briefing_current, first_briefing=first_briefing, briefing_count=briefing_count)
 
 
 @bp.route('/user_list', methods=('GET', 'POST'))

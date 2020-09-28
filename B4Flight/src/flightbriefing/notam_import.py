@@ -18,6 +18,7 @@ import time
 import os
 import shutil
 import sys
+import configparser
 
 
 from sqlalchemy import and_
@@ -39,7 +40,6 @@ def read_settings_ZA():
     dictionary 
         Settings in a dictionary
     """
-    import configparser
     settings = {}
     
     cfg = configparser.ConfigParser()
@@ -47,6 +47,7 @@ def read_settings_ZA():
     settings['file_name_base'] = cfg.get('notam_import_ZA', 'file_name_base')
     settings['api_key'] = cfg.get('notam_import_ZA', 'key')
     settings['caa_notam_url'] = cfg.get('notam_import_ZA', 'caa_notam_url')
+    settings['caa_briefing_page_url'] = cfg.get('notam_import_ZA', 'caa_updated_url')
     settings['check_url'] = cfg.get('notam_import_ZA', 'convert_check_url')
     settings['upload_url'] = cfg.get('notam_import_ZA', 'convert_upload_url')
     settings['status_url'] = cfg.get('notam_import_ZA', 'convert_status_url')
@@ -55,6 +56,69 @@ def read_settings_ZA():
     
     
     return settings
+
+
+def get_latest_CAA_briefing_date_ZA(caa_webpage_url=None):
+    """Checks the CAA website for the latest briefing date, and returns that date.
+    Used to avoid downloading and parsing the PDF file to check if latest B4Flight briefing is current
+    
+    Parameters
+    ----------
+    caa_webpage_url : str
+        full url to the CAA webpage containing the briefing download docs
+        If NONE will get the page from the setting file
+    
+    Returns
+    -------
+    date
+        date of the latest briefing
+    OR
+    None
+        if the action failed, returns None
+    """
+    
+    # If we don't have a URL then retrieve one from the flightbriefing.ini settings file
+    if caa_webpage_url is None:
+        cfg = configparser.ConfigParser()
+        cfg.read(os.path.join(current_app.root_path, 'flightbriefing.ini'))
+        update_url = cfg.get('notam_import_ZA', 'caa_updated_url')
+    else:
+        update_url = caa_webpage_url
+    
+    # Start with the result being None
+    updated_date = None
+    
+    # Check the URL, streaming it to limit impact
+    resp = requests.get(update_url, stream=True)
+    
+    # Did we succeed in retrieving the page?  200=success
+    if resp.status_code == 200:
+        
+        # How is page encoded?
+        enc = resp.encoding
+        
+        # Process page one line at a time to conserve resources
+        for line in resp.iter_lines():
+            # Does the line contain the text 'Last update'?
+            if 'LAST UPDATE' in line.decode(enc).upper():
+                start = line.decode(enc).upper().find('LAST UPDATE')
+                end = line.decode(enc).upper().find('</SPAN>', start)
+                found = line.decode(enc)[start:end]
+                
+                # Typical contents of variable "found":
+                # Last update&#58;&#160;&#160;25 <span lang="EN-US" style="font-family&#58;calibri, sans-serif;font-size&#58;11pt;">September 2020
+                # Extract the day of month - in this case the "25": &#160;25 <span
+                dom = found[:found.upper().rfind('<SPAN')]
+                dom = dom[dom.upper().rfind(';')+1:].strip()
+                # Extract the Month + Year:
+                month_year = found[found.rfind('>')+1:]
+                month, year = month_year.split(' ')
+                updated_date = datetime.strptime(f'{dom} {month} {year}', '%d %B %Y')
+                updated_date_str = datetime.strftime(updated_date, '%Y-%m-%d')
+                resp.close()
+                break
+
+    return updated_date
 
 
 def download_notam_file_ZA(caa_notam_url, file_name):
@@ -288,7 +352,8 @@ def import_notam_ZA(overwrite_existing_file=False):
         else:
             current_app.logger.error(f'Text File already exists, import aborted - {txt_file_name}')
             print(f'Text File already exists, import aborted - {txt_file_name}')
-            sys.exit()
+            #sys.exit()
+            return None
 
     # Download the Notam File from the CAA website
     download_notam_file_ZA(settings['caa_notam_url'], pdf_file_name)
@@ -314,7 +379,8 @@ def import_notam_ZA(overwrite_existing_file=False):
     if fileid == 0:
         current_app.logger.error(f"Conversions Job did not complete in {retry_count} attempts")
         print(f"Conversions Job did not complete in {retry_count} attempts.  Terminating")
-        sys.exit()
+        #sys.exit()
+        return None
 
     # Otherwise download the converted file    
     else:
@@ -371,7 +437,11 @@ def import_notams_command():
     """ 
     click.echo("--- Command Line ready to import NOTAMS ---")
     brf = import_notam_ZA(overwrite_existing_file=True)
-    click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
+    if brf is None:
+        click.echo(f"***Briefing import failed - check log files***")
+    else:
+        click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
+    
     click.echo("--- Command-Line Completed ---")
 
 

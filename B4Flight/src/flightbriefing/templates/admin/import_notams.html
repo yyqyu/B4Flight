@@ -11,12 +11,10 @@
 	<div class="row">
 		<div class="col-md-7">
 			<div class="bflight-panel">
+				<h3>UPDATE BRIEFING</h3>
 				<ul class="list-group">
 					<li class="list-group-item bflight-narrow-list">
 						<b>Current B4Flight Briefing:</b> {{briefing.Briefing_Date}} {{briefing.Briefing_Time}} - Reference {{briefing.Briefing_Ref}}
-					</li>
-					<li class="list-group-item  bflight-narrow-list">
-						<b># Active NOTAMs:</b> {{notam_count}} 
 					</li>
 					<li class="list-group-item  bflight-narrow-list">
 						<b>Latest CAA Website Briefing:</b> 
@@ -26,11 +24,25 @@
 							Could Not Determine
 						{% endif %} 
 						{% if is_briefing_current == True %}
-						<span class="badge badge-success">Current</span>
+						<span class="badge badge-success ml-5 px-2">Current</span>
 						{% elif not last_update %}
 						<span class="badge badge-dark">Unknown</span>
 						{% else %}
 						<span class="badge badge-danger">Outdated</span>
+						<form id="form-update" method="POST">
+						<input type="hidden" name="update" value="True">
+						<button id="btn-update" type="button" class="btn bflight-slim-btn px-3 float-right" onclick="submitClick()">
+							<span id="btn-processing" style="display: none;">
+								<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+								Processing...
+							</span>
+							<span id="btn-active">
+								Update Now
+							</span>
+						</button>
+						<span id="wait-msg" class="small form-text text-danger" style="display: none;">This will take time. Check log-files if timeout occurs.  Do not refresh.</span>
+						</form>
+
 						{% endif %}
 					</li>
 				</ul>
@@ -39,7 +51,18 @@
 		</div>
 		<div class="col-md-5">
 			<div class="bflight-panel">
-				<h3>LATEST CAA BRIEFING</h3>
+				<h3>BRIEFING STATS</h3>
+				<ul class="list-group">
+					<li class="list-group-item  bflight-narrow-list">
+						<b># Active NOTAMs:</b> {{notam_count}} 
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>Earliest B4Flight Briefing:</b> {{first_briefing.Briefing_Date}} {{first_briefing.Briefing_Time}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>Number of B4Flight Briefings:</b> {{briefing_count}}
+					</li>
+				</ul>
 			</div>
 		</div>
 
@@ -49,4 +72,17 @@
 		</div>
 	</div>
 </div>
+
+<script>
+function submitClick() {
+
+	document.querySelector("#btn-update").disabled = true;
+	document.querySelector("#btn-active").style.display = "none";
+	document.querySelector("#btn-processing").style.display = "inline";
+	document.querySelector("#wait-msg").style.display = "inline";
+	document.querySelector("#form-update").submit();
+
+}
+</script>
+
 {% endblock %}
