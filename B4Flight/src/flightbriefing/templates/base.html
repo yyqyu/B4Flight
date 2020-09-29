@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 	<head>
+{% if config['ENV'] != 'development' %}
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-179235988-1"></script>
 <script>
@@ -10,6 +11,8 @@
 
   gtag('config', 'UA-179235988-1');
 </script>
+{% endif %}
+
 		<meta charset="utf-8">
 	    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	
