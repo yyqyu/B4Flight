@@ -519,7 +519,7 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
             hidden = True
             this_group = 'My Hidden NOTAMS'
             colr = current_app.config['MAP_HIDDEN_NOTAM_COLOUR']
-            opacity = 0.3
+            opacity = current_app.config['MAP_HIDDEN_NOTAM_OPACITY']
         # Otherwise use the norma Q-Code Grouping
         else:
             hidden = False
@@ -530,7 +530,7 @@ def generate_notam_geojson(notam_list, hide_user_notams=False):
                 colr = current_app.config['MAP_DEFAULT_CATEGORY_COLOUR']
             else:
                 colr = ntm.QCode_2_3_Lookup.Group_Colour
-            opacity = 0.4
+            opacity = current_app.config['MAP_NOTAM_OPACITY']
         
         col_r = int(colr[1:3],16)
         col_g = int(colr[3:5],16)
