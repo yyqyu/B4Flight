@@ -6,7 +6,7 @@ Functionality is implemented using FLASK
 
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import (
     Blueprint, flash, render_template, request, session, url_for, current_app, abort
@@ -16,7 +16,7 @@ from sqlalchemy import func, and_
 
 from . import helpers
 from .auth import requires_login
-from .db import User, Briefing
+from .db import User, Briefing, FlightPlan
 from .notam_import import import_notam_ZA, get_latest_CAA_briefing_date_ZA
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
 
@@ -102,3 +102,32 @@ def user_list():
     users = sqa_sess.query(User).all()
 
     return render_template('admin/user_list.html', users=users)
+
+@bp.route('/admin_dash', methods=('GET', 'POST'))
+@requires_login
+def admin_dash():
+    """Implements html page that gives administrator a dashboard view
+    
+    """
+    if session['user_admin'] == False:
+        abort(403)
+
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    last_week = datetime.utcnow() - timedelta(days=7)
+    # Retrieve all Users
+    sqa_sess = sqa_session()
+    total_users = sqa_sess.query(User).count()
+    new_users_yesterday = sqa_sess.query(User).filter(User.Create_Date > yesterday).count()
+    new_users_lastweek = sqa_sess.query(User).filter(User.Create_Date > last_week).count()
+
+    active_users_yesterday = sqa_sess.query(User).filter(User.Last_Login_Date > yesterday).count()
+    active_users_lastweek = sqa_sess.query(User).filter(User.Last_Login_Date > last_week).count()
+
+    total_flights = sqa_sess.query(FlightPlan).count()
+    new_flights_yesterday = sqa_sess.query(FlightPlan).filter(FlightPlan.Import_Date >= yesterday).count()
+    new_flights_lastweek = sqa_sess.query(FlightPlan).filter(FlightPlan.Import_Date >= last_week).count()
+    
+
+    return render_template('admin/dashboard.html', total_users=total_users, new_users_yesterday=new_users_yesterday, new_users_lastweek=new_users_lastweek,
+                           active_users_lastweek=active_users_lastweek, active_users_yesterday=active_users_yesterday,
+                           total_flights=total_flights, new_flights_lastweek=new_flights_lastweek, new_flights_yesterday=new_flights_yesterday)

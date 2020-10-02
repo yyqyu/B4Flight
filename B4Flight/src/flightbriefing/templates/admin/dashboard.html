@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+  <h1 class="bflight-page-header">{% block title %}B4Flight Admin Dashboard {% endblock %}</h1>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-7">
+			<div class="bflight-panel">
+				<h3>USER ACTIVITY</h3>
+				<ul class="list-group">
+					<li class="list-group-item bflight-narrow-list">
+						<b>Total Users:</b> {{total_users}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>New Users Yesterday:</b> {{new_users_yesterday}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>New Users Past week:</b> {{new_users_lastweek}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>Active Users Yesterday:</b> {{active_users_yesterday}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>Active Users Past week:</b> {{active_users_lastweek}}
+					</li>
+				</ul>
+			</div>
+			
+		</div>
+		<div class="col-md-5">
+			<div class="bflight-panel">
+				<h3>FLIGHT STATS</h3>
+				<ul class="list-group">
+					<li class="list-group-item bflight-narrow-list">
+						<b>Number of Flights:</b> {{total_flights}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>New Flights Yesterday:</b> {{new_flights_yesterday}}
+					</li>
+					<li class="list-group-item bflight-narrow-list">
+						<b>New Flights Past week:</b> {{new_flights_lastweek}}
+					</li>
+				</ul>
+			</div>
+		</div>
+
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}
