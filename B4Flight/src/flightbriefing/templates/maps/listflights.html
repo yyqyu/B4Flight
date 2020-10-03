@@ -12,7 +12,7 @@
 				<tr>
 				<th >Uploaded</th>
 				<th>Flight Name</th>
-				<th>Description</th>
+				<th class="d-none d-md-block">Description</th>
 				<th style="width:6rem;"></th>
 				</tr>
 			</thead>
@@ -22,7 +22,7 @@
 				<tr>
 				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Import_Date_Text}}</a></td>
 				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Flight_Name}}</a></td>
-				<td><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Flight_Desc}}</a></td>
+				<td class="d-none d-md-block"><a href="{{url_for('viewmap.flightmap', flight_id=fpl.FlightplanID)}}" class="bflight-table-link">{{fpl.Flight_Desc}}</a></td>
 				<td class="text-right">
 					<a href="{{url_for('flightadmin.editflight', flight_id=fpl.FlightplanID)}}" class="btn bflight-btn bflight-slim-btn mx-2" role="button">Edit</a>
 				</td>

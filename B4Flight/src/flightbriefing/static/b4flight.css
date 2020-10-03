@@ -162,9 +162,22 @@ a.bflight-nav-user {
 	border-radius: 5px;
 }
 
+.bflight-map-filter-button {
+	line-height: 0rem;
+	width: 2rem;
+	padding-left: 0.25rem;
+	padding-right: 0.25rem;
+	background-color: rgba(0, 107, 142,0.7);
+	color: rgb(230,255,255);
+}
+
+.bflight-map-filter-button:hover {
+	background-color: rgba(0, 107, 142,1);
+	color: rgb(230,255,255);
+}
+
 .bflight-map-filter {
 	background-color: #e6f2ffea;
-	padding-left: 0.25rem;
 }
 
 li.bflight-map-filter {

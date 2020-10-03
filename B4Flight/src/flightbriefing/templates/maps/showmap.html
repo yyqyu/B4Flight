@@ -22,43 +22,69 @@
 
 {% block content %}
 <div class="container-flow">
-		<div id='map' style='position:absolute; width: 100vw; height:90vh;'></div>
+	<div id='map' style='position:absolute; width: 100vw; height:90vh;'></div>
 	{% if flight %}
-		<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-5">
-		<b>FLIGHT BRIEFING</b> as at {{briefing.Briefing_Date}} 
-		<button class="btn btn-sm bflight-slim-btn ml-2 my-2 float-right" onclick="printBriefing()">Print Briefing...</button>
-		<br>
-		<b>Flight:</b> {{flight.Flight_Name}} {% if default_flight_date %}<b>on</b> {{default_flight_date}}{% endif %}
-		<form method="POST" name="print-form" id="print-form" target="_blank"> 
-			<input class="inline" type="hidden" name="hidden-notams" id="hidden-notams">
-			<input class="inline" type="hidden" name="briefing-flight-date" id="briefing-flight-date">
-		</form>
+		<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-md-5">
+		<div class=" d-none d-md-block">
+			<b>FLIGHT BRIEFING</b> as at {{briefing.Briefing_Date}}
+			<button class="btn btn-sm bflight-slim-btn ml-2 my-2 float-right" onclick="printBriefing()">Print Briefing...</button>
+			<br>
+			<b>Flight:</b> {{flight.Flight_Name}} {% if default_flight_date %}<b>on</b> {{default_flight_date}}{% endif %}
+		</div> 
+		<div class="d-md-none d-sm-block">
+			<b>Briefing:</b> {{flight.Flight_Name}} {% if default_flight_date %}<b>on</b> {{default_flight_date}}{% endif %}
+			<button class="btn btn-sm bflight-slim-btn ml-2 my-2" onclick="printBriefing()">Print...</button>
+			<br>
+		</div> 
+			<form method="POST" name="print-form" id="print-form" target="_blank"> 
+				<input class="inline" type="hidden" name="hidden-notams" id="hidden-notams">
+				<input class="inline" type="hidden" name="briefing-flight-date" id="briefing-flight-date">
+			</form>
 		</div>
 	{% else %}
 		{% if prev_briefing %}
-			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>NEW NOTAMS</b> since {{prev_briefing.Briefing_Date}}</div>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-md-4 col-lg-3 d-none d-md-block"><b>NEW NOTAMS</b> since {{prev_briefing.Briefing_Date}}</div>
 		{% elif home_aerodrome %}
-			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>NOTAMS for {{home_aerodrome}}</b> as at {{briefing.Briefing_Date}}</div>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-md-4 col-lg-3 d-none d-md-block"><b>NOTAMS for {{home_aerodrome}}</b> as at {{briefing.Briefing_Date}}</div>
 		
 		{% else %}
-			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-3"><b>CURRENT NOTAMS</b> as at {{briefing.Briefing_Date}}</div>
+			<div class="border rounded bflight-map-filter px-2 py-1 mb-1 col-md-4 col-lg-3 d-none d-md-block"><b>CURRENT NOTAMS</b> as at {{briefing.Briefing_Date}}</div>
 		{% endif %}
 	{% endif %}
-	<div class="row">
-		<div class="col-2">
-			<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
-			<ul id="group-filter" class="list-group small">
-			{% for group in used_groups %}
-				<li class="list-group-item py-1 {% if group == 'My Hidden NOTAMS'%}bflight-map-filter-hidden{% else %}bflight-map-filter{% endif %}" >
-			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
-				</li>
-			{% endfor %}
-			{% if 'My Hidden NOTAMS' not in used_groups %}
-				<li class="list-group-item py-1 bflight-map-filter-hidden">
-			    <input id="My Hidden NOTAMS" type="checkbox" class="form-check-input" disabled>My Hidden NOTAMS
-				</li>
-			{% endif %}
-			</ul>
+	
+	<div class="dropright mt-1">
+		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-filter" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+				<path fill-rule="evenodd" d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"></path>
+			</svg>
+		</button>
+		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 12rem;">
+				<div class="bflight-table-head text-center"><b>FILTER CATEGORY</b></div>
+				<ul id="group-filter" class="list-group small">
+				{% for group in used_groups %}
+					<li class="list-group-item py-1 {% if group == 'My Hidden NOTAMS'%}bflight-map-filter-hidden{% else %}bflight-map-filter{% endif %}" >
+				    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
+					</li>
+				{% endfor %}
+				{% if 'My Hidden NOTAMS' not in used_groups %}
+					<li class="list-group-item py-1 bflight-map-filter-hidden">
+				    <input id="My Hidden NOTAMS" type="checkbox" class="form-check-input" disabled>My Hidden NOTAMS
+					</li>
+				{% endif %}
+				</ul>
+	
+		</div>
+	</div>
+	<div class="dropright mt-1">
+		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-bullseye" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+				<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"></path>
+				<path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path>
+				<path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"></path>
+			</svg>
+		</button>
+		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 12rem;">
 			<div class="bflight-table-head text-center"><b>FILTER NOTAM RADIUS</b></div>
 			<div class="small border py-1 bflight-map-filter">
 				<div class="slidecontainer px-1">
@@ -67,16 +93,25 @@
 					<button class="btn btn-sm bflight-btn ml-2 my-2" onclick="filterRadius()">Apply</button>
 				</div>
 			</div>
+		</div>
+	</div>	
+	<div class="dropright mt-1">
+		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-calendar4" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+				<path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1H2zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z"></path>
+			</svg>
+		</button>
+		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 12rem;">
 			<div class="bflight-table-head text-center"><b>FILTER FLIGHT DATE</b></div>
 			<div class="small border py-2 bflight-map-filter">
-				<div class="ml-1">
+				<div class="ml-1 px-1">
 					<input type="date" class="form-control-sm" name="flight-date" id="flight-date" {% if default_flight_date %}value="{{default_flight_date}}"{% endif %}>
 					<button class="btn btn-sm bflight-btn ml-2 my-2" onclick="filterDate()">Apply</button>
 				</div>
 			</div>
 		</div>
-	
 	</div>
+	
 </div>
 <script>
 
