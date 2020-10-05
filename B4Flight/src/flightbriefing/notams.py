@@ -269,7 +269,7 @@ def parse_notam_text_file(filename, country_code):
                         current_app.logger.error(f'Q-Line for Notam #{len(notams)+1} not correctly formatted: {in_line}')
                         return None
 
-                if in_line[0:3] == 'A) ':  # If this is an "A, B, C" line
+                if in_line[0:3] == 'A) ' and not processing_E_line:  # If this is an "A, B, C" line, and we aren't already processing "E" Line (prevent bullet-points starting A) )
 
                     #Perform Regular Expression match on the line
                     reResult = regABCLine.match(in_line)
@@ -299,14 +299,14 @@ def parse_notam_text_file(filename, country_code):
                         current_app.logger.error(f'ABC-Line for NOTAM #{len(notams)} not correctly formatted: {in_line}')
                         return None
 
-                if in_line[0:3] == 'D) ':  #If this is a "D" Line
+                if in_line[0:3] == 'D) ' and not processing_E_line:  #If this is a "D" Line, and we aren't already processing "E" Line (prevent bullet-points starting D) )
                     processing_D_line = True  #Flag to allow for multi-line processing
                     this_notam.Duration = in_line[3:-1]  #Extract text excluding the "D) " at start of line
 
                 elif processing_D_line == True and not in_line[0:3] == 'E) ':  #If we are processing "D" Line, and not yet on an "E" Line
                     this_notam.Duration += ' ' + in_line[:-1]  #Append the line to the current "D" Line (adding space, removing NEWLINE)
 
-                elif in_line[0:3] == 'E) ':  #If this is an "E" line
+                elif in_line[0:3] == 'E) ' and not processing_E_line:  #If this is an "E" line
                     #Need to prevent the footer appearing in the Text
                     if footer_date_time not in in_line:
                         this_notam.Notam_Text = in_line[3:-1]  #Extract text excluding the "E) " at start of line
