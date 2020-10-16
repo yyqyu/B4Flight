@@ -19,17 +19,19 @@ import os
 import shutil
 import sys
 import configparser
+from email.headerregistry import Address
 
 
 from sqlalchemy import and_
 
 import click
-from flask import current_app
+from flask import current_app, render_template
 from flask.cli import with_appcontext
 
 from .notams import parse_notam_text_file
 from .db import Briefing, Notam
 from .data_handling import sqa_session
+from .helpers import send_mail
 
 
 def read_settings_ZA():
@@ -436,11 +438,39 @@ def import_notams_command():
     usage: flask import-notams
     """ 
     click.echo("--- Command Line ready to import NOTAMS ---")
+    
+    # Check the date on the CAA website
+    settings = read_settings_ZA()
+    click.echo(settings['caa_briefing_page_url'])
+    caa_date = get_latest_CAA_briefing_date_ZA(settings['caa_briefing_page_url'])
+    if caa_date is None:
+        current_app.logger.error(f'Could not determine the CAA briefing date - import failed')
+        click.echo(f"***Briefing import failed - could not determine CAA briefing date***")
+        return -1
+
+    # Check if the briefing already exists in the database
+    sess = sqa_session()
+
+    # Check the Briefing doesn't already exist
+    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Date == caa_date, Briefing.Briefing_Country == 'ZA'))
+    if rs.count() > 0:
+        current_app.logger.info(f'Attempted to import briefing - date exists in the database: Briefing Date = {caa_date}')
+        click.echo(f'This Briefing already exists in the database: Briefing Date = {caa_date}')
+        return -1
+
     brf = import_notam_ZA(overwrite_existing_file=True)
     if brf is None:
+        current_app.logger.error(f'***Briefing import failed - check log files***')
         click.echo(f"***Briefing import failed - check log files***")
     else:
         click.echo(f"Imported {len(brf.Notams)} NOTAMS from briefing {brf.Briefing_Ref} dated {brf.Briefing_Date}")
+        
+        msg_txt = render_template('emails/notam_imported.txt', briefing=brf)
+        msg_html = render_template('emails/notam_imported.html', briefing=brf)
+        
+        mail_to = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_ADMIN_ADDRESS'])
+        mail_from = Address(display_name = current_app.config['EMAIL_ADMIN_NAME'], addr_spec = current_app.config['EMAIL_ADMIN_ADDRESS'])
+        was_mail_sent = send_mail(mail_from, mail_to, f'Notams imported for {brf.Briefing_Date}', msg_txt, msg_html)
     
     click.echo("--- Command-Line Completed ---")
 

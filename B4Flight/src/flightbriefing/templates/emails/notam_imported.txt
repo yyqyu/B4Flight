@@ -1,0 +1,7 @@
+
+Notam Import job was completed.  Imported:
+
+Briefing Country: {{briefing.Briefing_Country}}
+Briefing Ref: {{briefing.Briefing_Ref}}
+Briefing Date: {{briefing.Briefing_Date}}
+
