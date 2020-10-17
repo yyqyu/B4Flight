@@ -17,9 +17,14 @@
 	    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-		<link href="/docs/4.5/assets/css/docs.min.css" rel="stylesheet">
 		
 		<link rel="stylesheet" href="{{ url_for('static', filename='b4flight.css') }}">
+
+		<!-- Favicons -->
+		<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicons/favicon-180.png') }}" sizes="180x180">
+		<link rel="icon" href="{{ url_for('static', filename='img/favicons/favicon-32x32.png') }}" sizes="32x32" type="image/png">
+		<link rel="icon" href="{{ url_for('static', filename='img/favicons/favicon-16x16.png') }}" sizes="16x16" type="image/png">
+		<link rel="icon" href="{{ url_for('static', filename='img/favicons/favicon.ico') }}">
 		
 		<title>{% block title %}{% endblock %}</title>
 	
