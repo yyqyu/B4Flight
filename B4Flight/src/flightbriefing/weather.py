@@ -113,7 +113,11 @@ def read_sigmet_airmet_ZA(sigmet_url):
     fl_re = re.compile(r'(FL.+)|(TOP FL[0-9/]+)=')
     
     # Retrieve the webpage containing SIGMET/AIRMET data
-    r = requests.get(sigmet_url, verify=False)
+    try:
+        r = requests.get(sigmet_url, verify=False)
+    except:
+        current_app.logger.error(f"Error retrieving SIGMET - failed at REQUESTS call")
+        return None
     
     # If error retrieving page, return None
     if r.status_code != 200: 
@@ -311,7 +315,12 @@ def read_metar_ZA(metar_url):
     
     
     # Retrieve the webpage containing METAR data
-    r = requests.get(metar_url, verify=False)
+    try:
+        r = requests.get(metar_url, verify=False)
+    except:
+        current_app.logger.error(f"Error retrieving METAR - failed at REQUESTS call")
+        return None
+        
     
     # If error retrieving page, return None
     if r.status_code != 200: 
@@ -524,7 +533,12 @@ def read_taf_ZA(taf_url):
     
     
     # Retrieve the webpage containing TAF data
-    r = requests.get(taf_url, verify=False)
+    try:
+        r = requests.get(taf_url, verify=False)
+    except:
+        current_app.logger.error(f"Error retrieving TAF - failed at REQUESTS call")
+        return None
+        
     
     # If error retrieving page, return None
     if r.status_code != 200: 
