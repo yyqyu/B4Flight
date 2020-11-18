@@ -397,20 +397,22 @@ def import_notam_ZA(overwrite_existing_file=False):
     # Create a SQL Alchemy session 
     sess = sqa_session()
     
-    # Check the briefing doesn't already exist
-    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
-
-    # If it exists, log an error and exit.
-    if rs.count() > 0:
-        current_app.logger.error(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
-        print(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
-
-        # Delete the files
-        os.remove(pdf_file_name)
-        os.remove(txt_file_name)
-
-        return None
-    
+#---Duplicate Briefing Refs do occur - below code commented out temporarily
+#    # Check the briefing doesn't already exist
+#    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
+#
+#    # If it exists, log an error and exit.
+#
+#    if rs.count() > 0:
+#        current_app.logger.error(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
+#        print(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
+#
+#        # Delete the files
+#        os.remove(pdf_file_name)
+#        os.remove(txt_file_name)
+#
+#        return None
+#---    
     
     # Write the briefing and attached NOTAMS to the DB
     sess.add(brf)
