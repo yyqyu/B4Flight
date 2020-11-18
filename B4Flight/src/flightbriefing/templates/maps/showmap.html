@@ -9,7 +9,7 @@
 		{% elif home_aerodrome %}
 			{{home_aerodrome}} NOTAMS
 		{% else %}
-	      Visual NOTAMS
+	      Explore NOTAMS and WX
 		{% endif %}
     {% endif %}
   {% endblock %}
@@ -52,7 +52,7 @@
 		{% endif %}
 	{% endif %}
 	
-	<div class="dropright mt-1">
+	<div class="dropright mt-1" style="width: 2rem;">
 		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
 			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-filter" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -76,7 +76,7 @@
 	
 		</div>
 	</div>
-	<div class="dropright mt-1">
+	<div class="dropright mt-1" style="width: 2rem;">
 		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-bullseye" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 				<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"></path>
@@ -95,13 +95,13 @@
 			</div>
 		</div>
 	</div>	
-	<div class="dropright mt-1">
+	<div class="dropright mt-1" style="width: 2rem;">
 		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-calendar4" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 				<path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1H2zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z"></path>
 			</svg>
 		</button>
-		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 12rem;">
+		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 14rem;">
 			<div class="bflight-table-head text-center"><b>FILTER FLIGHT DATE</b></div>
 			<div class="small border py-2 bflight-map-filter">
 				<div class="ml-1 px-1">
@@ -111,6 +111,28 @@
 			</div>
 		</div>
 	</div>
+	{% if used_wx_groups %}
+	<div class="dropright mt-1" style="width: 2rem;">
+		<button type="button" class="btn bflight-map-filter-button " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+			<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-cloud-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+			  <path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z"/>
+			</svg>
+			
+		</button>
+		<div class="dropdown-menu bflight-map-filter py-1" style="min-width: 12rem;">
+			<div class="bflight-table-head text-center"><b>FILTER WEATHER</b></div>
+			<ul id="group-filter" class="list-group small">
+			{% for group in used_wx_groups %}
+				<li class="list-group-item py-1 bflight-map-filter" >
+			    <input id="{{group}}" type="checkbox" class="form-check-input">{{group}}
+				</li>
+			{% endfor %}
+			</ul>
+	
+		</div>
+	</div>
+	{% endif %}
 	
 </div>
 <script>
@@ -123,11 +145,31 @@ notamGeoData={{notam_geojson|safe}};
 flightGeoData={{flight_geojson|safe}};
 {% endif %}
 
+{% if sigair_geojson %}
+//geojson data for sigmet and airmet
+sigairmetGeoData={{sigair_geojson|safe}};
+{% endif %}
+
+{% if metar_geojson %}
+//geojsaon data for metars
+metarGeoData={{metar_geojson|safe}};
+{% endif %}
+
+{% if taf_geojson %}
+//geojsaon data for TAFs
+tafGeoData={{taf_geojson|safe}};
+{% endif %}
+
 //layers that need to be created to house the notams (format: group_type, eg. obstacle_polygon)
 //this same ref is included in the "layer_group" property in the geojson file, to allow filtering 
 var usedLayers={{used_layers|safe}};
 
 var usedGroups={{used_groups|safe}};
+
+{% if used_wx_groups %}
+var usedWxLayers = {{used_wx_layers|safe}}
+var usedWxGroups = {{used_wx_groups|safe}}
+{% endif %}
 
 var hiddenLayerName = 'My Hidden NOTAMS';
 
@@ -222,81 +264,11 @@ map.on('load', function() {
 				'filter': ['==', ["get", "layer_group"], layerId]
 			});
 			
-		}
-
-
-//This did not work well when layers were stacked - mouse would return to normal
-		// Change the cursor to a pointer when the mouse is over the layer.
-//		map.on('mouseenter', layerId, function() {
-//			map.getCanvas().style.cursor = 'pointer';
-//		});
-	
-//		// Change it back to a pointer when it leaves.
-//		map.on('mouseleave', layerId, function() {
-//			map.getCanvas().style.cursor = '';
-//		});
+		};
 
 		//Create a pop-up when the item is clicked on
-		map.on('click', layerId, function(e) {
-
-			
-			let popHtml = '';
-			
-			//Sometimes we get duplicates - prevent this by tracking what's already added
-			let alreadyListed = [];
-			
-			const feats = map.queryRenderedFeatures(e.point);
-			for (let i = 0; i < feats.length; i++) {
-				if (usedLayers.indexOf(feats[i].layer.id) >=0) {
-					
-					//If this notam not already added to popup then add it
-					if (alreadyListed.indexOf(feats[i].properties.notam_number) < 0) {
-						alreadyListed.push(feats[i].properties.notam_number);
-						popHtml += '<div id="popup-' + feats[i].properties.notam_number + '">' + 
-						'<div class="row bg-dark text-white"><div class="col"><b>' + feats[i].properties.notam_location + '</b></div>' + 
-						'<div class="col"><b>' + feats[i].properties.notam_number + '</b></div></div>'+
-						'<div class="row"><div class="col"><b>FROM:</b> ' + feats[i].properties.from_date + '</div> ' +
-						'<div class="col"><b>TO:</b> ' + feats[i].properties.to_date + '</div></div>' +
-						'<div class="row">' + feats[i].properties.notam_text + '</div>'
-						if (feats[i].properties.duration != '') {
-							popHtml += '<div class="row">' + feats[i].properties.duration + '</div>';
-						}
-
-						//If this Notam is permanently hidden, don't show the "hide" buttons
-						if (feats[i].properties.permanently_hidden == true) {
-							
-							popHtml += '<div class="row mb-1"><div class="col text-right">' +
-							'<span class="bflight-notam-hidden-indicator">Permanently Hidden</span></div></div></div>';
-						}
-						//Otherwise show them
-						else
-						{
-							popHtml += '<div class="row"><div class="col text-right">' +
-							'<a href=# class="bflight-hide-notam-temp" data-notam="'+ feats[i].properties.notam_number +'" onclick="hideNotam(dataset.notam)">Hide Now</a>' +
-							'<a href=# class="bflight-hide-notam-perm" data-notam="'+ feats[i].properties.notam_number +'" onclick="permHideNotam(dataset.notam)">Hide Always</a></div></div></div>';
-
-						}
-					}
-
-
-//					popHtml += feats[i].properties.text_htm;
-//					popHtml += '<a id="' + feats[i].properties.notam_number + '" href=# onclick="hideNotam(id)">Hide This</a>';
-				};
-			};
-			if (popHtml.length > 0) {
-				popHtml = '<div class="container" id="popup-container" style="max-height:300px; overflow:auto;">' + popHtml + '</div>';
-			}
-			
-			popup
-				.setLngLat(e.lngLat)
-				.setHTML(popHtml)
-				.setMaxWidth('50%')
-				.addTo(map);
-			
-			//e.stopPropogation();
-
-		});
-	}
+		map.on('click', layerId, function(e){showPopup(e);});
+	};
 
 {% if flight_geojson %}
 	//Add the flight datasource
@@ -323,6 +295,104 @@ map.on('load', function() {
 	});
 
 {% endif %}	
+
+{% if used_wx_groups %}
+
+	{% if sigair_geojson %}
+	map.addSource("sigairmets", {
+		"type": "geojson",
+		"data": {
+			"type": "FeatureCollection",
+			"features": sigairmetGeoData
+		}
+	});
+
+	map.addLayer({
+		"id": "SIGMET_polygon",
+		"type": "fill",
+		"source": "sigairmets",
+		"paint": {
+			"fill-color": ["get","fill"],
+			"fill-outline-color": ["get","line"],
+		},
+		layout : {
+			"visibility": "none"
+		},
+		'filter': ['==', ["get", "layer_group"], "SIGMET_polygon"]
+	});
+
+	map.addLayer({
+		"id": "AIRMET_polygon",
+		"type": "fill",
+		"source": "sigairmets",
+		"paint": {
+			"fill-color": ["get","fill"],
+			"fill-outline-color": ["get","line"]
+		},
+		layout : {
+			"visibility": "none"
+		},
+		'filter': ['==', ["get", "layer_group"], "AIRMET_polygon"]
+	});
+	
+	{% endif %}
+	
+	{% if metar_geojson %}
+
+	//Add the metar datasource
+	map.addSource("metars", {
+		"type": "geojson",
+		"data": {
+			"type": "FeatureCollection",
+			"features": metarGeoData
+		}
+	});
+
+	map.addLayer({
+		"id": "METAR_symbol",
+		"type": "symbol",
+		"source": "metars",
+		"layout": {
+			"visibility": "none",
+			"icon-image": "metar-icon-small",
+			"icon-anchor": "bottom",
+			"icon-allow-overlap": true,
+		}
+	});
+	{% endif %}
+	
+	{% if taf_geojson %}
+
+	//Add the TAF datasource
+	map.addSource("tafs", {
+		"type": "geojson",
+		"data": {
+			"type": "FeatureCollection",
+			"features": tafGeoData
+		}
+	});
+
+	map.addLayer({
+		"id": "TAF_symbol",
+		"type": "symbol",
+		"source": "tafs",
+		"layout": {
+			"visibility": "none",
+			"icon-image": "taf-icon-small",
+			"icon-anchor": "bottom",
+			"icon-allow-overlap": true,
+		}
+	});
+	
+	{% endif %}
+	
+	for (let i = 0; i < usedWxLayers.length; i++) {
+		//Create a pop-up when the item is clicked on
+		map.on('click', usedWxLayers[i], function(e){showPopup(e);});
+	};
+
+{% endif %}	
+
 
 {% if flight_bounds %}
 	map.fitBounds({{flight_bounds}});
@@ -361,7 +431,6 @@ for (let i = 0; i < usedGroups.length; i++) {
 			if (usedLayers.indexOf(circleLayer) > -1) {
 				map.setLayoutProperty(circleLayer, 'visibility', 'none');
 			}
-			this.style.font
 		} else {
 			if (usedLayers.indexOf(polygonLayer) > -1) {
 				map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
@@ -372,6 +441,40 @@ for (let i = 0; i < usedGroups.length; i++) {
 		};
 	};
 };
+
+{% if used_wx_groups %}
+//Loop through the groups that have been used, and attach click events
+for (let i = 0; i < usedWxGroups.length; i++) {
+
+	let grpElement=document.getElementById(usedWxGroups[i]);
+	grpElement.checked=false;
+	
+	grpElement.onclick = function(e) {
+
+		const clicked = this.checked
+		const polygonLayer = this.id + '_polygon';
+		const symbolLayer = this.id + '_symbol';
+	
+		// toggle layer visibility by changing the layout object's visibility property
+		if (clicked === false) {
+			if (usedWxLayers.indexOf(polygonLayer) > -1) {
+				map.setLayoutProperty(polygonLayer, 'visibility', 'none');
+			}
+			if (usedWxLayers.indexOf(symbolLayer) > -1) {
+				map.setLayoutProperty(symbolLayer, 'visibility', 'none');
+			}
+		} else {
+			if (usedWxLayers.indexOf(polygonLayer) > -1) {
+				map.setLayoutProperty(polygonLayer, 'visibility', 'visible');
+			}
+			if (usedWxLayers.indexOf(symbolLayer) > -1) {
+				map.setLayoutProperty(symbolLayer, 'visibility', 'visible');
+			}
+		};
+	};
+};
+
+{% endif %}
 
 //This is the slider to filter elements based on radius
 var radiusSlider = document.getElementById("radius-filter");
@@ -566,6 +669,103 @@ function printBriefing() {
 	frm.submit();
 	
 }
+
+function showPopup(e) {
+	let popHtml = '';
+	let popWXHtml='';
+	
+	//Sometimes we get duplicates - prevent this by tracking what's already added
+	let alreadyListed = [];
+	
+	const feats = map.queryRenderedFeatures(e.point);
+	for (let i = 0; i < feats.length; i++) {
+
+		{% if used_wx_groups %}
+		//Is this layer a WEATHER layer?
+
+		if (usedWxLayers.indexOf(feats[i].layer.id) >=0) {
+			
+			popWXHtml += '<div>'
+			if (feats[i].properties.group == 'METAR') {
+				popWXHtml += '<div class="row bg-info text-white"><div class="col"><b>' + feats[i].properties.aerodrome + ' - METAR</b></div>' +
+				'<div class="col text-right"><b>' + feats[i].properties.date_time + '</b></div></div>'+
+				'<div class="row mb-2"><div class="col-auto">' + feats[i].properties.text + '</div>' +
+				'<div class="col small text-right text-muted font-italic">' + feats[i].properties.metar_age + '</div></div>'
+
+			}
+			else if (feats[i].properties.group == 'TAF') {
+				popWXHtml += '<div class="row bg-info text-white"><div class="col"><b>' + feats[i].properties.aerodrome + ' - TAF</b></div>' +
+				'<div class="col text-right"><b>' + feats[i].properties.valid_from + ' TO ' + feats[i].properties.valid_to + '</b></div></div>'+
+				'<div class="row"><div class="col"><b>Issued: ' + feats[i].properties.date_time + '</b></div>'+
+				'<div class="col small text-right text-muted font-italic">' + feats[i].properties.taf_age + '</div></div>' +
+				'<div class="row mb-2"><div class="col-auto">' + feats[i].properties.text + '</div></div>' 
+
+			}
+			else
+			{
+				popWXHtml += '<div class="row bg-warning"><div class="col"><b>' + feats[i].properties.group + '</b></div>'
+				if (feats[i].properties.flight_levels != 'null') {
+					popWXHtml += '<div class="col"><b>' + feats[i].properties.flight_levels + '</b></div>'
+				}
+				if (feats[i].properties.valid_from != 'null') {
+					popWXHtml += '<div class="col-auto text-right"><b>' + feats[i].properties.valid_from + ' TO ' + feats[i].properties.valid_to + '</b></div>'
+				}
+				popWXHtml += '</div><div class="row mb-1"><div class="col-auto">' + feats[i].properties.text + '</div></div>'
+			}
+
+		};
+		{% endif %}
+		
+		
+		//Is this layer a NOTAM layer?
+		if (usedLayers.indexOf(feats[i].layer.id) >=0) {
+			
+			//If this notam not already added to popup then add it
+			if (alreadyListed.indexOf(feats[i].properties.notam_number) < 0) {
+				alreadyListed.push(feats[i].properties.notam_number);
+				popHtml += '<div id="popup-' + feats[i].properties.notam_number + '">' + 
+				'<div class="row bg-dark text-white"><div class="col"><b>' + feats[i].properties.notam_location + '</b></div>' + 
+				'<div class="col text-right"><b>' + feats[i].properties.notam_number + '</b></div></div>'+
+				'<div class="row"><div class="col"><b>FROM:</b> ' + feats[i].properties.from_date + '</div> ' +
+				'<div class="col"><b>TO:</b> ' + feats[i].properties.to_date + '</div></div>' +
+				'<div class="row"><div class="col-auto">' + feats[i].properties.notam_text + '</div></div>'
+				if (feats[i].properties.duration != '') {
+					popHtml += '<div class="row">' + feats[i].properties.duration + '</div>';
+				}
+
+				//If this Notam is permanently hidden, don't show the "hide" buttons
+				if (feats[i].properties.permanently_hidden == true) {
+					
+					popHtml += '<div class="row mb-1"><div class="col text-right">' +
+					'<span class="bflight-notam-hidden-indicator">Permanently Hidden</span></div></div></div>';
+				}
+				//Otherwise show them
+				else
+				{
+					popHtml += '<div class="row"><div class="col text-right">' +
+					'<a href=# class="bflight-hide-notam-temp" data-notam="'+ feats[i].properties.notam_number +'" onclick="hideNotam(dataset.notam)">Hide Now</a>' +
+					'<a href=# class="bflight-hide-notam-perm" data-notam="'+ feats[i].properties.notam_number +'" onclick="permHideNotam(dataset.notam)">Hide Always</a></div></div></div>';
+
+				}
+			}
+
+
+		};
+	};
+	if (popHtml.length > 0 | popWXHtml.length > 0) {
+		popHtml = '<div class="container" id="popup-container" style="max-height:300px; overflow:auto;">' + popWXHtml + popHtml + '</div>';
+	}
+	
+	popup
+		.setLngLat(e.lngLat)
+		.setHTML(popHtml)
+		.setMaxWidth('50%')
+		.addTo(map);
+	
+	//e.stopPropogation();
+
+};
+
 
 </script>
 

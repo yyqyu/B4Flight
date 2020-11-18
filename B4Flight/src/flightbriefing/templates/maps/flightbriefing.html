@@ -47,20 +47,66 @@
 		</div></div>
 	</div>
 		
+	{% if depart_metar|length > 0 or depart_taf|length > 0 or dest_metar|length > 0 or dest_taf|length > 0 or enroute_metar|length > 0 or enroute_taf|length > 0 or enroute_sigairmet|length > 0 %}
+		<H1 class="mt-3">Weather</H1>
+		<ul class="list-group pl-3">
+	
+		{% if depart_metar|length > 0 or depart_taf|length > 0 %}
+	
+			<li class="list-group-item list-group-item-info py-1"><strong>Departure Weather</strong></li>
+			{% for mt in depart_metar %}
+				<li class="list-group-item py-2"><strong>METAR:</strong> {{mt['body']}}</li>
+			{% endfor %}
+			{% for tf in depart_taf %}
+				<li class="list-group-item py-2"><strong>TAF:</strong> {{tf['body']}}</li>
+			{% endfor %}
+		{% endif %}
+		
+		{% if enroute_metar|length > 0 or enroute_taf|length > 0 or enroute_sigairmet|length > 0 %}
+	
+			<li class="list-group-item list-group-item-info py-1"><strong>Enroute Weather</strong></li>
+			{% for mt in enroute_metar %}
+				<li class="list-group-item py-2"><strong>METAR:</strong> {{mt['body']}}</li>
+			{% endfor %}
+			{% for tf in enroute_taf %}
+				<li class="list-group-item py-2"><strong>TAF:</strong> {{tf['body']}}</li>
+			{% endfor %}
+			{% for met in enroute_sigairmet %}
+				<li class="list-group-item py-2"><strong>{{met['type']}}:</strong> {{met['body']}}</li>
+			{% endfor %}
+	
+		{% endif %}
+
+		{% if dest_metar|length > 0 or dest_taf|length > 0 %}
+	
+			<li class="list-group-item list-group-item-info py-1"><strong>Destination Weather</strong></li>
+			{% for mt in dest_metar %}
+				<li class="list-group-item py-2"><strong>METAR:</strong> {{mt['body']}}</li>
+			{% endfor %}
+			{% for tf in dest_taf %}
+				<li class="list-group-item py-2"><strong>TAF:</strong> {{tf['body']}}</li>
+			{% endfor %}
+		{% endif %}
+	
+		</ul>
+	{% endif %}
+
 	{% if dest_notams|length > 0 %}
 	<H1 class="mt-3">Departure Notams</H1>
-	{% else %}
-	<H1>Departure & Destination Notams</H1>
+	{% elif depart_notams|length > 0 %}
+	<H1 class="mt-3">Departure & Destination Notams</H1>
 	{% endif %}
 	
 	{% for ntm in depart_notams %}
 		{% include 'maps/notam_briefing_include.html' %}
 	{% endfor %}
 
-	<H1 class="mt-3">En-Route Notams</H1>
-	{% for ntm in enroute_notams %}
-		{% include 'maps/notam_briefing_include.html' %}
-	{% endfor %}
+	{% if enroute_notams|length > 0 %}
+		<H1 class="mt-3">En-Route Notams</H1>
+		{% for ntm in enroute_notams %}
+			{% include 'maps/notam_briefing_include.html' %}
+		{% endfor %}
+	{% endif %}
 
 	{% if dest_notams|length > 0 %}
 		<H1 class="mt-3">Destination Notams</H1>

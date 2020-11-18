@@ -73,6 +73,17 @@ def create_app(test_config=None):
     email_port = cfg.get('email','email_port')
     email_use_ssl = cfg.get('email','email_use_ssl') == '1'
     email_use_tls = cfg.get('email','email_use_tls') == '1'
+    weather_sigmet_airmet_url_ZA = cfg.get('weather','sigmet_airmet_url_ZA')
+    weather_metar_url_ZA = cfg.get('weather','metar_url_ZA')
+    weather_taf_url_ZA = cfg.get('weather','taf_url_ZA')
+    weather_sigmet_colour = cfg.get('weather','sigmet_colour')
+    weather_sigmet_opacity = cfg.get('weather','sigmet_opacity')
+    weather_airmet_colour = cfg.get('weather','airmet_colour')
+    weather_airmet_opacity = cfg.get('weather','airmet_opacity')
+    weather_metar_colour = cfg.get('weather','metar_colour')
+    weather_metar_opacity = cfg.get('weather','metar_opacity')
+    weather_taf_colour = cfg.get('weather','taf_colour')
+    weather_taf_opacity = cfg.get('weather','taf_opacity')
     
 
     app.config.from_mapping(
@@ -108,6 +119,17 @@ def create_app(test_config=None):
         EMAIL_PORT = email_port, #Email server port to use - needs to match the USE_SSL or USE_TLS
         EMAIL_USE_SSL = email_use_ssl, #Email - Use Secure Sockets Layer for email sending 
         EMAIL_USE_TLS = email_use_tls, #Email - Use Transport Layer Security for email sending
+        WEATHER_SIGMET_AIRMET_URL_ZA = weather_sigmet_airmet_url_ZA, #URL for ZA Sigmets and Airmets
+        WEATHER_METAR_URL_ZA = weather_metar_url_ZA, #URL for ZA Metars
+        WEATHER_TAF_URL_ZA = weather_taf_url_ZA, #URL for ZA TAFs
+        WEATHER_AIRMET_COLOUR = weather_airmet_colour, #Colour for AIRMETs on the map
+        WEATHER_AIRMET_OPACITY = weather_airmet_opacity, #opacity for AIRMETs on the map
+        WEATHER_SIGMET_COLOUR = weather_sigmet_colour, #colour for SIGMETs on the map
+        WEATHER_SIGMET_OPACITY = weather_sigmet_opacity, #opacity for SIGMETs on the map
+        WEATHER_METAR_COLOUR = weather_metar_colour, #Colour for METARs on the map
+        WEATHER_METAR_OPACITY = weather_metar_opacity, #opacity for METARs on the map
+        WEATHER_TAF_COLOUR = weather_taf_colour, #colour for TAF on the map
+        WEATHER_TAF_OPACITY = weather_taf_opacity, #opacity for TAF on the map
     )
 
     if test_config is None:

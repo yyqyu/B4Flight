@@ -7,6 +7,8 @@ and filter NOTAMS relevant to a specific flightplan
 """
 
 from datetime import datetime
+import datetime as dt
+
 
 from sqlalchemy import func, and_
 
@@ -20,7 +22,9 @@ from geojson import LineString, Feature
 
 from .db import FlightPlan, FlightPlanPoint, Notam, Briefing, UserSetting
 from .data_handling import sqa_session    #sqa_session is the Session object for the site
+from .weather import read_metar_ZA, read_taf_ZA, read_sigmet_airmet_ZA
 from . import helpers
+
 
 
 
@@ -465,9 +469,293 @@ def filter_relevant_notams(shapely_geom, buffer_width_nm, include_matches=True, 
         # If we don't want to show notams that intersect (include_matches == False), add this NOTAM if it does not intersect
         if doesIntersect == include_matches:
             # Add NOTAM to list of notams
-            filtered_notams.append(this_notam)
+            if this_notam not in filtered_notams: filtered_notams.append(this_notam)
 
 
     # Return the new Filtered list of Notam objects
     return filtered_notams
 
+
+def filter_route_sigairmets_ZA(flightplan_id, buffer_width_nm, sigairmet_url=None, flight_date=None):
+    """Filters SIGMETS and AIRMETS that are relevant to a flight route ( linestring geometric feature).
+    Relevent SIG/AIRMETS are those within a 'buffer_width_nm' nm around the feature.
+    Buffer is approximate, using the principle of 1 minute of lat = 1 nm
+    
+    Parameters
+    ----------
+    flightplan_id : int
+        The FlightPlan's ID
+
+    buffer_width_nm : int
+        width of buffer around the feature in approx nautical miles
+
+    sigairmet_url : str
+        URL to download the SIGMETs/AIRMETs from
+        
+    flight_date: datetime OR None
+        date the flight will operate - used to filter relevant SIGMET/AIRMET
+
+    Returns
+    -------
+    list
+        List of SIGAIRMET object that meet criteria
+    """
+    
+    sqa_sess = sqa_session()
+    
+    # Retrieve the flightplan for the specified ID
+    flightplan = sqa_sess.query(FlightPlan).filter(FlightPlan.FlightplanID == flightplan_id).first()
+    
+    # Loop through the Route Points, adding them to a series of co-ordinate tuples
+    lstring = []
+    for rtePoint in flightplan.FlightPlanPoints: 
+        lstring.append((float(rtePoint.Longitude),float(rtePoint.Latitude)))
+
+    # Create a Shapely linestring for the route using the tuples of co-ordinates
+    route_geom = geometry.LineString(lstring)
+        
+
+    # Calculate the buffer in degrees
+    buffer_width_deg = float(buffer_width_nm) / 60.0  #approximate the NM buffer on the basis that 1 minute = 1 nm
+
+    # Circular (closed) geometries, when buffered, create a filled polygon for the buffer.  
+    # We don't want that - we want a "hole" in the middle of the buffer
+    # To prevent that, we split the route into two and create two route buffers that overlap.
+    
+    # We only split the geometry if there are more than 2 co-ordinates in the geometry - i.e. it is a route
+    if len(route_geom.coords)>2:
+        
+        # Split the route in two.
+        rte_len = int(len(route_geom.coords)/2.0)
+        # If there are 3 points, the above divides the route so that there is only 1 pt.  Make it 2
+        if rte_len==1: rte_len=2
+        # Separate out the points for route 1
+        route1 = geometry.LineString(route_geom.coords[:rte_len])
+        # Separate out the points for route 2, ensuring the first point overlaps with the last point of the prev route
+        route2 = geometry.LineString(route_geom.coords[rte_len-1:])
+        # Create the 2 buffers
+        fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
+        fplShapelyBuffers.append(route2.buffer(buffer_width_deg))
+    
+    # If there is only one co-ordinate in the geometry - i.e. it is a point 
+    else:
+        # Buffer the point
+        fplShapelyBuffers = [route_geom.buffer(buffer_width_deg)]
+
+    
+    # Retrieve latest METARS
+    if sigairmet_url is None:
+        sigairmet_list = read_sigmet_airmet_ZA(current_app.config['WEATHER_SIGMET_AIRMET_URL_ZA'])
+    else:
+        sigairmet_list = read_sigmet_airmet_ZA(sigairmet_url)
+    
+    # List of relevant sig/airmets
+    filtered_sigairmets = []
+
+    # Now process each SIGMET/AIRMET, and check if it intersects with the route buffer.
+    for this_met in sigairmet_list:
+        
+        #If there is a date for this flight, and a validity for the SIGAIRMET (there should always be unless there was a parsing error)
+        if flight_date is not None and this_met['valid_from'] is not None and this_met['valid_to'] is not None:
+            # If passed parameter is DATE (not DATETIME) convert it to DateTime - to allow comparison
+            if isinstance(flight_date, dt.date): 
+                check_date = datetime(flight_date.year, flight_date.month, flight_date.day)
+            
+            else:
+                check_date = flight_date
+                
+            # Check if flight date is outside SIGAIRMET validity - if so ignore this one
+            if check_date < this_met['valid_from'] or check_date > this_met['valid_to']: continue
+        
+        met_shape = geometry.Polygon(this_met['coords']) #Shapely polygon
+        
+        # Test whether each of the buffers intersect with this SIG-AIRMET
+        for routeBuf in fplShapelyBuffers:
+            # If it does, add the metar to the list
+            if routeBuf.intersects(met_shape): 
+                if this_met not in filtered_sigairmets: filtered_sigairmets.append(this_met)
+
+    # Return the new Filtered list of sigmets/airmets 
+    return filtered_sigairmets
+
+
+def filter_route_metar_taf_ZA(flightplan_id, buffer_width_nm, metar_url=None, taf_url=None):
+    """Filters METARS and TAFS that are relevant to a flight route ( linestring geometric feature).
+    Creates a Shapely geometry for the flightplan then calls "filter_relevant_metar_taf" function
+    
+    Relevent METARS/TAFS are those within a 'buffer_width_nm' nm around the feature.
+    Buffer is approximate, using the principle of 1 minute of lat = 1 nm
+    
+    Parameters
+    ----------
+    flightplan_id : int
+        The FlightPlan's ID
+
+    buffer_width_nm : int
+        width of buffer around the feature in approx nautical miles
+
+    metar_url: str
+        url from which to retrieve the METARs
+
+    taf_url: str
+        url from which to retrieve the TAFs
+
+    Returns
+    -------
+    list
+        List of METAR objects that meet criteria
+        List of TAF objects that meet criteria
+    """
+    
+    sqa_sess = sqa_session()
+    
+    # Retrieve the flightplan for the specified ID
+    flightplan = sqa_sess.query(FlightPlan).filter(FlightPlan.FlightplanID == flightplan_id).first()
+    
+    # Loop through the Route Points, adding them to a series of co-ordinate tuples
+    lstring = []
+    for rtePoint in flightplan.FlightPlanPoints: 
+        lstring.append((float(rtePoint.Longitude),float(rtePoint.Latitude)))
+
+    # Create a Shapely linestring for the route using the tuples of co-ordinates
+    route_geom = geometry.LineString(lstring)
+        
+
+    return filter_relevant_metar_taf_ZA(route_geom, buffer_width_nm, metar_url, taf_url)
+
+
+def filter_point_metar_taf_ZA(longitude, latitude, buffer_width_nm, metar_url=None, taf_url=None):
+    """Filters METARS and TAFS that are relevant to a specific point - eg. an airfield.  
+    Creates a Shapely geometry for the point then calls "filter_relevant_notams" function
+    
+    Relevent METARS/TAFS are those within a 'buffer_width_nm' nm around the feature.
+    Buffer is approximate, using the principle of 1 minute of lat = 1 nm
+    
+    Parameters
+    ----------
+    longitude : float
+        Longitude of the point in decimal degrees
+
+    latitude : float
+        Latitude of the point in decimal degrees
+
+    buffer_width_nm : int
+        width of buffer around the feature in approx nautical miles
+
+    metar_url: str
+        url from which to retrieve the METARs
+
+    taf_url: str
+        url from which to retrieve the TAFs
+
+    Returns
+    -------
+    list
+        List of METAR objects that meet criteria
+        List of TAF objects that meet criteria
+    """
+    
+    # Create the co-ordinates into a Shapely Point
+    point = geometry.Point(longitude, latitude)
+
+    return filter_relevant_metar_taf_ZA(point, buffer_width_nm, metar_url, taf_url)
+
+
+def filter_relevant_metar_taf_ZA(shapely_geom, buffer_width_nm, metar_url=None, taf_url=None):
+    """Filters METARS and TAFS that are relevant to a specific geographic geometric feature (point, linestring).
+    Relevent METARS/TAFS are those within a 'buffer_width_nm' nm around the feature.
+    Buffer is approximate, using the principle of 1 minute of lat = 1 nm
+    
+    Parameters
+    ----------
+    shapely_geom : geometry
+        Shapely Geometry around which to buffer (Shapely.geometry.Point, Shapely.geometry.LineString)
+
+    buffer_width_nm : int
+        width of buffer around the feature in approx nautical miles
+
+    metar_url: str
+        url from which to retrieve the METARs
+
+    taf_url: str
+        url from which to retrieve the TAFs
+
+    Returns
+    -------
+    list
+        List of METAR objects that meet criteria
+        List of TAF objects that meet criteria
+    """
+    
+    sqa_sess = sqa_session()
+    
+
+    # Calculate the buffer in degrees
+    buffer_width_deg = float(buffer_width_nm) / 60.0  #approximate the NM buffer on the basis that 1 minute = 1 nm
+
+    # Circular (closed) geometries, when buffered, create a filled polygon for the buffer.  
+    # We don't want that - we want a "hole" in the middle of the buffer
+    # To prevent that, we split the route into two and create two route buffers that overlap.
+    
+    # We only split the geometry if there are more than 2 co-ordinates in the geometry - i.e. it is a route
+    if len(shapely_geom.coords)>2:
+        
+        # Split the route in two.
+        rte_len = int(len(shapely_geom.coords)/2.0)
+        # If there are 3 points, the above divides the route so that there is only 1 pt.  Make it 2
+        if rte_len==1: rte_len=2
+        # Separate out the points for route 1
+        route1 = geometry.LineString(shapely_geom.coords[:rte_len])
+        # Separate out the points for route 2, ensuring the first point overlaps with the last point of the prev route
+        route2 = geometry.LineString(shapely_geom.coords[rte_len-1:])
+        # Create the 2 buffers
+        fplShapelyBuffers = [route1.buffer(buffer_width_deg)]
+        fplShapelyBuffers.append(route2.buffer(buffer_width_deg))
+
+    # If there is only one co-ordinate in the geometry - i.e. it is a point 
+    else:
+        # Buffer the point
+        fplShapelyBuffers = [shapely_geom.buffer(buffer_width_deg)]
+
+    
+    # Retrieve latest METARS
+    if metar_url is None:
+        metar_list = read_metar_ZA(current_app.config['WEATHER_METAR_URL_ZA'])
+    else:
+        metar_list = read_metar_ZA(metar_url)
+    
+    # Retrieve latest TAFS
+    if taf_url is None:
+        taf_list = read_taf_ZA(current_app.config['WEATHER_TAF_URL_ZA'])
+    else:
+        taf_list = read_taf_ZA(taf_url)
+
+    # List of relevant metars and tafs
+    filtered_metars = []
+    filtered_tafs = []
+    
+
+    # Now process each METAR, and check if it intersects with the route buffer.
+    for this_met in metar_list:
+     
+        met_shape = geometry.Point(this_met['coords']) #Shapely polygon
+        
+        # Test whether each of the buffers intersect with this METAR
+        for routeBuf in fplShapelyBuffers:
+            # If it does, add the metar to the list
+            if routeBuf.intersects(met_shape): 
+                if this_met not in filtered_metars: filtered_metars.append(this_met)
+
+    # Now process each TAF, and check if it intersects with the route buffer.
+    for this_met in taf_list:
+     
+        met_shape = geometry.Point(this_met['coords']) #Shapely polygon
+        
+        # Test whether each of the buffers intersect with this TAF
+        for routeBuf in fplShapelyBuffers:
+            # If it does, add the metar to the list
+            if routeBuf.intersects(met_shape): 
+                if this_met not in filtered_tafs: filtered_tafs.append(this_met)
+
+    # Return the new Filtered list of sigmets/airmets 
+    return filtered_metars, filtered_tafs

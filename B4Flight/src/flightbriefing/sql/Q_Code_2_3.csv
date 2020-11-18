@@ -115,10 +115,10 @@ NO,OMEGA,omega,Navigation Aids,#33cc33
 NT,VORTAC,vortac,Navigation Aids,#33cc33
 NV,VOR,vor,Navigation Aids,#33cc33
 NX,Direction-finding station (specify type and frequency),df,Navigation Aids,#33cc33
-OA,Aeronautical information service,ais,Aeronautical Information,#ffff4d
-OB,Obstacle (specify details),obst,Obstacles,#ff4000
+OA,Aeronautical information service,ais,Miscellaneous,#ffff4d
+OB,Obstacle (specify details),obst,Hazards / Obstacles,#ff4000
 OE,Aircraft entry requirements,acft entry rqmnts,Miscellaneous,#ff00ff
-OL,Obstacle lights on . . . (specify),obst lgt,Obstacles,#ff4000
+OL,Obstacle lights on . . . (specify),obst lgt,Hazards / Obstacles,#ff4000
 OR,Rescue coordination centre,rcc,Miscellaneous,#ff00ff
 PA,Standard instrument arrival (specify route designator),star,Aerodromes,#1a66ff
 PB,Standard VFR arrival,std vfr arr,Aerodromes,#1a66ff
@@ -161,21 +161,21 @@ SY,Upper advisory service (specify),upper advisory ser,Airspace / ATC,#33cc33
 WA,Air display,air display,Aircraft Activity,#ff8000
 WB,Aerobatics,aerobatics,Aircraft Activity,#ff8000
 WC,Captive balloon or kite,captive balloon/kite,Aircraft Activity,#ff8000
-WD,Demolition of explosives,demolition of explosives,Hazards,#ff0000
+WD,Demolition of explosives,demolition of explosives,Hazards / Obstacles,#ff0000
 WE,Exercises (specify),exer,Aircraft Activity,#ff8000
 WF,Air refuelling,air refuelling,Aircraft Activity,#ff8000
 WG,Glider flying,gld fly,Aircraft Activity,#ff8000
-WH,Blasting,blasting,Hazards,#ff0000
+WH,Blasting,blasting,Hazards / Obstacles,#ff0000
 WJ,Banner/target towing,banner/target towing,Aircraft Activity,#ff8000
 WL,Ascent of free balloon,ascent of free balloon,Aircraft Activity,#ff8000
-WM,"Missile, gun or rocket firing",missile/gun/rocket/frng,Hazards,#ff0000
+WM,"Missile, gun or rocket firing",missile/gun/rocket/frng,Hazards / Obstacles,#ff0000
 WP,"Parachute jumping exercise, paragliding or hang gliding",pje/paragliding/hang gliding,Aircraft Activity,#ff8000
-WR,Radioactive materials or toxic chemicals (specify),radioactive materials/toxic chemicals,Hazards,#ff0000
-WS,Burning or blowing gas,burning/blowing gas,Hazards,#ff0000
+WR,Radioactive materials or toxic chemicals (specify),radioactive materials/toxic chemicals,Hazards / Obstacles,#ff0000
+WS,Burning or blowing gas,burning/blowing gas,Hazards / Obstacles,#ff0000
 WT,Mass movement of aircraft,mass mov of acft,Aircraft Activity,#ff8000
 WU,Unmanned aircraft,ua,Unmanned Aircraft,#ff8000
 WV,Formation flight,formation flt,Aircraft Activity,#ff8000
-WW,Significant volcanic activity,significant volcanic act,Hazards,#ff0000
+WW,Significant volcanic activity,significant volcanic act,Hazards / Obstacles,#ff0000
 WY,Aerial survey,aerial survey,Aircraft Activity,#ff8000
 WZ,Model flying,model fly,Unmanned Aircraft,#ff8000
 XX,Other,Other,Miscellaneous,#ff00ff

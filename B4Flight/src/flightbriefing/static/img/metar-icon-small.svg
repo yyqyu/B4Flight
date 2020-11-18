@@ -23,11 +23,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="14.87134"
-     inkscape:cx="11.60343"
-     inkscape:cy="14.786857"
+     inkscape:zoom="29.74268"
+     inkscape:cx="8.5889747"
+     inkscape:cy="12.680642"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g1494"
      inkscape:document-rotation="0"
      showgrid="true"
      inkscape:window-width="1920"
@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -73,19 +73,19 @@
          sodipodi:nodetypes="cc"
          id="path1423"
          d="M 47,5 V 17"
-         style="fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:none;stroke:#ffffff;stroke-width:2.31632525;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <ellipse
          ry="0.91856062"
          rx="1.0024302"
          cx="47.016743"
          cy="4.9153428"
          id="path1428"
-         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.87874;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;paint-order:markers stroke fill" />
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3.47448788;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;paint-order:markers stroke fill;stroke-miterlimit:4;stroke-dasharray:none" />
       <path
          sodipodi:nodetypes="ccccc"
          id="path1430"
          d="M 49,7 59,8 V 9 L 49,10 Z"
-         style="fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#ffffff;stroke:#ffffff;stroke-width:2.31632525;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" />
     </g>
   </g>
 </svg>
