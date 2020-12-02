@@ -227,6 +227,9 @@ def generate_sigmet_geojson(sigair_met_list):
     used_layers = []
     sigair_met_features = []
 
+        # If there are no Sig/Airmets (incase None is passed)
+    if sigair_met_list is None:
+        return sigair_met_features, used_groups, used_layers
     
     # Create the Fill Colour attributes
     fill_col = {}
@@ -293,7 +296,7 @@ def read_metar_ZA(metar_url):
     
     Returns
     -------
-        taf_list : list of dictionary elements
+        metar_list : list of dictionary elements
             aerodrome: ICAO code
             has_no_data: boolean
             is_speci: boolean
@@ -305,7 +308,7 @@ def read_metar_ZA(metar_url):
     """
 
     
-    taf_list = [] # The list of disctionaries that will be returned, containing SIGMAT/AIRMET data
+    metar_list = [] # The list of disctionaries that will be returned, containing METAR data
     
     # Regular expressions to extract the wind
     re_wind_no_gust = re.compile(r'(?P<direction>[0-9]{3,3})(?P<spd>[0-9]{2,2})KT') # 10005KT
@@ -412,7 +415,7 @@ def read_metar_ZA(metar_url):
                     'has_no_data': False , 'is_speci': is_speci, 'time': met_date , 
                     'wind': (wind_dir, wind_spd, wind_gust, wind_variable) , 'body': met_string}
         
-        taf_list.append(met_dict)
+        metar_list.append(met_dict)
         
     # Check for any stations with no data - search the whole page
     aero_no_datas = re_no_data.findall(soup.text)
@@ -430,18 +433,18 @@ def read_metar_ZA(metar_url):
             met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude) , 
                         'has_no_data': True, 'body': f'No data for {aerodrome}'}
             
-            taf_list.append(met_dict)
+            metar_list.append(met_dict)
 
-    return taf_list
+    return metar_list
 
 
 
-def generate_metar_geojson(taf_list):
+def generate_metar_geojson(metar_list):
     """ Function that accepts METAR data, and creates a list of GEOJSON features
     
     Parameters
     ----------
-    taf_list : list of dictionary elements containing METAR data
+    metar_list : list of dictionary elements containing METAR data
         aerodrome: ICAO code
         has_no_data: boolean
         is_speci: boolean
@@ -460,6 +463,10 @@ def generate_metar_geojson(taf_list):
     # Initialise Variables
     metar_features = []
     
+    # If there are no Metars (incase None is passed)
+    if metar_list is None:
+        return metar_features
+    
     #Get the colours
     colr = current_app.config['WEATHER_METAR_COLOUR']
     opacity = current_app.config['WEATHER_METAR_OPACITY']
@@ -474,7 +481,7 @@ def generate_metar_geojson(taf_list):
 
     
     # Create a GEOJSON Feature for each Notam - Feature contains specific Notam attributes
-    for met in taf_list:
+    for met in metar_list:
         
         # If there is no data, then ignore this notam
         if met['has_no_data'] : continue
@@ -643,6 +650,10 @@ def generate_taf_geojson(taf_list):
 
     # Initialise Variables
     taf_features = []
+    
+    # If there are no TAFs (incase None is passed)
+    if taf_list is None:
+        return taf_features
     
     #Get the colours
     colr = current_app.config['WEATHER_TAF_COLOUR']
