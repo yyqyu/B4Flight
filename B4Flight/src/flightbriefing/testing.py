@@ -501,10 +501,118 @@ def generate_taf_geojson(taf_list):
     return taf_features
 
 
-taf_list = read_taf_ZA('https://aviation.weathersa.co.za/pib/pages/actuals/tafs.php')
+#taf_list = read_taf_ZA('https://aviation.weathersa.co.za/pib/pages/actuals/tafs.php')
 #for x in taf_list: print(x['aerodrome'], x['body'])
 
-print(generate_taf_geojson(taf_list))
+#print(generate_taf_geojson(taf_list))
 #x=flightplans.filter_route_sigairmets(23, 5,'https://aviation.weathersa.co.za/pib/pages/actuals/sigmet.php')
 
 #for y in x: print(y['type'])
+
+def mailchimp_ping():
+    
+    from mailchimp_marketing import Client
+    mailchimp = Client()
+
+    mailchimp_api_key = '5c2b37b42fd75fb3b4eee6113a155772-us7'
+    mailchimp_server_prefix = 'us7'
+    
+    mailchimp.set_config({
+        "api_key": mailchimp_api_key,
+        "server": mailchimp_server_prefix})
+    mc_response = mailchimp.ping.get()
+    print(mc_response)
+    
+    print(mc_response["health_status"] == "Everything's Chimpy!")
+    
+def mailchimp_list_subscribers():
+    import mailchimp_marketing as MailchimpMarketing
+    from mailchimp_marketing.api_client import ApiClientError
+
+    mailchimp_api_key = '5c2b37b42fd75fb3b4eee6113a155772-us7'
+    mailchimp_server_prefix = 'us7'
+    mailchimp_list_id = "1753d98442"
+
+    try:
+        client = MailchimpMarketing.Client()
+        client.set_config({
+            "api_key": mailchimp_api_key,
+            "server": mailchimp_server_prefix
+      })
+    
+        mc_response = client.lists.get_list_members_info(mailchimp_list_id, count=100)
+        #print(mc_response)
+        for m in mc_response['members']:
+            print(m['id'], m['merge_fields']['FNAME'], m['merge_fields']['LNAME'],m['merge_fields']['MMERGE6'],m['merge_fields']['MMERGE7'], m['merge_fields']['MMERGE8'], m['email_address'], m['status'])
+    except ApiClientError as error:
+        print("Error: {}".format(error.text))
+
+
+def mailchimp_add_subscriber():
+    import mailchimp_marketing as MailchimpMarketing
+    from mailchimp_marketing.api_client import ApiClientError
+
+    mailchimp_api_key = '5c2b37b42fd75fb3b4eee6113a155772-us7'
+    mailchimp_server_prefix = 'us7'
+    mailchimp_list_id = "1753d98442"
+    mailchimp_userid_field = 'MMERGE6'
+    mailchimp_username_field = 'MMERGE7'
+    mailchimp_active_field = 'MMERGE8'
+
+    try:
+        client = MailchimpMarketing.Client()
+        client.set_config({
+            "api_key": mailchimp_api_key,
+            "server": mailchimp_server_prefix
+      })
+    
+        mc_response = client.lists.add_list_member(mailchimp_list_id, {
+            'email_address':'test1@live.co.za', 
+            'status':'cleaned',
+            'merge_fields':{'FNAME':'Test First','LNAME':'Test Last', mailchimp_userid_field:'1234', mailchimp_username_field:'username', mailchimp_active_field:'Y'}, 
+            'tags':['Beta_Tester']})
+        print(mc_response)
+    except ApiClientError as error:
+        print("Error: {}".format(error.text))
+
+
+def mailchimp_update_subscriber():
+    import hashlib
+    import mailchimp_marketing as MailchimpMarketing
+    from mailchimp_marketing.api_client import ApiClientError
+
+    mailchimp_api_key = '5c2b37b42fd75fb3b4eee6113a155772-us7'
+    mailchimp_server_prefix = 'us7'
+    mailchimp_list_id = "1753d98442"
+    mailchimp_userid_field = 'MMERGE6'
+    mailchimp_username_field = 'MMERGE7'
+    mailchimp_active_field = 'MMERGE8'
+    
+    user_email = 'aretallack@live.co.za'
+    # Conver e-mail to lower-case, and then encode as binary (i.e. a b'...' string) 
+    bin_user_email = user_email.lower().encode()
+    # Now has to MD5 in order to pass to Mailchimp API
+    user_email_hash = hashlib.md5(bin_user_email).hexdigest()
+    print(user_email_hash)
+
+    try:
+        client = MailchimpMarketing.Client()
+        client.set_config({
+            "api_key": mailchimp_api_key,
+            "server": mailchimp_server_prefix
+      })
+        
+        
+        client.lists.update_list
+        mc_response = client.lists.update_list_member(list_id=mailchimp_list_id, subscriber_hash=user_email_hash, body={
+            'merge_fields':{mailchimp_active_field:'Y'}
+            })
+        print(mc_response)
+    except ApiClientError as error:
+        print("Error: {}".format(error.text))
+
+#mailchimp_ping()
+#mailchimp_add_subscriber()
+mailchimp_update_subscriber()
+
+mailchimp_list_subscribers()
