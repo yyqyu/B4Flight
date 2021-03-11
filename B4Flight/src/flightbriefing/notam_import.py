@@ -114,14 +114,22 @@ def get_latest_CAA_briefing_date_ZA(caa_webpage_url=None):
                 dom = dom[dom.upper().rfind(';')+1:].strip()
                 # Extract the Month + Year:
                 month_year = found[found.rfind('>')+1:]
-                month, year = month_year.split(' ')
+                # If the above search fails, then need to look for re-formatted version:
+                # Last update&#58;&#160;11 March 2021</strong>
+                if month_year == '':
+                    full_date = found[found.upper().rfind(';')+1:]
+                    full_date = full_date[:full_date.upper().rfind('</STRONG')].strip()
+                    # This should give us just the date in formay dd mmm yyyy
+                    dom, month, year = full_date.split(' ')
+                else:
+                    month, year = month_year.split(' ')
+                
                 updated_date = datetime.strptime(f'{dom} {month} {year}', '%d %B %Y')
                 updated_date_str = datetime.strftime(updated_date, '%Y-%m-%d')
                 resp.close()
                 break
 
     return updated_date
-
 
 def download_notam_file_ZA(caa_notam_url, file_name):
     """Downloads PDF Briefing file from the CAA website
