@@ -106,6 +106,7 @@ def get_latest_CAA_briefing_date_ZA(caa_webpage_url=None):
                 start = line.decode(enc).upper().find('LAST UPDATE')
                 end = line.decode(enc).upper().find('</SPAN>', start)
                 found = line.decode(enc)[start:end]
+                found = found.replace('&#58;', ':').replace('&#160;', ' ')
                 
                 # Typical contents of variable "found":
                 # Last update&#58;&#160;&#160;25 <span lang="EN-US" style="font-family&#58;calibri, sans-serif;font-size&#58;11pt;">September 2020
@@ -118,7 +119,11 @@ def get_latest_CAA_briefing_date_ZA(caa_webpage_url=None):
                 # Last update&#58;&#160;11 March 2021</strong>
                 if month_year == '':
                     full_date = found[found.upper().rfind(';')+1:]
+                    #Remove the Strong closing tag
                     full_date = full_date[:full_date.upper().rfind('</STRONG')].strip()
+                    #Remove the Last Update: prefix
+                    full_date = full_date[full_date.find(':')+1:].strip()
+                    
                     # This should give us just the date in formay dd mmm yyyy
                     dom, month, year = full_date.split(' ')
                 else:
