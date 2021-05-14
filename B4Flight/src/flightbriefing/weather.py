@@ -23,7 +23,7 @@ from .db import NavPoint
 
 
 def calc_metar_taf_date(day, hr, mn=0):
-    """ Function that calculates teh FULL date for a METAR/TAF, based on the day, hour and minute 
+    """ Function that calculates the FULL date for a METAR/TAF, based on the day, hour and minute 
         As METARS can be expired, and TAFs can be in the future, we need to work out the Year and Month 
         
     
@@ -302,19 +302,24 @@ def read_metar_ZA(metar_url):
             is_speci: boolean
             time: date and time of the METAR
             wind: tuple containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
+            temperature: temp in degrees centigrade
+            dew_point: dewpoint temp in degrees centigrade (integer, so M01 is shown as -01)
+            QNH: QNH in hPa
             body: full body of the METAR
             coords: co-ord pair for the aerodrome - LONG, LAT in decimal degrees
         
     """
 
     
-    metar_list = [] # The list of disctionaries that will be returned, containing METAR data
+    metar_list = [] # The list of dictionaries that will be returned, containing METAR data
     
     # Regular expressions to extract the wind
     re_wind_no_gust = re.compile(r'(?P<direction>[0-9]{3,3})(?P<spd>[0-9]{2,2})KT') # 10005KT
     re_wind_gust = re.compile(r'(?P<direction>[0-9]{3,3})(?P<spd>[0-9]{2,2})G(?P<gust>[0-9]{2,2})KT') # 10005G15KT
     re_wind_variable = re.compile(r'(?P<direction>VRB)(?P<spd>[0-9]{2,2})KT') # VRB05KT
     re_no_data = re.compile(r'No Data For (?P<missing>[A-Z,a-z]{4,4})', re.IGNORECASE) # No data for FAGC
+    re_temp = re.compile(r' (?P<temp>[M]?[0-9]{2,2})+/(?P<dewpt>[M]?[0-9]{2,2}) ') #temp in format 20/12 or 20/M02 or M03/M10 etc. 
+    re_qnh = re.compile(r'Q(?P<qnh>[0-9]{3,4})')
     
     
     # Retrieve the webpage containing METAR data
@@ -383,8 +388,8 @@ def read_metar_ZA(metar_url):
         wind_gust = 0 # Gust defaults to 0
         
         # Use regular expression to try to extract non-gusting wind (eg. 10010KT)
-        if re_wind_no_gust.search(met_string):
-            tmp = re_wind_no_gust.search(met_string)
+        tmp = re_wind_no_gust.search(met_string)
+        if tmp:
             try:
                 wind_dir = tmp.group('direction')
                 wind_spd = tmp.group('spd')
@@ -410,10 +415,37 @@ def read_metar_ZA(metar_url):
                 wind_variable = True
             except:
                 current_app.logger.error(f"Error passing METAR wind VARIABLE: {met_string}")
+
+        # Use regular expression to try to extract Temp and Dewpoint (eg. 25/M02)
+        temperature = 0
+        dew_point = 0
+
+        tmp = re_temp.search(met_string)
+        if tmp:
+            try:
+                temperature = int(tmp.group('temp').replace('M','-'))
+                dew_point = int(tmp.group('dewpt').replace('M','-'))
+            except:
+                current_app.logger.error(f"Error passing METAR temperature: {met_string}")
+
+
+        # Use regular expression to try to extract QNH (eg. Q1025)
+        qnh = 1013
         
-        met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude) , 
-                    'has_no_data': False , 'is_speci': is_speci, 'time': met_date , 
-                    'wind': (wind_dir, wind_spd, wind_gust, wind_variable) , 'body': met_string}
+        tmp = re_qnh.search(met_string)
+        if tmp:
+            try:
+                qnh = tmp.group('qnh')
+            except:
+                current_app.logger.error(f"Error passing METAR QNH: {met_string}")
+
+        
+        met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude), 
+                    'has_no_data': False , 'is_speci': is_speci, 'time': met_date, 
+                    'wind': (wind_dir, wind_spd, wind_gust, wind_variable) , 
+                    'temperature': temperature, 'dew_point': dew_point,
+                    'qnh': qnh,
+                     'body': met_string}
         
         metar_list.append(met_dict)
         
