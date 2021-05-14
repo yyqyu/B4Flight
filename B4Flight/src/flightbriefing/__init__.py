@@ -190,6 +190,9 @@ def create_app(test_config=None):
 
     from . import admin
     app.register_blueprint(admin.bp)
+    
+    from . import weather
+    app.register_blueprint(weather.bp)
 
     #This is the SQLAlchemy session used across the application - allows for scoped sessions
     from .data_handling import sqa_session
