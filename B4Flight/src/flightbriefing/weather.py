@@ -18,6 +18,7 @@ import json
 from flask import (
     Blueprint, redirect, render_template, request, session, url_for, current_app, flash, abort
 )
+from flask_cors import CORS
 #from flask import current_app
 
 from .data_handling import sqa_session
@@ -25,7 +26,7 @@ from . import helpers
 from .db import NavPoint
 
 bp = Blueprint('weather', __name__, url_prefix='/weather')
-
+CORS(bp)
 
 def calc_metar_taf_date(day, hr, mn=0):
     """ Function that calculates the FULL date for a METAR/TAF, based on the day, hour and minute 
