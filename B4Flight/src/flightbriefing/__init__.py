@@ -31,6 +31,7 @@ def create_app(test_config=None):
     import configparser
 
     app = Flask(__name__, instance_relative_config=True)
+#    cors = CORS(app, resources={r'/weather/*': {'origins': '*'}})
 
     # Custom Error Pages
     app.register_error_handler(500, internal_server_error)
@@ -191,8 +192,8 @@ def create_app(test_config=None):
     from . import admin
     app.register_blueprint(admin.bp)
     
-    from . import weather
-    app.register_blueprint(weather.bp)
+    from . import api
+    app.register_blueprint(api.bp)
 
     #This is the SQLAlchemy session used across the application - allows for scoped sessions
     from .data_handling import sqa_session
