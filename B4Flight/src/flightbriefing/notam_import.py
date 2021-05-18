@@ -511,9 +511,9 @@ def import_notam_text_command(filename):
     sess = sqa_session()
     
     # Check the Briefing doesn't already exist
-    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Ref == brf.Briefing_Ref, Briefing.Briefing_Country == brf.Briefing_Country))
+    rs = sess.query(Briefing).filter(and_(Briefing.Briefing_Date == brf.Briefing_Date, Briefing.Briefing_Country == brf.Briefing_Country))
     if rs.count() > 0:
-        click.echo(f'This Briefing already exists in the database: Briefing Ref = {brf.Briefing_Ref}')
+        click.echo(f'A Briefing already exists in the database for this date: Briefing Date = {brf.Briefing_Date} ; Briefing Ref = {brf.Briefing_Ref}')
         return -1
     
     # Write the briefing and attached NOTAMS to teh DB
