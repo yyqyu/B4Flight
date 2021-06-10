@@ -304,7 +304,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
             has_no_data: boolean
             is_speci: boolean
             time: date and time of the METAR
-            wind: tuple containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
+            wind: dictionary containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
             temperature: temp in degrees centigrade
             dew_point: dewpoint temp in degrees centigrade (integer, so M01 is shown as -01)
             QNH: QNH in hPa
@@ -447,7 +447,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
         
         met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude), 
                     'has_no_data': False , 'is_speci': is_speci, 'time': met_date, 
-                    'wind': (wind_dir, wind_spd, wind_gust, wind_variable) , 
+                    'wind': {'direction': wind_dir, 'speed': wind_spd, 'gusting': wind_gust, 'is_variable': wind_variable},  #(wind_dir, wind_spd, wind_gust, wind_variable) , 
                     'temperature': temperature, 'dew_point': dew_point,
                     'qnh': qnh,
                      'body': met_string}
@@ -487,7 +487,7 @@ def generate_metar_geojson(metar_list):
         is_speci: boolean
         time: date and time of the METAR
         metar_age: string: how old is the METAR
-        wind: tuple containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
+        wind: dictionary containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
         body: full body of the METAR
         coords: co-ord pair for the aerodrome - LONG, LAT in decimal degrees
         
@@ -538,9 +538,9 @@ def generate_metar_geojson(metar_list):
                                                                  'group': 'METAR',
                                                                  'layer_group': 'METAR_symbol', 
                                                                  'aerodrome': met['aerodrome'],
-                                                                 'wind_direction': 'variable' if met['wind'][3] == True else met['wind'][0],
-                                                                 'wind_speed_kts': met['wind'][1],
-                                                                 'wind_gust_kts': met['wind'][2],
+                                                                 'wind_direction': 'variable' if met['wind']['is_variable'] == True else met['wind']['direction'],
+                                                                 'wind_speed_kts': met['wind']['speed'],
+                                                                 'wind_gust_kts': met['wind']['gusting'],
                                                                  'date_time': datetime.strftime(met['time'], '%H:%M %d-%b'),
                                                                  'metar_age' : metar_age,
                                                                  'text': met['body']}))

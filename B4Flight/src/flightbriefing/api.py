@@ -1,6 +1,6 @@
 """Exposes APIs for use by external apps
 
-APIs allow for Cross-Origin call
+APIs allow for Cross-Origin call (using https://pypi.org/project/Flask-Cors/)
 
 APIs exposed are: 
 - get_metar_za: return Metars in a JSON format for ZA aerodromes 
