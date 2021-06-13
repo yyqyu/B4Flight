@@ -389,35 +389,44 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
         #Get the winds
         wind_variable = False # Wind defaults to not light and variable
         wind_gust = 0 # Gust defaults to 0
+        no_wind = False #Is there no wind data avail (i.e. /////KT)
         
-        # Use regular expression to try to extract non-gusting wind (eg. 10010KT)
-        tmp = re_wind_no_gust.search(met_string)
-        if tmp:
-            try:
-                wind_dir = tmp.group('direction')
-                wind_spd = tmp.group('spd')
-            except:
-                current_app.logger.error(f"Error passing METAR winds: {met_string}")
-
-        # Use regular expression to try to extract gusting wind (eg. 10010G15KT)
-        elif re_wind_gust.search(met_string):
-            tmp = re_wind_gust.search(met_string)
-            try:
-                wind_dir = tmp.group('direction')
-                wind_spd = tmp.group('spd')
-                wind_gust = tmp.group('gust')
-            except:
-                current_app.logger.error(f"Error passing METAR wind GUSTING: {met_string}")
-                
-        # Use regular expression to try to extract variable wind (eg. VRB02KT)
-        elif re_wind_variable.search(met_string):
-            tmp = re_wind_variable.search(met_string)
-            try:
-                wind_dir = -1
-                wind_spd = tmp.group('spd')
-                wind_variable = True
-            except:
-                current_app.logger.error(f"Error passing METAR wind VARIABLE: {met_string}")
+        
+        #Check whether there is now wind specified (i.e. /////KT)
+        if met_string.find('///KT') > 0:
+            no_wind = True
+            wind_dir = 0
+            wind_spd = 0
+        else:
+            
+            # Use regular expression to try to extract non-gusting wind (eg. 10010KT)
+            tmp = re_wind_no_gust.search(met_string)
+            if tmp:
+                try:
+                    wind_dir = tmp.group('direction')
+                    wind_spd = tmp.group('spd')
+                except:
+                    current_app.logger.error(f"Error passing METAR winds: {met_string}")
+    
+            # Use regular expression to try to extract gusting wind (eg. 10010G15KT)
+            elif re_wind_gust.search(met_string):
+                tmp = re_wind_gust.search(met_string)
+                try:
+                    wind_dir = tmp.group('direction')
+                    wind_spd = tmp.group('spd')
+                    wind_gust = tmp.group('gust')
+                except:
+                    current_app.logger.error(f"Error passing METAR wind GUSTING: {met_string}")
+                    
+            # Use regular expression to try to extract variable wind (eg. VRB02KT)
+            elif re_wind_variable.search(met_string):
+                tmp = re_wind_variable.search(met_string)
+                try:
+                    wind_dir = -1
+                    wind_spd = tmp.group('spd')
+                    wind_variable = True
+                except:
+                    current_app.logger.error(f"Error passing METAR wind VARIABLE: {met_string}")
 
         # Use regular expression to try to extract Temp and Dewpoint (eg. 25/M02)
         temperature = 0
@@ -447,7 +456,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
         
         met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude), 
                     'has_no_data': False , 'is_speci': is_speci, 'time': met_date, 
-                    'wind': {'direction': wind_dir, 'speed': wind_spd, 'gusting': wind_gust, 'is_variable': wind_variable},  #(wind_dir, wind_spd, wind_gust, wind_variable) , 
+                    'wind': {'no_wind_data': no_wind, 'direction': wind_dir, 'speed': wind_spd, 'gusting': wind_gust, 'is_variable': wind_variable},  #(wind_dir, wind_spd, wind_gust, wind_variable) , 
                     'temperature': temperature, 'dew_point': dew_point,
                     'qnh': qnh,
                      'body': met_string}
