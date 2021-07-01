@@ -25,8 +25,6 @@ from flightbriefing.data_handling import sqa_session
 from polycircles import polycircles
 from datetime import datetime, timedelta
 
-from xml.etree.ElementTree import ElementTree as ET
-import csv
 
 db_connect = helpers.read_db_connect()
 eng = create_engine(db_connect, pool_recycle=280)
@@ -183,67 +181,6 @@ def test_mail():
     
 #test_mail()
 
-def extract_ATNS_data(filename, csv_filename):
-    
-    aip_data = []
-    
-    tree = ET()
-    tree.parse(filename)
-    
-    root = tree.getroot()
-    
-    if root.tag.find('{') > -1:
-        ns_name=root.tag[root.tag.find('{')+1:root.tag.find('}')]
-    else:
-        ns_name=''
-    
-    ns={'ns':ns_name}
-    
-    base = root.find('ns:Document', ns)
-    base = base.find('ns:Folder', ns)
-    folders = base.findall('ns:Folder', ns)
-    
-    for category in folders:
-        category_name = category[0].text
-        
-        if category_name not in ['Aerodromes', 'Helistops', 'VOR', 'NDB', 'Waypoints']:
-            break
-        
-        extract_ATNS_items(ns, category, category_name, aip_data)
-        
-        csv_columns = ['Category','ID', 'Description', 'Longitude', 'Latitude']
-        
-        with open(csv_filename, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-            writer.writeheader()
-            for data in aip_data:
-                writer.writerow(data)
-        print(f'Written to filename {csv_filename}')
-
-def extract_ATNS_items(ns, branch, category_name, data_list):
-    
-    sub_items = branch.findall('ns:Placemark', ns)
-    for this_item in sub_items:
-        x={}
-        x['Category'] = category_name
-        x['ID'] = this_item.find('ns:name', ns).text
-        try:
-            x['Description'] = this_item.find('ns:description', ns).text
-        except:
-            x['Description'] = x['ID']
-            print(f'No Description for {category_name} -- {x["ID"]}')
-            
-        point = this_item.find('ns:Point', ns)
-        coords = point.find('ns:coordinates', ns).text.split(',')
-        x['Longitude'] = coords[0]
-        x['Latitude'] = coords[1]
-        data_list.append(x)
-    
-    sub_folders = branch.findall('ns:Folder', ns)
-    for fldr in sub_folders:
-        extract_ATNS_items(ns, fldr, category_name, data_list)
-
-#extract_ATNS_data('C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.kml', 'C:/Users/aretallack/git/B4Flight/RSA DATA - 16JUL2020.csv')
 
 #test_import_notams()
 
@@ -613,6 +550,121 @@ def mailchimp_update_subscriber():
 
 #mailchimp_ping()
 #mailchimp_add_subscriber()
-mailchimp_update_subscriber()
+#mailchimp_update_subscriber()
 
-mailchimp_list_subscribers()
+#mailchimp_list_subscribers()
+
+def pdftest(file_path, file_out_path):
+    from io import StringIO
+    
+    from pdfminer.converter import TextConverter
+    from pdfminer.layout import LAParams
+    from pdfminer.pdfdocument import PDFDocument
+    from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+    from pdfminer.pdfpage import PDFPage
+    from pdfminer.pdfparser import PDFParser
+
+    output_string = StringIO()
+    with open(file_path, 'rb') as in_file:
+        parser = PDFParser(in_file)
+        doc = PDFDocument(parser)
+        rsrcmgr = PDFResourceManager()
+        device = TextConverter(rsrcmgr, output_string, laparams=LAParams())
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        for page in PDFPage.create_pages(doc):
+            interpreter.process_page(page)
+    
+    x=open(file_out_path,'w')
+    x.write(output_string.getvalue())
+    return(output_string.getvalue())
+
+#pdftest('C:/Users/aretallack/git/B4Flight/B4Flight/src/instance/notam_archives/ZA_notam_2020-06-16.pdf', 'C:/Users/aretallack/Desktop/ZA_notam_2020-06-16.txt')
+
+
+
+def get_latest_CAA_briefing_date_ZA(caa_webpage_url=None):
+    """Checks the CAA website for the latest briefing date, and returns that date.
+    Used to avoid downloading and parsing the PDF file to check if latest B4Flight briefing is current
+    
+    Parameters
+    ----------
+    caa_webpage_url : str
+        full url to the CAA webpage containing the briefing download docs
+        If NONE will get the page from the setting file
+    
+    Returns
+    -------
+    date
+        date of the latest briefing
+    OR
+    None
+        if the action failed, returns None
+    """
+    
+    # If we don't have a URL then retrieve one from the flightbriefing.ini settings file
+    if caa_webpage_url is None:
+        cfg = configparser.ConfigParser()
+        cfg.read(os.path.join(current_app.root_path, 'flightbriefing.ini'))
+        update_url = cfg.get('notam_import_ZA', 'caa_updated_url')
+    else:
+        update_url = caa_webpage_url
+    
+    # Start with the result being None
+    updated_date = None
+    
+    # Check the URL, streaming it to limit impact
+    resp = requests.get(update_url, stream=True)
+    
+    # Did we succeed in retrieving the page?  200=success
+    if resp.status_code == 200:
+        
+        # How is page encoded?
+        enc = resp.encoding
+        
+        # Process page one line at a time to conserve resources
+        for line in resp.iter_lines():
+            # Does the line contain the text 'Last update'?
+            if 'LAST UPDATE' in line.decode(enc).upper():
+                start = line.decode(enc).upper().find('LAST UPDATE')
+                end = line.decode(enc).upper().find('</SPAN>', start)
+                found = line.decode(enc)[start:end]
+                found = found.replace('&#58;', ':').replace('&#160;', ' ')
+                
+                # Typical contents of variable "found":
+                # Last update&#58;&#160;&#160;25 <span lang="EN-US" style="font-family&#58;calibri, sans-serif;font-size&#58;11pt;">September 2020
+                # Extract the day of month - in this case the "25": &#160;25 <span
+                dom = found[:found.upper().rfind('<SPAN')]
+                dom = dom[dom.upper().rfind(';')+1:].strip()
+                # Extract the Month + Year:
+                month_year = found[found.rfind('>')+1:]
+                # If the above search fails, then need to look for re-formatted version:
+                # Last update&#58;&#160;11 March 2021</strong>
+                if month_year == '':
+                    full_date = found[found.upper().rfind(';')+1:]
+                    #Remove the Strong closing tag
+                    full_date = full_date[:full_date.upper().rfind('</STRONG')].strip()
+                    #Remove the Last Update: prefix
+                    full_date = full_date[full_date.find(':')+1:].strip()
+                    
+                    # This should give us just the date in formay dd mmm yyyy
+                    dom, month, year = full_date.split(' ')
+                else:
+                    month, year = month_year.split(' ')
+                
+                updated_date = datetime.strptime(f'{dom} {month} {year}', '%d %B %Y')
+                updated_date_str = datetime.strftime(updated_date, '%Y-%m-%d')
+                resp.close()
+                break
+
+    return updated_date
+
+#get_latest_CAA_briefing_date_ZA('http://www.caa.co.za/Pages/Aeronautical%20Information/Notam-summaries-PIB.aspx')
+
+def testMetar():
+    metars = weather.read_metar_ZA('https://aviation.weathersa.co.za/pib/pages/actuals/metars.php')
+    print(len(metars))
+    for m in metars:
+        if m['has_no_data'] == False:
+            print(f"{m['aerodrome']} Temp={m['temperature']} QNH={m['qnh']} Wind = {m['wind']} Correction={m['is_correction']}")
+
+testMetar()            
