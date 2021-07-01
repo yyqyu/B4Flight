@@ -303,6 +303,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
             aerodrome: ICAO code
             has_no_data: boolean
             is_speci: boolean
+            is_correction: boolean
             time: date and time of the METAR
             wind: dictionary containing (direction, strength, gusting, is_variable).  Direction of -1 means variable
             temperature: temp in degrees centigrade
@@ -352,6 +353,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
         met_string = str(met.text)
         
         is_speci = False # Is this a SPECI and not a METAR - default to False
+        is_correction = False #Is this METAR a correction of an earlier (i.e. 'METAR COR xxxxxxxxx')
         
         # Determine if this is a METAR, a SPECI, or a line to be ignored
         s = met_string.find('METAR') # Is it a METAR?
@@ -369,6 +371,11 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
         s += 5 # 5 is the length of the text METAR and SPECI - we want to remove this.
         # Remove METAR/SPECI text - we should now have the raw METAR/SPECI only (eg. 'FAOR 100530Z 19015KT CAVOK 15/M03 Q1020 NOSIG=')
         met_string = met_string[s:].strip()
+        
+        # If this METAR is a Correction, then flag and remove the 'COR '  (eg: METAR COR FAHS 011200Z AUTO 30009KT 34/02 Q1017=
+        if met_string[:4] == 'COR ':
+            is_correction = True
+            met_string = met_string[4:]
         
         # Extract aerodrome name
         aerodrome = met_string[:4]
@@ -455,7 +462,7 @@ def read_metar_ZA(metar_url, date_as_ISO_text=False):
             met_date = datetime.isoformat(met_date)
         
         met_dict = {'aerodrome': aerodrome , 'coords': (aero_point.Longitude, aero_point.Latitude), 
-                    'has_no_data': False , 'is_speci': is_speci, 'time': met_date, 
+                    'has_no_data': False , 'is_speci': is_speci, 'is_correction': is_correction, 'time': met_date, 
                     'wind': {'no_wind_data': no_wind, 'direction': wind_dir, 'speed': wind_spd, 'gusting': wind_gust, 'is_variable': wind_variable},  #(wind_dir, wind_spd, wind_gust, wind_variable) , 
                     'temperature': temperature, 'dew_point': dew_point,
                     'qnh': qnh,
